@@ -15,10 +15,14 @@ tags
 *.swo
 *.o
 *.a
-./pme
+pme
+!src/pme/*
+parseproof
+!src/parseproof/*
 libsat.a
 autom4te.cache/
 config.h.in~
 test_*
-Makefile.in
+!test_*.cpp
 *.tar.gz
+*.log
