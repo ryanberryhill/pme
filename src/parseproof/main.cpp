@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -52,8 +52,8 @@ std::string default_name(std::string prefix, unsigned index)
 }
 
 
-void parse_symbols(aiger_symbol * syms, 
-                   size_t n, 
+void parse_symbols(aiger_symbol * syms,
+                   size_t n,
                    std::string name_prefix,
                    std::unordered_map<std::string, unsigned> & name_to_id)
 {
@@ -74,7 +74,7 @@ void parse_symbols(aiger_symbol * syms,
         assert(!name.empty());
         name_to_id[name] = lit;
     }
-} 
+}
 
 ParsedProof parse_proof(aiger * aig, std::ifstream & file)
 {
@@ -119,7 +119,7 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
         }
         else if (!line.empty() && line != ignorable)
         {
-            std::cerr << "Error at line " << lineno << ": " 
+            std::cerr << "Error at line " << lineno << ": "
                       << line << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -131,8 +131,8 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
 int main(int argc, char ** argv)
 {
     const char * opts = "h";
-    char * aig_path = NULL; 
-    char * proof_path = NULL; 
+    char * aig_path = NULL;
+    char * proof_path = NULL;
     int option = 0;
 
     // Parse flags
@@ -206,7 +206,7 @@ int main(int argc, char ** argv)
 
     // Read and parse the proof file
     ParsedProof pp = parse_proof(aig, proof_file);
-    
+
     // Output the new proof to stdout
     for (const ParsedClause & pc : pp)
     {

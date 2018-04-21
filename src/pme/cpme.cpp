@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -33,7 +33,7 @@ void * cpme_init(aiger * aig, void * proof)
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
     if (!p) { return NULL; }
 
-    try 
+    try
     {
         auto engine = new PME::Engine(aig, *p);
         return engine;
@@ -61,7 +61,7 @@ int cpme_add_clause(void * proof, const unsigned * cls, size_t n)
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
     if (!p) { return 1; }
 
-    try 
+    try
     {
         PME::ExternalClause real_cls;
         for (size_t i = 0; i < n; ++i)
@@ -83,7 +83,7 @@ int cpme_free_proof(void * proof)
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
     if (!p) { return 1; }
 
-    try 
+    try
     {
         delete p;
     }
@@ -97,7 +97,7 @@ int cpme_free_proof(void * proof)
 
 int cpme_free(void * pme)
 {
-    try 
+    try
     {
         PME::Engine * eng = static_cast<PME::Engine *>(pme);
         if (!eng) { return 1; }

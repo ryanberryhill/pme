@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(constants)
 {
     SATAdaptor slv;
     BOOST_CHECK(!slv.isSAT());
-    
+
     BOOST_CHECK(slv.solve());
     BOOST_CHECK(slv.isSAT());
 
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(three_var)
     slv.addClause({negate(b), negate(c)});
 
     BOOST_CHECK(slv.solve());
-    
+
     BOOST_CHECK(slv.solve({b}));
     BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
     BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);

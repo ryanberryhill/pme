@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -30,7 +30,7 @@ namespace PME
     const ID ID_NULL = 0;
     const ID ID_TRUE = 2;
     const ID ID_FALSE = negate(ID_TRUE);
-    
+
     static const size_t PRIME_BITS = 16;
     static const size_t PRIME_SHIFT = sizeof(ID) * 8 - PRIME_BITS;
     static const size_t MAX_PRIMES = (1 << PRIME_BITS) - 1;
@@ -50,7 +50,7 @@ namespace PME
         assert(n <= MAX_PRIMES);
         return id | (n << PRIME_SHIFT);
     }
-    
+
     size_t nprimes(ID id)
     {
         return (id & PRIMES_MASK) >> PRIME_SHIFT;
@@ -60,7 +60,7 @@ namespace PME
     {
         return (id & 1) != 0;
     }
-    
+
     bool is_valid_id(ID id)
     {
         return id >= MIN_ID || id == ID_TRUE || id == ID_FALSE;
@@ -79,7 +79,7 @@ namespace PME
     std::vector<ID> negateVec(const std::vector<ID> & vec)
     {
         std::vector<ID> negated;
-        negated.reserve(vec.size()); 
+        negated.reserve(vec.size());
         for (ID id : vec)
         {
             negated.push_back(negate(id));
@@ -106,7 +106,7 @@ namespace PME
         {
             Clause pcls = primeClause(cls, n);
             pvec.push_back(pcls);
-        } 
+        }
         return pvec;
     }
 }

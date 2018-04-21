@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -42,7 +42,7 @@ namespace PME
         return sym == nullptr ? defname : sym;
     }
 
-    void make_equal(ClauseVec & vec, ID a, ID b) 
+    void make_equal(ClauseVec & vec, ID a, ID b)
     {
         vec.push_back({a, negate(b)});
         vec.push_back({negate(a), b});
@@ -66,7 +66,7 @@ namespace PME
         m_property = fromAiger(property);
     }
 
-    ID TransitionRelation::getNewID() 
+    ID TransitionRelation::getNewID()
     {
         assert(m_nextID <= MAX_ID);
         ID next = m_nextID;
@@ -106,7 +106,7 @@ namespace PME
         createAndProcessAnds(aig);
         processLatches(aig);
         processConstraints(aig);
-        // TODO: bad states 
+        // TODO: bad states
     }
 
     void TransitionRelation::createAndProcessAnds(aiger * aig)
@@ -125,12 +125,12 @@ namespace PME
             ID r0 = fromAiger(rhs0);
             ID r1 = fromAiger(rhs1);
 
-            m_clauses.push_back({negate(l), r0}); 
-            m_clauses.push_back({negate(l), r1}); 
-            m_clauses.push_back({l, negate(r0), negate(r1)}); 
+            m_clauses.push_back({negate(l), r0});
+            m_clauses.push_back({negate(l), r1});
+            m_clauses.push_back({l, negate(r0), negate(r1)});
         }
-    } 
-            
+    }
+
     void TransitionRelation::processConstraints(aiger * aig)
     {
         for (size_t i = 0; i < aig->num_constraints; ++i)
@@ -140,9 +140,9 @@ namespace PME
             m_constraints.push_back(l);
         }
     }
-        
-    void TransitionRelation::createSymbols(aiger_symbol *syms, 
-                                           size_t n, 
+
+    void TransitionRelation::createSymbols(aiger_symbol *syms,
+                                           size_t n,
                                            std::string name_prefix)
     {
         for (size_t i = 0; i < n; ++i)
@@ -164,8 +164,8 @@ namespace PME
             unsigned next_var = aiger_strip(next);
             unsigned reset = aig->latches[i].reset;
             ID reset_id = (reset == 0) ? (ID_FALSE) :
-                          (reset == 1) ? (ID_TRUE)  : 
-                                         (ID_NULL); 
+                          (reset == 1) ? (ID_TRUE)  :
+                                         (ID_NULL);
 
             bool neg = aiger_sign(next);
 
@@ -186,8 +186,8 @@ namespace PME
         return m_vars[stripped];
     }
 
-    const Variable& TransitionRelation::createVar(unsigned aig_id, 
-                                                  std::string name) 
+    const Variable& TransitionRelation::createVar(unsigned aig_id,
+                                                  std::string name)
     {
         assert(!aiger_sign(aig_id));
         assert(m_aigerToID.find(aig_id) == m_aigerToID.end());
@@ -200,8 +200,8 @@ namespace PME
     const Variable& TransitionRelation::getOrCreateVar(unsigned aig_id)
     {
         auto it = m_aigerToID.find(aig_id);
-        if (it != m_aigerToID.end()) 
-        { 
+        if (it != m_aigerToID.end())
+        {
             ID id = it->second;
             return varOf(id);
         }
@@ -220,7 +220,7 @@ namespace PME
         for (unsigned lit : cls)
         {
             ID internal_lit = fromAiger(lit);
-            internal_cls.push_back(internal_lit); 
+            internal_cls.push_back(internal_lit);
         }
 
         return internal_cls;
@@ -236,7 +236,7 @@ namespace PME
 
         return internal_vec;
     }
-            
+
     ClauseVec TransitionRelation::unrollWithInit(unsigned n) const
     {
         ClauseVec unrolled = unroll(n);
@@ -269,7 +269,7 @@ namespace PME
             for (ID lit : m_constraints)
             {
                 unrolled.push_back({prime(lit, i - 1)});
-            } 
+            }
         }
 
         return unrolled;
@@ -286,7 +286,7 @@ namespace PME
                 ID lit = latch.m_ID;
                 ID reset = latch.m_reset;
                 assert(reset == ID_TRUE || reset == ID_FALSE);
-                
+
                 make_equal(init, lit, reset);
             }
         }

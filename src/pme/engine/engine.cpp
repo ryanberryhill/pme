@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -34,18 +34,18 @@ namespace PME
 {
     Engine::Engine(aiger * aig, const ExternalClauseVec & proof)
         : m_tr(aig)
-    { 
+    {
         m_proof = m_tr.makeInternal(proof);
     }
 
-    Engine::Engine(aiger * aig, 
-                   const ExternalClauseVec & proof, 
+    Engine::Engine(aiger * aig,
+                   const ExternalClauseVec & proof,
                    unsigned property)
         : m_tr(aig, property)
-    { 
+    {
         m_proof = m_tr.makeInternal(proof);
     }
-            
+
     bool Engine::checkProof()
     {
         // Quick hack here
@@ -64,7 +64,7 @@ namespace PME
         {
             Cube negc;
             for (ID lit : c) { negc.push_back(negate(lit)); }
-            
+
             // relative induction
             if (ind.solve(negc)) { return false; }
 

@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -43,7 +43,7 @@ namespace SAT
         return is_negated(lit) ? -lit : lit;
     }
 
-    Solver::Solver() 
+    Solver::Solver()
         : m_solver(new Glucose::Solver),
           m_nextVar(1),
           m_lastResult(UNKNOWN)
@@ -52,14 +52,14 @@ namespace SAT
     Solver::~Solver()
     { }
 
-    Variable Solver::newVariable() 
+    Variable Solver::newVariable()
     {
         Glucose::Var gvar = m_solver->newVar();
         Variable var = getNextVar();
         m_varMap[var] = gvar;
         return var;
     }
-            
+
     Variable Solver::getNextVar()
     {
         Variable next = m_nextVar;
@@ -86,8 +86,8 @@ namespace SAT
         Glucose::Var v = it->second;
         return Glucose::mkLit(v, neg);
     }
-            
-    bool Solver::solve(const Cube& assumps) 
+
+    bool Solver::solve(const Cube& assumps)
     {
         Glucose::vec<Glucose::Lit> gvec;
         for (Literal lit : assumps)
@@ -99,8 +99,8 @@ namespace SAT
         m_lastResult = result ? SAT : UNSAT;
         return result;
     }
-            
-    bool Solver::isSAT() const 
+
+    bool Solver::isSAT() const
     {
         return m_lastResult == SAT;
     }

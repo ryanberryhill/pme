@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -72,7 +72,7 @@ namespace PME
         bool neg = is_negated(id);
         ID stripped = strip(id);
         SAT::Variable satvar = SATVarOf(stripped);
-        return neg ? SAT::negate(satvar) : satvar; 
+        return neg ? SAT::negate(satvar) : satvar;
     }
 
     SAT::Variable SATAdaptor::SATVarOf(ID id) const
@@ -84,7 +84,7 @@ namespace PME
     {
         return m_SATToIDMap.at(var);
     }
-            
+
     bool SATAdaptor::solve()
     {
         Cube assumps;
@@ -99,9 +99,9 @@ namespace PME
             introduceVariable(lit);
             satassumps.push_back(toSAT(lit));
         }
-        return m_solver.solve(satassumps); 
+        return m_solver.solve(satassumps);
     }
-            
+
     bool SATAdaptor::isSAT() const
     {
         return m_solver.isSAT();
@@ -113,7 +113,7 @@ namespace PME
         SAT::Literal satlit = toSAT(lit);
         return m_solver.getAssignment(satlit);
     }
-            
+
     ModelValue SATAdaptor::getAssignmentToVar(ID var) const
     {
         assert(!is_negated(var));

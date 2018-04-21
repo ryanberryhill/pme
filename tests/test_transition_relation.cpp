@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -73,14 +73,14 @@ struct AigFixture
     AigFixture()
     {
         aig = aiger_init();
-        i0 = 2; 
-        i1 = i0 + 2; 
-        l0 = i1 + 2; 
-        l1 = l0 + 2; 
-        l2 = l1 + 2; 
-        l3 = l2 + 2; 
-        a0 = l3 + 2; 
-        
+        i0 = 2;
+        i1 = i0 + 2;
+        l0 = i1 + 2;
+        l1 = l0 + 2;
+        l2 = l1 + 2;
+        l3 = l2 + 2;
+        a0 = l3 + 2;
+
         aiger_add_input(aig, i0, "i0");
         aiger_add_input(aig, i1, "i1");
         aiger_add_and(aig, a0, i0, i1);
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(combinational)
 
     // TR on its own should be SAT
     BOOST_CHECK(sat.solve());
-    
+
     // Output = 1 should be SAT
     ID o1 = tr.fromAiger(f.o1);
     ID i1 = tr.fromAiger(f.i1);
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(undefined_resets)
     AigFixture f_default, f_zero, f_none;
     f_zero.addResets(0);
     f_none.clearResets();
-    
+
     // Default reset should be zero
     TransitionRelation tr_default(f_default.aig);
     TransitionRelation tr_zero(f_zero.aig);
@@ -222,14 +222,14 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
 {
     AigFixture f;
     f.addResets(0);
-    
+
     TransitionRelation tr(f.aig);
     SATAdaptor sat;
     sat.addClauses(tr.unrollWithInit(1));
 
     // TR with zero init state should be SAT
     BOOST_CHECK(sat.solve());
-    
+
     // Latches should be zero
     ID l0 = tr.fromAiger(f.l0);
     ID l1 = tr.fromAiger(f.l1);
@@ -245,10 +245,10 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
     ID o0 = tr.fromAiger(f.o0);
     BOOST_CHECK(!sat.solve({o0}));
     BOOST_CHECK(sat.solve({negate(o0)}));
-} 
+}
 
 BOOST_AUTO_TEST_CASE(sequential_unroll)
-{      
+{
     AigFixture f;
 
     TransitionRelation tr(f.aig);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(sequential_unroll)
         BOOST_CHECK(sat.solve());
 
         for (unsigned j = 0; j <= i; ++j)
-        { 
+        {
             // l0' = 1 should be reachable in the first cycle (and all others)
             if (j > 0) { BOOST_CHECK(sat.solve({prime(l0, j)})); }
             else       { BOOST_CHECK(!sat.solve({prime(l0, j)})); }
@@ -292,9 +292,9 @@ BOOST_AUTO_TEST_CASE(sequential_unroll)
             BOOST_CHECK(sat.solve({prime(l3, i)}));
             for (unsigned j = 0; j < i; ++j)
             {
-                BOOST_CHECK_EQUAL(sat.getAssignment(prime(i0, j)), 
+                BOOST_CHECK_EQUAL(sat.getAssignment(prime(i0, j)),
                                   SAT::TRUE);
-                BOOST_CHECK_EQUAL(sat.getAssignment(prime(i1, j)), 
+                BOOST_CHECK_EQUAL(sat.getAssignment(prime(i1, j)),
                                   SAT::TRUE);
             }
         }

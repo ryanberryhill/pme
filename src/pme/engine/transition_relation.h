@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -33,7 +33,7 @@ namespace PME
 {
     struct Variable
     {
-        Variable(ID id, unsigned aig_id, std::string name) 
+        Variable(ID id, unsigned aig_id, std::string name)
             : m_ID(id),
               m_aigerID(aig_id),
               m_name(name)
@@ -66,8 +66,8 @@ namespace PME
         ID m_next;
         ID m_reset;
     };
-    
-    class TransitionRelation 
+
+    class TransitionRelation
     {
         public:
             TransitionRelation(aiger * aig);
@@ -79,10 +79,10 @@ namespace PME
             Clause makeInternal(ExternalClause cls);
             ClauseVec makeInternal(ExternalClauseVec vec);
 
-            ClauseVec unroll(unsigned n = 1) const; 
-            ClauseVec unrollWithInit(unsigned n = 1) const; 
+            ClauseVec unroll(unsigned n = 1) const;
+            ClauseVec unrollWithInit(unsigned n = 1) const;
             ClauseVec initState() const;
-    
+
         private:
             ID m_property;
             ID m_nextID;
@@ -96,12 +96,12 @@ namespace PME
 
             ID getNewID();
 
-            
+
             void buildModel(aiger * aig);
             void createAndProcessAnds(aiger * aig);
             void createInputs(aiger * aig);
-            void createSymbols(aiger_symbol *syms, 
-                               size_t n, 
+            void createSymbols(aiger_symbol *syms,
+                               size_t n,
                                std::string name_prefix);
             void createLatches(aiger * aig);
             void processConstraints(aiger * aig);

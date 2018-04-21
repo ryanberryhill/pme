@@ -6,7 +6,7 @@
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -46,7 +46,7 @@ void parse_proof(void * proof, FILE * proof_file)
         size_t len = strnlen(line, sizeof(line));
         if (line[len-1] != '\n')
         {
-            fprintf(stderr, 
+            fprintf(stderr,
                     "Error parsing proof: line %lu is too long\n",
                     lineno);
             exit(EXIT_FAILURE);
@@ -62,7 +62,7 @@ void parse_proof(void * proof, FILE * proof_file)
         {
             if (n >= sizeof(cls) / sizeof(unsigned))
             {
-                fprintf(stderr, 
+                fprintf(stderr,
                         "Error parsing proof: too many literals on line %lu\n",
                         lineno);
                 exit(EXIT_FAILURE);
@@ -72,7 +72,7 @@ void parse_proof(void * proof, FILE * proof_file)
 
             if (aig_id == 0)
             {
-                fprintf(stderr, 
+                fprintf(stderr,
                         "Error parsing proof: invalid token %s on line %lu\n",
                         token, lineno);
                 exit(EXIT_FAILURE);
@@ -89,8 +89,8 @@ void parse_proof(void * proof, FILE * proof_file)
 int main(int argc, char ** argv)
 {
     const char * opts = "hv";
-    char * aig_path = NULL; 
-    char * proof_path = NULL; 
+    char * aig_path = NULL;
+    char * proof_path = NULL;
     int verbosity = 0;
     int option = 0;
 
