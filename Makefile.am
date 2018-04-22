@@ -15,7 +15,9 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/engine/transition_relation.h \
 				   src/pme/engine/transition_relation.cpp \
 				   src/pme/engine/sat_adaptor.h \
-				   src/pme/engine/sat_adaptor.cpp 
+				   src/pme/engine/sat_adaptor.cpp \
+				   src/pme/engine/variable_manager.h \
+				   src/pme/engine/variable_manager.cpp 
 
 libpme_a_LIBADD = libsat.a
 
@@ -47,11 +49,19 @@ parseproof_SOURCES = src/parseproof/main.cpp \
 
 TESTS = test_sat_adaptor \
 		test_sat \
-		test_transition_relation
+		test_transition_relation \
+		test_variable_manager
 
 check_PROGRAMS = test_sat_adaptor \
 				 test_sat \
-				 test_transition_relation
+				 test_transition_relation \
+				 test_variable_manager
+
+test_variable_manager_SOURCES = tests/test_variable_manager.cpp
+test_variable_manager_LDADD = libpme.a \
+				 		 	  -lboost_unit_test_framework
+
+
 test_sat_adaptor_SOURCES = tests/test_sat_adaptor.cpp  
 test_sat_adaptor_LDADD = libpme.a \
 						 libsat.a \

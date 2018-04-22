@@ -33,7 +33,7 @@ extern "C" {
 namespace PME
 {
     Engine::Engine(aiger * aig, const ExternalClauseVec & proof)
-        : m_tr(aig)
+        : m_tr(m_vars, aig)
     {
         m_proof = m_tr.makeInternal(proof);
     }
@@ -41,7 +41,7 @@ namespace PME
     Engine::Engine(aiger * aig,
                    const ExternalClauseVec & proof,
                    unsigned property)
-        : m_tr(aig, property)
+        : m_tr(m_vars, aig, property)
     {
         m_proof = m_tr.makeInternal(proof);
     }

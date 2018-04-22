@@ -51,6 +51,7 @@ int cpme_check_proof(void * pme);
 namespace PME
 {
     typedef uint64_t ID;
+    typedef uint64_t ExternalID;
 
     typedef std::vector<unsigned> ExternalClause;
     typedef std::vector<ExternalClause> ExternalClauseVec;

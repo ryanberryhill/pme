@@ -23,6 +23,7 @@
 #define ENGINE_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
 
@@ -41,6 +42,7 @@ namespace PME
             bool checkProof();
 
         private:
+            VariableManager m_vars;
             TransitionRelation m_tr;
             ClauseVec m_proof;
             SATAdaptor m_solver;

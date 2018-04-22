@@ -34,7 +34,7 @@ using namespace PME;
 struct CombinationalAigFixture
 {
     aiger * aig;
-    unsigned i1, i2, o1, c0;
+    ExternalID i1, i2, o1, c0;
 
     CombinationalAigFixture()
     {
@@ -68,7 +68,7 @@ struct CombinationalAigFixture
 struct AigFixture
 {
     aiger * aig;
-    unsigned i0, i1, l0, l1, l2, l3, a0, o0, c0;
+    ExternalID i0, i1, l0, l1, l2, l3, a0, o0, c0;
 
     AigFixture()
     {
@@ -136,7 +136,8 @@ BOOST_AUTO_TEST_CASE(combinational)
 {
     CombinationalAigFixture f;
 
-    TransitionRelation tr(f.aig);
+    VariableManager vars;
+    TransitionRelation tr(vars, f.aig);
     ClauseVec unrolled = tr.unroll(1);
 
     SATAdaptor sat;
@@ -146,9 +147,9 @@ BOOST_AUTO_TEST_CASE(combinational)
     BOOST_CHECK(sat.solve());
 
     // Output = 1 should be SAT
-    ID o1 = tr.fromAiger(f.o1);
-    ID i1 = tr.fromAiger(f.i1);
-    ID i2 = tr.fromAiger(f.i2);
+    ID o1 = tr.toInternal(f.o1);
+    ID i1 = tr.toInternal(f.i1);
+    ID i2 = tr.toInternal(f.i2);
     sat.addClause({o1});
     BOOST_CHECK(sat.solve());
 
@@ -168,9 +169,10 @@ BOOST_AUTO_TEST_CASE(undefined_resets)
     f_none.clearResets();
 
     // Default reset should be zero
-    TransitionRelation tr_default(f_default.aig);
-    TransitionRelation tr_zero(f_zero.aig);
-    TransitionRelation tr_none(f_none.aig);
+    VariableManager vars_default, vars_zero, vars_none;
+    TransitionRelation tr_default(vars_default, f_default.aig);
+    TransitionRelation tr_zero(vars_zero, f_zero.aig);
+    TransitionRelation tr_none(vars_none, f_none.aig);
 
     for (unsigned i = 1; i < 8; ++i)
     {
@@ -205,7 +207,8 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll)
 {
     AigFixture f;
 
-    TransitionRelation tr(f.aig);
+    VariableManager vars;
+    TransitionRelation tr(vars, f.aig);
     SATAdaptor sat;
     sat.addClauses(tr.unroll(1));
 
@@ -213,7 +216,7 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll)
     BOOST_CHECK(sat.solve());
 
     // Output = 0 or = 1 should be SAT
-    ID o0 = tr.fromAiger(f.o0);
+    ID o0 = tr.toInternal(f.o0);
     BOOST_CHECK(sat.solve({o0}));
     BOOST_CHECK(sat.solve({negate(o0)}));
 }
@@ -223,7 +226,8 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
     AigFixture f;
     f.addResets(0);
 
-    TransitionRelation tr(f.aig);
+    VariableManager vars;
+    TransitionRelation tr(vars, f.aig);
     SATAdaptor sat;
     sat.addClauses(tr.unrollWithInit(1));
 
@@ -231,10 +235,10 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
     BOOST_CHECK(sat.solve());
 
     // Latches should be zero
-    ID l0 = tr.fromAiger(f.l0);
-    ID l1 = tr.fromAiger(f.l1);
-    ID l2 = tr.fromAiger(f.l2);
-    ID l3 = tr.fromAiger(f.l3);
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
     BOOST_CHECK_EQUAL(sat.getAssignment(l0), SAT::FALSE);
     BOOST_CHECK_EQUAL(sat.getAssignment(l1), SAT::FALSE);
     BOOST_CHECK_EQUAL(sat.getAssignment(l2), SAT::FALSE);
@@ -242,7 +246,7 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
 
     // Output is l3
     // l3 = 0 should be SAT
-    ID o0 = tr.fromAiger(f.o0);
+    ID o0 = tr.toInternal(f.o0);
     BOOST_CHECK(!sat.solve({o0}));
     BOOST_CHECK(sat.solve({negate(o0)}));
 }
@@ -251,13 +255,14 @@ BOOST_AUTO_TEST_CASE(sequential_unroll)
 {
     AigFixture f;
 
-    TransitionRelation tr(f.aig);
-    ID i0 = tr.fromAiger(f.i0);
-    ID i1 = tr.fromAiger(f.i1);
-    ID l0 = tr.fromAiger(f.l0);
-    ID l1 = tr.fromAiger(f.l1);
-    ID l2 = tr.fromAiger(f.l2);
-    ID l3 = tr.fromAiger(f.l3);
+    VariableManager vars;
+    TransitionRelation tr(vars, f.aig);
+    ID i0 = tr.toInternal(f.i0);
+    ID i1 = tr.toInternal(f.i1);
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
 
     for (unsigned i = 1; i < 8; ++i)
     {
@@ -306,10 +311,11 @@ BOOST_AUTO_TEST_CASE(combinational_constraints)
     CombinationalAigFixture f;
     f.addConstraint();
 
-    TransitionRelation tr(f.aig);
-    ID i1 = tr.fromAiger(f.i1);
-    ID i2 = tr.fromAiger(f.i2);
-    ID o1 = tr.fromAiger(f.o1);
+    VariableManager vars;
+    TransitionRelation tr(vars, f.aig);
+    ID i1 = tr.toInternal(f.i1);
+    ID i2 = tr.toInternal(f.i2);
+    ID o1 = tr.toInternal(f.o1);
 
     SATAdaptor sat;
     sat.addClauses(tr.unrollWithInit(1));
@@ -332,10 +338,11 @@ BOOST_AUTO_TEST_CASE(sequential_constraints)
     AigFixture f;
     f.addConstraint();
 
-    TransitionRelation tr(f.aig);
-    ID i0 = tr.fromAiger(f.i0);
-    ID i1 = tr.fromAiger(f.i1);
-    ID o0 = tr.fromAiger(f.o0);
+    VariableManager vars;
+    TransitionRelation tr(vars, f.aig);
+    ID i0 = tr.toInternal(f.i0);
+    ID i1 = tr.toInternal(f.i1);
+    ID o0 = tr.toInternal(f.o0);
     ID o0_final = prime(o0, 4);
 
     SATAdaptor sat;
@@ -361,18 +368,19 @@ BOOST_AUTO_TEST_CASE(init_states)
     f0.addResets(0);
     f1.addResets(1);
 
-    TransitionRelation tr0(f0.aig), tr1(f1.aig);
+    VariableManager vars0, vars1;
+    TransitionRelation tr0(vars0, f0.aig), tr1(vars1, f1.aig);
     SATAdaptor sat0, sat1;
 
-    ID l0_0 = tr0.fromAiger(f0.l0);
-    ID l1_0 = tr0.fromAiger(f0.l1);
-    ID l2_0 = tr0.fromAiger(f0.l2);
-    ID l3_0 = tr0.fromAiger(f0.l3);
+    ID l0_0 = tr0.toInternal(f0.l0);
+    ID l1_0 = tr0.toInternal(f0.l1);
+    ID l2_0 = tr0.toInternal(f0.l2);
+    ID l3_0 = tr0.toInternal(f0.l3);
 
-    ID l0_1 = tr0.fromAiger(f1.l0);
-    ID l1_1 = tr0.fromAiger(f1.l1);
-    ID l2_1 = tr0.fromAiger(f1.l2);
-    ID l3_1 = tr0.fromAiger(f1.l3);
+    ID l0_1 = tr0.toInternal(f1.l0);
+    ID l1_1 = tr0.toInternal(f1.l1);
+    ID l2_1 = tr0.toInternal(f1.l2);
+    ID l3_1 = tr0.toInternal(f1.l3);
 
     sat0.addClauses(tr0.initState());
     sat1.addClauses(tr1.initState());

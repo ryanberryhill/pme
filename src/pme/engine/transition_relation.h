@@ -25,30 +25,13 @@
 
 #include "pme/pme.h"
 #include "pme/id.h"
+#include "pme/engine/variable_manager.h"
 
 #include <vector>
 #include <unordered_map>
 
 namespace PME
 {
-    struct Variable
-    {
-        Variable(ID id, unsigned aig_id, std::string name)
-            : m_ID(id),
-              m_aigerID(aig_id),
-              m_name(name)
-        { }
-
-        Variable() : m_ID(ID_NULL), m_aigerID(0), m_name("")
-        { }
-
-        bool isNull() const { return m_ID == ID_NULL; }
-
-        ID m_ID;
-        unsigned m_aigerID;
-        std::string m_name;
-    };
-
     struct Latch
     {
         Latch(ID id, ID next, ID reset)
@@ -70,11 +53,11 @@ namespace PME
     class TransitionRelation
     {
         public:
-            TransitionRelation(aiger * aig);
-            TransitionRelation(aiger * aig, unsigned property);
+            TransitionRelation(VariableManager & varman, aiger * aig);
+            TransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
 
-            ID fromAiger(unsigned aig_id) const;
-            unsigned toAiger(ID pme_id) const;
+            ID toInternal(ExternalID aig_id) const;
+            ExternalID toExternal(ID pme_id) const;
 
             Clause makeInternal(ExternalClause cls);
             ClauseVec makeInternal(ExternalClauseVec vec);
@@ -84,18 +67,15 @@ namespace PME
             ClauseVec initState() const;
 
         private:
+            VariableManager & m_vars;
             ID m_property;
-            ID m_nextID;
 
-            std::unordered_map<ID, Variable> m_vars;
-            std::unordered_map<unsigned, ID> m_aigerToID;
             std::unordered_map<ID, Latch> m_latches;
             std::vector<ID> m_constraints;
 
             std::vector<Clause> m_clauses;
 
             ID getNewID();
-
 
             void buildModel(aiger * aig);
             void createAndProcessAnds(aiger * aig);
@@ -108,8 +88,8 @@ namespace PME
             void processLatches(aiger * aig);
 
             const Variable& varOf(ID id);
-            const Variable& createVar(unsigned aig_id, std::string name);
-            const Variable& getOrCreateVar(unsigned aig_id);
+            const Variable& createVar(ExternalID external, std::string name);
+            const Variable& getOrCreateVar(ExternalID external);
     };
 }
 

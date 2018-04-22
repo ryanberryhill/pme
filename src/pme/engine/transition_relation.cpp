@@ -48,53 +48,34 @@ namespace PME
         vec.push_back({negate(a), b});
     }
 
-    TransitionRelation::TransitionRelation(aiger * aig)
-        : m_property(ID_NULL),
-          m_nextID(MIN_ID)
+    TransitionRelation::TransitionRelation(VariableManager & varman, aiger * aig)
+        : m_vars(varman),
+          m_property(ID_NULL)
     {
         assert(aig->num_outputs > 0);
         buildModel(aig);
-        m_property = fromAiger(aig->outputs[0].lit);
+        m_property = toInternal(aig->outputs[0].lit);
     }
 
-    TransitionRelation::TransitionRelation(aiger * aig, unsigned property)
-        : m_property(ID_NULL),
-          m_nextID(MIN_ID)
+    TransitionRelation::TransitionRelation(VariableManager & varman,
+                                           aiger * aig,
+                                           unsigned property)
+        : m_vars(varman),
+          m_property(ID_NULL)
     {
         assert(property <= aig->maxvar * 2 + 1);
         buildModel(aig);
-        m_property = fromAiger(property);
+        m_property = toInternal(property);
     }
 
-    ID TransitionRelation::getNewID()
+    ID TransitionRelation::toInternal(ExternalID external) const
     {
-        assert(m_nextID <= MAX_ID);
-        ID next = m_nextID;
-        m_nextID += ID_INCR;
-        return next;
+        return m_vars.toInternal(external);
     }
 
-    ID TransitionRelation::fromAiger(unsigned aig_id) const
+    ExternalID TransitionRelation::toExternal(ID pme_id) const
     {
-        bool neg = aiger_sign(aig_id);
-        auto it = m_aigerToID.find(aiger_strip(aig_id));
-        assert(it != m_aigerToID.end());
-        return neg ? negate(it->second) : it->second;
-    }
-
-    unsigned TransitionRelation::toAiger(ID pme_id) const
-    {
-        assert(is_valid_id(pme_id));
-        bool neg = is_negated(pme_id);
-        pme_id = strip(pme_id);
-        assert(is_valid_id(pme_id));
-
-        auto it = m_vars.find(pme_id);
-        assert(it != m_vars.end());
-        unsigned aig_id = it->second.m_aigerID;
-        assert(!aiger_sign(aig_id));
-
-        return neg ? aiger_not(aig_id) : aig_id;
+        return m_vars.toExternal(pme_id);
     }
 
     void TransitionRelation::buildModel(aiger * aig)
@@ -121,9 +102,9 @@ namespace PME
             getOrCreateVar(aiger_strip(rhs0));
             getOrCreateVar(aiger_strip(rhs1));
 
-            ID l = fromAiger(lhs);
-            ID r0 = fromAiger(rhs0);
-            ID r1 = fromAiger(rhs1);
+            ID l = toInternal(lhs);
+            ID r0 = toInternal(rhs0);
+            ID r1 = toInternal(rhs1);
 
             m_clauses.push_back({negate(l), r0});
             m_clauses.push_back({negate(l), r1});
@@ -136,7 +117,7 @@ namespace PME
         for (size_t i = 0; i < aig->num_constraints; ++i)
         {
             unsigned lit = aig->constraints[i].lit;
-            ID l = fromAiger(lit);
+            ID l = toInternal(lit);
             m_constraints.push_back(l);
         }
     }
@@ -147,10 +128,10 @@ namespace PME
     {
         for (size_t i = 0; i < n; ++i)
         {
-            unsigned aig_id = aiger_strip(syms[i].lit);
+            ExternalID external = aiger_strip(syms[i].lit);
             const char * sym = syms[i].name;
             std::string name = create_name(sym, default_name(name_prefix, i));
-            createVar(aig_id, name);
+            createVar(external, name);
         }
     }
 
@@ -158,8 +139,8 @@ namespace PME
     {
         for (size_t i = 0; i < aig->num_latches; ++i)
         {
-            unsigned aig_id = aig->latches[i].lit;
-            assert(!aiger_sign(aig_id));
+            ExternalID external = aig->latches[i].lit;
+            assert(!aiger_sign(external));
             unsigned next = aig->latches[i].next;
             unsigned next_var = aiger_strip(next);
             unsigned reset = aig->latches[i].reset;
@@ -171,7 +152,7 @@ namespace PME
 
             const Variable& varp = getOrCreateVar(next_var);
             ID next_id = neg ? negate(varp.m_ID) : varp.m_ID;
-            ID latch_id = fromAiger(aig_id);
+            ID latch_id = toInternal(external);
 
             assert(m_latches.find(latch_id) == m_latches.end());
             m_latches[latch_id] = Latch(latch_id, next_id, reset_id);
@@ -180,38 +161,30 @@ namespace PME
 
     const Variable& TransitionRelation::varOf(ID id)
     {
-        assert(is_valid_id(id));
-        ID stripped = strip(id);
-        assert(m_vars.find(stripped) != m_vars.end());
-        return m_vars[stripped];
+        return m_vars.varOf(id);
     }
 
-    const Variable& TransitionRelation::createVar(unsigned aig_id,
+    const Variable& TransitionRelation::createVar(ExternalID external,
                                                   std::string name)
     {
-        assert(!aiger_sign(aig_id));
-        assert(m_aigerToID.find(aig_id) == m_aigerToID.end());
-        ID id = getNewID();
-        m_vars[id] = Variable(id, aig_id, name);
-        m_aigerToID[aig_id] = id;
+        assert(!aiger_sign(external));
+        ID id = m_vars.getNewID(name, external);
         return varOf(id);
     }
 
-    const Variable& TransitionRelation::getOrCreateVar(unsigned aig_id)
+    const Variable& TransitionRelation::getOrCreateVar(ExternalID external)
     {
-        auto it = m_aigerToID.find(aig_id);
-        if (it != m_aigerToID.end())
+        if (m_vars.isKnownExternal(external))
         {
-            ID id = it->second;
+            ID id = toInternal(external);
             return varOf(id);
         }
         else
         {
-            std::string name = default_name("aig", aig_id);
-            return createVar(aig_id, name);
+            std::string name = default_name("aig", external);
+            return createVar(external, name);
         }
     }
-
 
     Clause TransitionRelation::makeInternal(ExternalClause cls)
     {
@@ -219,7 +192,7 @@ namespace PME
         internal_cls.reserve(cls.size());
         for (unsigned lit : cls)
         {
-            ID internal_lit = fromAiger(lit);
+            ID internal_lit = toInternal(lit);
             internal_cls.push_back(internal_lit);
         }
 

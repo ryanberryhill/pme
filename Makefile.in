@@ -89,9 +89,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = pme$(EXEEXT) parseproof$(EXEEXT)
 TESTS = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
-	test_transition_relation$(EXEEXT)
+	test_transition_relation$(EXEEXT) \
+	test_variable_manager$(EXEEXT)
 check_PROGRAMS = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
-	test_transition_relation$(EXEEXT)
+	test_transition_relation$(EXEEXT) \
+	test_variable_manager$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -118,7 +120,8 @@ am_libpme_a_OBJECTS = src/aiger/aiger.$(OBJEXT) src/pme/pme.$(OBJEXT) \
 	src/pme/id.$(OBJEXT) src/pme/cpme.$(OBJEXT) \
 	src/pme/engine/engine.$(OBJEXT) \
 	src/pme/engine/transition_relation.$(OBJEXT) \
-	src/pme/engine/sat_adaptor.$(OBJEXT)
+	src/pme/engine/sat_adaptor.$(OBJEXT) \
+	src/pme/engine/variable_manager.$(OBJEXT)
 libpme_a_OBJECTS = $(am_libpme_a_OBJECTS)
 libsat_a_AR = $(AR) $(ARFLAGS)
 libsat_a_DEPENDENCIES = src/sat/solvers/glucose/libglucose.a
@@ -147,6 +150,10 @@ test_transition_relation_OBJECTS =  \
 	$(am_test_transition_relation_OBJECTS)
 test_transition_relation_DEPENDENCIES = libpme.a libsat.a \
 	src/sat/solvers/glucose/libglucose.a
+am_test_variable_manager_OBJECTS =  \
+	tests/test_variable_manager.$(OBJEXT)
+test_variable_manager_OBJECTS = $(am_test_variable_manager_OBJECTS)
+test_variable_manager_DEPENDENCIES = libpme.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -195,11 +202,13 @@ am__v_CXXLD_1 =
 SOURCES = $(libpme_a_SOURCES) $(libsat_a_SOURCES) \
 	$(parseproof_SOURCES) $(pme_SOURCES) $(test_sat_SOURCES) \
 	$(test_sat_adaptor_SOURCES) \
-	$(test_transition_relation_SOURCES)
+	$(test_transition_relation_SOURCES) \
+	$(test_variable_manager_SOURCES)
 DIST_SOURCES = $(libpme_a_SOURCES) $(libsat_a_SOURCES) \
 	$(parseproof_SOURCES) $(pme_SOURCES) $(test_sat_SOURCES) \
 	$(test_sat_adaptor_SOURCES) \
-	$(test_transition_relation_SOURCES)
+	$(test_transition_relation_SOURCES) \
+	$(test_variable_manager_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -604,7 +613,9 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/engine/transition_relation.h \
 				   src/pme/engine/transition_relation.cpp \
 				   src/pme/engine/sat_adaptor.h \
-				   src/pme/engine/sat_adaptor.cpp 
+				   src/pme/engine/sat_adaptor.cpp \
+				   src/pme/engine/variable_manager.h \
+				   src/pme/engine/variable_manager.cpp 
 
 libpme_a_LIBADD = libsat.a
 libsat_a_SOURCES = src/sat/sat.h \
@@ -629,6 +640,10 @@ pme_LDADD = libpme.a \
 parseproof_SOURCES = src/parseproof/main.cpp \
 					 src/aiger/aiger.h \
 					 src/aiger/aiger.c
+
+test_variable_manager_SOURCES = tests/test_variable_manager.cpp
+test_variable_manager_LDADD = libpme.a \
+				 		 	  -lboost_unit_test_framework
 
 test_sat_adaptor_SOURCES = tests/test_sat_adaptor.cpp  
 test_sat_adaptor_LDADD = libpme.a \
@@ -737,6 +752,9 @@ src/pme/engine/transition_relation.$(OBJEXT):  \
 	src/pme/engine/$(am__dirstamp) \
 	src/pme/engine/$(DEPDIR)/$(am__dirstamp)
 src/pme/engine/sat_adaptor.$(OBJEXT): src/pme/engine/$(am__dirstamp) \
+	src/pme/engine/$(DEPDIR)/$(am__dirstamp)
+src/pme/engine/variable_manager.$(OBJEXT):  \
+	src/pme/engine/$(am__dirstamp) \
 	src/pme/engine/$(DEPDIR)/$(am__dirstamp)
 
 libpme.a: $(libpme_a_OBJECTS) $(libpme_a_DEPENDENCIES) $(EXTRA_libpme_a_DEPENDENCIES) 
@@ -849,6 +867,12 @@ tests/test_transition_relation.$(OBJEXT): tests/$(am__dirstamp) \
 test_transition_relation$(EXEEXT): $(test_transition_relation_OBJECTS) $(test_transition_relation_DEPENDENCIES) $(EXTRA_test_transition_relation_DEPENDENCIES) 
 	@rm -f test_transition_relation$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_transition_relation_OBJECTS) $(test_transition_relation_LDADD) $(LIBS)
+tests/test_variable_manager.$(OBJEXT): tests/$(am__dirstamp) \
+	tests/$(DEPDIR)/$(am__dirstamp)
+
+test_variable_manager$(EXEEXT): $(test_variable_manager_OBJECTS) $(test_variable_manager_DEPENDENCIES) $(EXTRA_test_variable_manager_DEPENDENCIES) 
+	@rm -f test_variable_manager$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_variable_manager_OBJECTS) $(test_variable_manager_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -872,10 +896,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/engine.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/sat_adaptor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/transition_relation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/variable_manager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat_adaptor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_transition_relation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_variable_manager.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1187,6 +1213,13 @@ test_sat.log: test_sat$(EXEEXT)
 test_transition_relation.log: test_transition_relation$(EXEEXT)
 	@p='test_transition_relation$(EXEEXT)'; \
 	b='test_transition_relation'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_variable_manager.log: test_variable_manager$(EXEEXT)
+	@p='test_variable_manager$(EXEEXT)'; \
+	b='test_variable_manager'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
