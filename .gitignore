@@ -15,8 +15,7 @@ tags
 *.swo
 *.o
 *.a
-pme
-!src/pme/*
+/pme
 parseproof
 !src/parseproof/*
 libsat.a
