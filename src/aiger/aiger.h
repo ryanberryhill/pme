@@ -22,7 +22,7 @@ IN THE SOFTWARE.
 
 /*------------------------------------------------------------------------*/
 /* This file contains the API of the 'AIGER' library, which is a reader and
- * writer for the AIGER AIG format.  The code of the library 
+ * writer for the AIGER AIG format.  The code of the library
  * consists of 'aiger.c' and 'aiger.h'.  It is independent of 'simpaig.c'
  * and 'simpaig.h'.
  * library.
@@ -100,7 +100,7 @@ enum aiger_mode
 {
   aiger_binary_mode = 0,
   aiger_ascii_mode = 1,
-  aiger_stripped_mode = 2,	/* can be ORed with one of the previous */
+  aiger_stripped_mode = 2 	/* can be ORed with one of the previous */
 };
 
 typedef enum aiger_mode aiger_mode;
@@ -132,7 +132,7 @@ struct aiger_symbol
  */
 struct aiger
 {
-  /* variable not literal index, e.g. maxlit = 2*maxvar + 1 
+  /* variable not literal index, e.g. maxlit = 2*maxvar + 1
    */
   unsigned maxvar;
 

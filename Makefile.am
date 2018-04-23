@@ -1,5 +1,10 @@
-AM_CPPFLAGS = -I$(srcdir)/src -Wall -Wpedantic -Werror 
-AM_CXXFLAGS = -std=c++11
+AM_CPPFLAGS = -I$(srcdir)/src 
+AM_CXXFLAGS = -Wall -Wpedantic -Werror
+# No pedantic for CFLAGS because aiger has some mixed code and declarations
+# that gcc4 errors about
+AM_CFLAGS = -Wall -Werror
+
+ACLOCAL_AMFLAGS = -I m4
 
 noinst_LIBRARIES = libpme.a libsat.a
 
@@ -17,7 +22,9 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/engine/sat_adaptor.h \
 				   src/pme/engine/sat_adaptor.cpp \
 				   src/pme/engine/variable_manager.h \
-				   src/pme/engine/variable_manager.cpp 
+				   src/pme/engine/variable_manager.cpp \
+				   src/pme/util/cardinality_constraint.h \
+				   src/pme/util/cardinality_constraint.cpp 
 
 libpme_a_LIBADD = libsat.a
 
@@ -27,9 +34,10 @@ libsat_a_SOURCES = src/sat/sat.h \
 libsat_a_LIBADD = src/sat/solvers/glucose/libglucose.a
 
 # No Werror because glucose headers cause several warnings
-libsat_a_CPPFLAGS = -Wall -Wpedantic \
-					-I$(srcdir)/src \
+libsat_a_CPPFLAGS = -I$(srcdir)/src \
 					-I$(srcdir)/src/sat/solvers/glucose/src 
+libsat_a_CXXFLAGS = -Wall -Wpedantic 
+
 
 
 bin_PROGRAMS = pme parseproof
@@ -50,12 +58,10 @@ parseproof_SOURCES = src/parseproof/main.cpp \
 TESTS = test_sat_adaptor \
 		test_sat \
 		test_transition_relation \
-		test_variable_manager
+		test_variable_manager \
+		test_cardinality_constraint
 
-check_PROGRAMS = test_sat_adaptor \
-				 test_sat \
-				 test_transition_relation \
-				 test_variable_manager
+check_PROGRAMS = $(TESTS)
 
 test_variable_manager_SOURCES = tests/test_variable_manager.cpp
 test_variable_manager_LDADD = libpme.a \
@@ -79,6 +85,12 @@ test_transition_relation_LDADD = libpme.a \
 						 		 libsat.a \
 						         src/sat/solvers/glucose/libglucose.a \
 						         -lboost_unit_test_framework
+
+test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
+test_cardinality_constraint_LDADD = libpme.a \
+						 		    libsat.a \
+						            src/sat/solvers/glucose/libglucose.a \
+						            -lboost_unit_test_framework
 
 
 SUBDIRS = src/sat/solvers/glucose 

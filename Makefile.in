@@ -90,13 +90,14 @@ POST_UNINSTALL = :
 bin_PROGRAMS = pme$(EXEEXT) parseproof$(EXEEXT)
 TESTS = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
 	test_transition_relation$(EXEEXT) \
-	test_variable_manager$(EXEEXT)
-check_PROGRAMS = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
-	test_transition_relation$(EXEEXT) \
-	test_variable_manager$(EXEEXT)
+	test_variable_manager$(EXEEXT) \
+	test_cardinality_constraint$(EXEEXT)
+check_PROGRAMS = $(am__EXEEXT_1)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
+	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -121,13 +122,18 @@ am_libpme_a_OBJECTS = src/aiger/aiger.$(OBJEXT) src/pme/pme.$(OBJEXT) \
 	src/pme/engine/engine.$(OBJEXT) \
 	src/pme/engine/transition_relation.$(OBJEXT) \
 	src/pme/engine/sat_adaptor.$(OBJEXT) \
-	src/pme/engine/variable_manager.$(OBJEXT)
+	src/pme/engine/variable_manager.$(OBJEXT) \
+	src/pme/util/cardinality_constraint.$(OBJEXT)
 libpme_a_OBJECTS = $(am_libpme_a_OBJECTS)
 libsat_a_AR = $(AR) $(ARFLAGS)
 libsat_a_DEPENDENCIES = src/sat/solvers/glucose/libglucose.a
 am_libsat_a_OBJECTS = src/sat/libsat_a-sat.$(OBJEXT)
 libsat_a_OBJECTS = $(am_libsat_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
+am__EXEEXT_1 = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
+	test_transition_relation$(EXEEXT) \
+	test_variable_manager$(EXEEXT) \
+	test_cardinality_constraint$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am_parseproof_OBJECTS = src/parseproof/main.$(OBJEXT) \
 	src/aiger/aiger.$(OBJEXT)
@@ -136,6 +142,12 @@ parseproof_LDADD = $(LDADD)
 am_pme_OBJECTS = src/main/main.$(OBJEXT) src/aiger/aiger.$(OBJEXT)
 pme_OBJECTS = $(am_pme_OBJECTS)
 pme_DEPENDENCIES = libpme.a libsat.a \
+	src/sat/solvers/glucose/libglucose.a
+am_test_cardinality_constraint_OBJECTS =  \
+	tests/test_cardinality_constraint.$(OBJEXT)
+test_cardinality_constraint_OBJECTS =  \
+	$(am_test_cardinality_constraint_OBJECTS)
+test_cardinality_constraint_DEPENDENCIES = libpme.a libsat.a \
 	src/sat/solvers/glucose/libglucose.a
 am_test_sat_OBJECTS = tests/test_sat.$(OBJEXT)
 test_sat_OBJECTS = $(am_test_sat_OBJECTS)
@@ -200,12 +212,14 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libpme_a_SOURCES) $(libsat_a_SOURCES) \
-	$(parseproof_SOURCES) $(pme_SOURCES) $(test_sat_SOURCES) \
+	$(parseproof_SOURCES) $(pme_SOURCES) \
+	$(test_cardinality_constraint_SOURCES) $(test_sat_SOURCES) \
 	$(test_sat_adaptor_SOURCES) \
 	$(test_transition_relation_SOURCES) \
 	$(test_variable_manager_SOURCES)
 DIST_SOURCES = $(libpme_a_SOURCES) $(libsat_a_SOURCES) \
-	$(parseproof_SOURCES) $(pme_SOURCES) $(test_sat_SOURCES) \
+	$(parseproof_SOURCES) $(pme_SOURCES) \
+	$(test_cardinality_constraint_SOURCES) $(test_sat_SOURCES) \
 	$(test_sat_adaptor_SOURCES) \
 	$(test_transition_relation_SOURCES) \
 	$(test_variable_manager_SOURCES)
@@ -527,6 +541,7 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EXEEXT = @EXEEXT@
+HAVE_CXX11 = @HAVE_CXX11@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -598,8 +613,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -I$(srcdir)/src -Wall -Wpedantic -Werror 
-AM_CXXFLAGS = -std=c++11
+AM_CPPFLAGS = -I$(srcdir)/src 
+AM_CXXFLAGS = -Wall -Wpedantic -Werror
+# No pedantic for CFLAGS because aiger has some mixed code and declarations
+# that gcc4 errors about
+AM_CFLAGS = -Wall -Werror
+ACLOCAL_AMFLAGS = -I m4
 noinst_LIBRARIES = libpme.a libsat.a
 libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/aiger/aiger.c \
@@ -615,7 +634,9 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/engine/sat_adaptor.h \
 				   src/pme/engine/sat_adaptor.cpp \
 				   src/pme/engine/variable_manager.h \
-				   src/pme/engine/variable_manager.cpp 
+				   src/pme/engine/variable_manager.cpp \
+				   src/pme/util/cardinality_constraint.h \
+				   src/pme/util/cardinality_constraint.cpp 
 
 libpme_a_LIBADD = libsat.a
 libsat_a_SOURCES = src/sat/sat.h \
@@ -624,10 +645,10 @@ libsat_a_SOURCES = src/sat/sat.h \
 libsat_a_LIBADD = src/sat/solvers/glucose/libglucose.a
 
 # No Werror because glucose headers cause several warnings
-libsat_a_CPPFLAGS = -Wall -Wpedantic \
-					-I$(srcdir)/src \
+libsat_a_CPPFLAGS = -I$(srcdir)/src \
 					-I$(srcdir)/src/sat/solvers/glucose/src 
 
+libsat_a_CXXFLAGS = -Wall -Wpedantic 
 pme_SOURCES = src/main/main.c \
 			  src/aiger/aiger.h \
 			  src/aiger/aiger.c
@@ -661,6 +682,12 @@ test_transition_relation_LDADD = libpme.a \
 						 		 libsat.a \
 						         src/sat/solvers/glucose/libglucose.a \
 						         -lboost_unit_test_framework
+
+test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
+test_cardinality_constraint_LDADD = libpme.a \
+						 		    libsat.a \
+						            src/sat/solvers/glucose/libglucose.a \
+						            -lboost_unit_test_framework
 
 SUBDIRS = src/sat/solvers/glucose 
 EXTRA_DIST = LICENSE README 
@@ -756,6 +783,15 @@ src/pme/engine/sat_adaptor.$(OBJEXT): src/pme/engine/$(am__dirstamp) \
 src/pme/engine/variable_manager.$(OBJEXT):  \
 	src/pme/engine/$(am__dirstamp) \
 	src/pme/engine/$(DEPDIR)/$(am__dirstamp)
+src/pme/util/$(am__dirstamp):
+	@$(MKDIR_P) src/pme/util
+	@: > src/pme/util/$(am__dirstamp)
+src/pme/util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/pme/util/$(DEPDIR)
+	@: > src/pme/util/$(DEPDIR)/$(am__dirstamp)
+src/pme/util/cardinality_constraint.$(OBJEXT):  \
+	src/pme/util/$(am__dirstamp) \
+	src/pme/util/$(DEPDIR)/$(am__dirstamp)
 
 libpme.a: $(libpme_a_OBJECTS) $(libpme_a_DEPENDENCIES) $(EXTRA_libpme_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libpme.a
@@ -849,6 +885,12 @@ tests/$(am__dirstamp):
 tests/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) tests/$(DEPDIR)
 	@: > tests/$(DEPDIR)/$(am__dirstamp)
+tests/test_cardinality_constraint.$(OBJEXT): tests/$(am__dirstamp) \
+	tests/$(DEPDIR)/$(am__dirstamp)
+
+test_cardinality_constraint$(EXEEXT): $(test_cardinality_constraint_OBJECTS) $(test_cardinality_constraint_DEPENDENCIES) $(EXTRA_test_cardinality_constraint_DEPENDENCIES) 
+	@rm -f test_cardinality_constraint$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_cardinality_constraint_OBJECTS) $(test_cardinality_constraint_LDADD) $(LIBS)
 tests/test_sat.$(OBJEXT): tests/$(am__dirstamp) \
 	tests/$(DEPDIR)/$(am__dirstamp)
 
@@ -881,6 +923,7 @@ mostlyclean-compile:
 	-rm -f src/parseproof/*.$(OBJEXT)
 	-rm -f src/pme/*.$(OBJEXT)
 	-rm -f src/pme/engine/*.$(OBJEXT)
+	-rm -f src/pme/util/*.$(OBJEXT)
 	-rm -f src/sat/*.$(OBJEXT)
 	-rm -f tests/*.$(OBJEXT)
 
@@ -897,7 +940,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/sat_adaptor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/transition_relation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/variable_manager.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/pme/util/$(DEPDIR)/cardinality_constraint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-sat.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_cardinality_constraint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat_adaptor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_transition_relation.Po@am__quote@
@@ -936,18 +981,18 @@ distclean-compile:
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 src/sat/libsat_a-sat.o: src/sat/sat.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-sat.o -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-sat.Tpo -c -o src/sat/libsat_a-sat.o `test -f 'src/sat/sat.cpp' || echo '$(srcdir)/'`src/sat/sat.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-sat.o -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-sat.Tpo -c -o src/sat/libsat_a-sat.o `test -f 'src/sat/sat.cpp' || echo '$(srcdir)/'`src/sat/sat.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-sat.Tpo src/sat/$(DEPDIR)/libsat_a-sat.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/sat.cpp' object='src/sat/libsat_a-sat.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-sat.o `test -f 'src/sat/sat.cpp' || echo '$(srcdir)/'`src/sat/sat.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-sat.o `test -f 'src/sat/sat.cpp' || echo '$(srcdir)/'`src/sat/sat.cpp
 
 src/sat/libsat_a-sat.obj: src/sat/sat.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-sat.obj -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-sat.Tpo -c -o src/sat/libsat_a-sat.obj `if test -f 'src/sat/sat.cpp'; then $(CYGPATH_W) 'src/sat/sat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/sat.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-sat.obj -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-sat.Tpo -c -o src/sat/libsat_a-sat.obj `if test -f 'src/sat/sat.cpp'; then $(CYGPATH_W) 'src/sat/sat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/sat.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-sat.Tpo src/sat/$(DEPDIR)/libsat_a-sat.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/sat.cpp' object='src/sat/libsat_a-sat.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-sat.obj `if test -f 'src/sat/sat.cpp'; then $(CYGPATH_W) 'src/sat/sat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/sat.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-sat.obj `if test -f 'src/sat/sat.cpp'; then $(CYGPATH_W) 'src/sat/sat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/sat.cpp'; fi`
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -1224,6 +1269,13 @@ test_variable_manager.log: test_variable_manager$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_cardinality_constraint.log: test_cardinality_constraint$(EXEEXT)
+	@p='test_cardinality_constraint$(EXEEXT)'; \
+	b='test_cardinality_constraint'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -1476,6 +1528,8 @@ distclean-generic:
 	-rm -f src/pme/$(am__dirstamp)
 	-rm -f src/pme/engine/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/pme/engine/$(am__dirstamp)
+	-rm -f src/pme/util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/pme/util/$(am__dirstamp)
 	-rm -f src/sat/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/sat/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
@@ -1491,7 +1545,7 @@ clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/aiger/$(DEPDIR) src/main/$(DEPDIR) src/parseproof/$(DEPDIR) src/pme/$(DEPDIR) src/pme/engine/$(DEPDIR) src/sat/$(DEPDIR) tests/$(DEPDIR)
+	-rm -rf src/aiger/$(DEPDIR) src/main/$(DEPDIR) src/parseproof/$(DEPDIR) src/pme/$(DEPDIR) src/pme/engine/$(DEPDIR) src/pme/util/$(DEPDIR) src/sat/$(DEPDIR) tests/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1539,7 +1593,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/aiger/$(DEPDIR) src/main/$(DEPDIR) src/parseproof/$(DEPDIR) src/pme/$(DEPDIR) src/pme/engine/$(DEPDIR) src/sat/$(DEPDIR) tests/$(DEPDIR)
+	-rm -rf src/aiger/$(DEPDIR) src/main/$(DEPDIR) src/parseproof/$(DEPDIR) src/pme/$(DEPDIR) src/pme/engine/$(DEPDIR) src/pme/util/$(DEPDIR) src/sat/$(DEPDIR) tests/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

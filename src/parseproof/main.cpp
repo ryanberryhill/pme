@@ -29,7 +29,6 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include <regex>
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -86,18 +85,18 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
 
     std::string ignorable = "One-step Inductive Strengthening of Property"
                             " (in CNF):";
-    std::regex parse_line("(Clause [[:d:]]+: ?)([!a-zA-Z0-9_]+ ?)+");
-    std::regex remove_line("Clause [[:d:]]+: ?");
+    std::string remove_from_line("Clause");
 
     std::string line;
     size_t lineno = 0;
     while (std::getline(file, line))
     {
         lineno++;
-        if (regex_match(line, parse_line))
+        if (!line.compare(0, remove_from_line.size(), remove_from_line))
         {
-            // Remove the "Clause n:" part if present
-            line = std::regex_replace(line, remove_line, "");
+            // Remove the "Clause n:" part
+            assert(line.size() >= line.find(":") + 2);
+            line = line.substr(line.find(":") + 2, line.size());
             ParsedClause cls;
             std::string disjunct;
             std::istringstream iss(line);

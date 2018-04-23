@@ -1,6 +1,8 @@
 AM_CXXFLAGS = -Wall -Wno-parentheses -O3 -std=c++11
 AM_CPPFLAGS = -I$(srcdir)/src -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS 
 
+ACLOCAL_AMFLAGS = -I m4
+
 noinst_LIBRARIES = libglucose.a
 
 libglucose_a_SOURCES = \

@@ -1,13 +1,15 @@
-AC_INIT([minisat], [2.2.0])
+AC_INIT([glucose], [4.1])
 AC_PREREQ([2.69])
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([1.15 foreign subdir-objects])
+AM_INIT_AUTOMAKE([1.14 foreign subdir-objects])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_FILES([Makefile])
 
 : ${CXXFLAGS="-g -O3"}
 
 AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX_11
 AC_LANG([C++])
 AC_PROG_RANLIB
 
