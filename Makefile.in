@@ -706,7 +706,8 @@ test_cardinality_constraint_LDADD = libpme.a \
 						            -lboost_unit_test_framework
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
-EXTRA_DIST = LICENSE README.md 
+EXTRA_DIST = LICENSE README.md glucose.supp
+VALGRIND_SUPPRESSIONS_FILES = glucose.supp
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -1714,6 +1715,7 @@ uninstall-am: uninstall-binPROGRAMS
 .PRECIOUS: Makefile
 
 
+# Glucose can generate memcheck errors with certain compilers and flags
 @VALGRIND_CHECK_RULES@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

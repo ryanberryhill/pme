@@ -96,7 +96,9 @@ test_cardinality_constraint_LDADD = libpme.a \
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 
-EXTRA_DIST = LICENSE README.md 
+EXTRA_DIST = LICENSE README.md glucose.supp
 
+# Glucose can generate memcheck errors with certain compilers and flags
 @VALGRIND_CHECK_RULES@
+VALGRIND_SUPPRESSIONS_FILES = glucose.supp
 

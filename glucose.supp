@@ -1,0 +1,8 @@
+{
+    <glucose_solve>
+    Memcheck:Cond
+    ...
+    fun:_ZN7Glucose6Solver6solve_Ebb
+    ...
+}
+
