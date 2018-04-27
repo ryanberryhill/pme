@@ -4,7 +4,7 @@ dist: trusty
 sudo: required
 script:
     - autoreconf -fvi
-    - ./configure && make && make check
+    - ./configure && make && make check && make check-valgrind
 
 matrix:
   include:
