@@ -98,3 +98,5 @@ SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat
 
 EXTRA_DIST = LICENSE README.md 
 
+@VALGRIND_CHECK_RULES@
+

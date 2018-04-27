@@ -15,4 +15,11 @@ AC_PROG_CC
 AC_PROG_RANLIB
 AM_PROG_AR
 
+# To enable valgrind checks
+AX_VALGRIND_DFLT([sgcheck], [off])
+AX_VALGRIND_DFLT([helgrind], [off])
+AX_VALGRIND_DFLT([drd], [off])
+AX_VALGRIND_DFLT([memcheck], [on])
+AX_VALGRIND_CHECK
+
 AC_OUTPUT

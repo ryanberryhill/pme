@@ -1,7 +1,7 @@
 AM_CXXFLAGS = -Wall -Wno-parentheses -O3 
 AM_CPPFLAGS = -I$(srcdir) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS 
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I ../../../../m4
 
 noinst_LIBRARIES = libminisat.a
 
@@ -28,4 +28,6 @@ libminisat_a_SOURCES = \
   minisat/utils/ParseUtils.h \
   minisat/utils/System.h \
   minisat/utils/System.cc
+
+@VALGRIND_CHECK_RULES@
 

@@ -1,7 +1,7 @@
 AM_CXXFLAGS = -Wall -Wno-parentheses -O3 
 AM_CPPFLAGS = -I$(srcdir)/src -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS 
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I ../../../../m4
 
 noinst_LIBRARIES = libglucose.a
 
@@ -31,4 +31,6 @@ libglucose_a_SOURCES = \
   src/utils/ParseUtils.h \
   src/utils/System.h \
   src/utils/System.cc
+
+@VALGRIND_CHECK_RULES@
 
