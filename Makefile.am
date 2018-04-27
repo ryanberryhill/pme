@@ -95,5 +95,5 @@ test_cardinality_constraint_LDADD = libpme.a \
 
 SUBDIRS = src/sat/solvers/glucose 
 
-EXTRA_DIST = LICENSE README 
+EXTRA_DIST = LICENSE README.md 
 
