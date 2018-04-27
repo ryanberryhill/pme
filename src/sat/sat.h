@@ -30,11 +30,12 @@
  * This is a very thin wrapper around a SAT solver. The main reason for its
  * existence (as opposed to just having wrappers for different solvers in PME)
  * is to avoid having to include third-party headers (like those of glucose) in
- * the pme library. Glucose's headers introduce warnings, so they are confined
- * to being included in sat.cpp and nowhere else.
+ * the pme library. Glucose's and Minisat's headers generate warnings so they
+ * should not be included in this file.
  */
 
 namespace Glucose { class Solver; class Lit; }
+namespace Minisat { class Solver; class Lit; }
 
 namespace SAT
 {
@@ -53,13 +54,24 @@ namespace SAT
     class Solver
     {
         public:
-            Solver();
-            ~Solver();
-            Variable newVariable();
-            void addClause(const Clause& cls);
-            bool solve(const Cube& assumps);
-            ModelValue getAssignment(Variable v) const;
-            bool isSAT() const;
+            virtual ~Solver() { };
+            virtual Variable newVariable() = 0;
+            virtual void addClause(const Clause& cls) = 0;
+            virtual bool solve(const Cube& assumps) = 0;
+            virtual ModelValue getAssignment(Variable v) const = 0;
+            virtual bool isSAT() const = 0;
+    };
+
+    class GlucoseSolver : public Solver
+    {
+        public:
+            GlucoseSolver();
+            ~GlucoseSolver() override;
+            Variable newVariable() override;
+            void addClause(const Clause& cls) override;
+            bool solve(const Cube& assumps) override;
+            ModelValue getAssignment(Variable v) const override;
+            bool isSAT() const override;
 
         private:
             std::unique_ptr<Glucose::Solver> m_solver;
@@ -72,8 +84,34 @@ namespace SAT
 
             Glucose::Lit toGlucose(Literal lit) const;
             Variable getNextVar();
-
     };
+
+    class MinisatSolver : public Solver
+    {
+        public:
+            MinisatSolver();
+            ~MinisatSolver() override;
+            Variable newVariable() override;
+            void addClause(const Clause& cls) override;
+            bool solve(const Cube& assumps) override;
+            ModelValue getAssignment(Variable v) const override;
+            bool isSAT() const override;
+
+        private:
+            std::unique_ptr<Minisat::Solver> m_solver;
+            // Minisat's SolverTypes generates warnings, but the int below
+            // should be Minisat::Var ideally
+            std::unordered_map<Variable, int> m_varMap;
+            Variable m_nextVar;
+            SolverResult m_lastResult;
+
+            Minisat::Lit toMinisat(Literal lit) const;
+            Variable getNextVar();
+    };
+
+    Literal negate(Literal lit);
+    bool is_negated(Literal lit);
+    Variable strip(Literal lit);
 }
 
 #endif

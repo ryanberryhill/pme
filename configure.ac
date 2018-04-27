@@ -7,7 +7,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.14 foreign subdir-objects -Wall -Werror])
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_SUBDIRS([src/sat/solvers/glucose])
+AC_CONFIG_SUBDIRS([src/sat/solvers/glucose src/sat/solvers/minisat])
 
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11

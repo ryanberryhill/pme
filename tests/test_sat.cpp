@@ -28,64 +28,91 @@
 
 using namespace SAT;
 
+typedef std::unique_ptr<SAT::Solver> SolverPointer;
+
+struct SATFixture
+{
+    SATFixture()
+    {
+        SolverPointer minisat(new MinisatSolver);
+        SolverPointer glucose(new GlucoseSolver);
+        solvers.push_back(std::move(minisat));
+        solvers.push_back(std::move(glucose));
+    }
+
+    std::vector<SolverPointer> solvers;
+};
+
 BOOST_AUTO_TEST_CASE(one_var)
 {
-    Solver slv;
-    BOOST_CHECK(!slv.isSAT());
-    Variable v = slv.newVariable();
+    SATFixture f;
 
-    // (v)
-    slv.addClause({v});
-    BOOST_CHECK(slv.solve({}));
-    BOOST_CHECK(slv.isSAT());
+    for (auto & slv : f.solvers)
+    {
+        BOOST_CHECK(!slv->isSAT());
+        Variable v = slv->newVariable();
 
-    // (v) & (-v)[assumption]
-    BOOST_CHECK(!slv.solve({negate(v)}));
-    BOOST_CHECK(!slv.isSAT());
+        // (v)
+        slv->addClause({v});
+        BOOST_CHECK(slv->solve({}));
+        BOOST_CHECK(slv->isSAT());
 
-    // (v) & (-v)
-    slv.addClause({negate(v)});
-    BOOST_CHECK(!slv.isSAT());
-    BOOST_CHECK(!slv.solve({}));
+        // (v) & (-v)[assumption]
+        BOOST_CHECK(!slv->solve({negate(v)}));
+        BOOST_CHECK(!slv->isSAT());
+
+        // (v) & (-v)
+        slv->addClause({negate(v)});
+        BOOST_CHECK(!slv->isSAT());
+        BOOST_CHECK(!slv->solve({}));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(three_var)
 {
-    Solver slv;
-    Variable a = slv.newVariable();
-    Variable b = slv.newVariable();
-    Variable c = slv.newVariable();
+    SATFixture f;
 
-    // (a) & (b V c) & (-c)
-    Cube empty_assumps;
-    slv.addClause({a});
-    slv.addClause({b, c});
-    slv.addClause({negate(c)});
-    BOOST_CHECK(slv.solve({}));
+    for (auto & slv : f.solvers)
+    {
+        Variable a = slv->newVariable();
+        Variable b = slv->newVariable();
+        Variable c = slv->newVariable();
 
-    BOOST_CHECK(!slv.solve({c}));
+        // (a) & (b V c) & (-c)
+        Cube empty_assumps;
+        slv->addClause({a});
+        slv->addClause({b, c});
+        slv->addClause({negate(c)});
+        BOOST_CHECK(slv->solve({}));
 
-    BOOST_CHECK(slv.solve({b}));
+        BOOST_CHECK(!slv->solve({c}));
 
-    slv.addClause({b});
-    BOOST_CHECK(slv.solve(empty_assumps));
-    BOOST_CHECK(!slv.solve({negate(b)}));
+        BOOST_CHECK(slv->solve({b}));
+
+        slv->addClause({b});
+        BOOST_CHECK(slv->solve(empty_assumps));
+        BOOST_CHECK(!slv->solve({negate(b)}));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(get_assignment)
 {
-    Solver slv;
-    Variable a = slv.newVariable();
-    Variable b = slv.newVariable();
+    SATFixture f;
 
-    // (-a V -b)
-    slv.addClause({negate(a), negate(b)});
-    BOOST_CHECK(slv.solve({a}));
-    BOOST_CHECK_EQUAL(slv.getAssignment(a), TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(b), FALSE);
+    for (auto & slv : f.solvers)
+    {
+        Variable a = slv->newVariable();
+        Variable b = slv->newVariable();
 
-    BOOST_CHECK(slv.solve({b}));
-    BOOST_CHECK_EQUAL(slv.getAssignment(a), FALSE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(b), TRUE);
+        // (-a V -b)
+        slv->addClause({negate(a), negate(b)});
+        BOOST_CHECK(slv->solve({a}));
+        BOOST_CHECK_EQUAL(slv->getAssignment(a), TRUE);
+        BOOST_CHECK_EQUAL(slv->getAssignment(b), FALSE);
+
+        BOOST_CHECK(slv->solve({b}));
+        BOOST_CHECK_EQUAL(slv->getAssignment(a), FALSE);
+        BOOST_CHECK_EQUAL(slv->getAssignment(b), TRUE);
+    }
 }
 

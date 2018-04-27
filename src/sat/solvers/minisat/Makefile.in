@@ -107,13 +107,13 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libglucose_a_AR = $(AR) $(ARFLAGS)
-libglucose_a_LIBADD =
+libminisat_a_AR = $(AR) $(ARFLAGS)
+libminisat_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libglucose_a_OBJECTS = src/simp/SimpSolver.$(OBJEXT) \
-	src/core/Solver.$(OBJEXT) src/utils/Options.$(OBJEXT) \
-	src/utils/System.$(OBJEXT)
-libglucose_a_OBJECTS = $(am_libglucose_a_OBJECTS)
+am_libminisat_a_OBJECTS = minisat/simp/SimpSolver.$(OBJEXT) \
+	minisat/core/Solver.$(OBJEXT) minisat/utils/Options.$(OBJEXT) \
+	minisat/utils/System.$(OBJEXT)
+libminisat_a_OBJECTS = $(am_libminisat_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -155,8 +155,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libglucose_a_SOURCES)
-DIST_SOURCES = $(libglucose_a_SOURCES)
+SOURCES = $(libminisat_a_SOURCES)
+DIST_SOURCES = $(libminisat_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -187,7 +187,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/build-aux/compile \
 	$(top_srcdir)/build-aux/depcomp \
 	$(top_srcdir)/build-aux/install-sh \
-	$(top_srcdir)/build-aux/missing README build-aux/compile \
+	$(top_srcdir)/build-aux/missing build-aux/compile \
 	build-aux/depcomp build-aux/install-sh build-aux/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
@@ -298,35 +298,32 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CXXFLAGS = -Wall -Wno-parentheses -O3 
-AM_CPPFLAGS = -I$(srcdir)/src -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS 
+AM_CPPFLAGS = -I$(srcdir) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS 
 ACLOCAL_AMFLAGS = -I m4
-noinst_LIBRARIES = libglucose.a
-libglucose_a_SOURCES = \
-  src/simp/SimpSolver.cc \
-  src/simp/SimpSolver.h \
-  src/core/BoundedQueue.h \
-  src/core/Constants.h \
-  src/core/Dimacs.h \
-  src/core/Solver.cc \
-  src/core/Solver.h \
-  src/core/SolverStats.h \
-  src/core/SolverTypes.h \
-  src/mtl/Alg.h \
-  src/mtl/Alloc.h \
-  src/mtl/Clone.h \
-  src/mtl/Heap.h \
-  src/mtl/IntTypes.h \
-  src/mtl/Map.h \
-  src/mtl/Queue.h \
-  src/mtl/Sort.h \
-  src/mtl/VecThreads.h \
-  src/mtl/Vec.h \
-  src/mtl/XAlloc.h \
-  src/utils/Options.cc \
-  src/utils/Options.h \
-  src/utils/ParseUtils.h \
-  src/utils/System.h \
-  src/utils/System.cc
+noinst_LIBRARIES = libminisat.a
+libminisat_a_SOURCES = \
+  minisat/simp/SimpSolver.cc \
+  minisat/simp/SimpSolver.h \
+  minisat/core/Dimacs.h \
+  minisat/core/Solver.cc \
+  minisat/core/Solver.h \
+  minisat/core/SolverTypes.h \
+  minisat/mtl/Alg.h \
+  minisat/mtl/Alloc.h \
+  minisat/mtl/Heap.h \
+  minisat/mtl/IntMap.h \
+  minisat/mtl/IntTypes.h \
+  minisat/mtl/Map.h \
+  minisat/mtl/Queue.h \
+  minisat/mtl/Rnd.h \
+  minisat/mtl/Sort.h \
+  minisat/mtl/Vec.h \
+  minisat/mtl/XAlloc.h \
+  minisat/utils/Options.cc \
+  minisat/utils/Options.h \
+  minisat/utils/ParseUtils.h \
+  minisat/utils/System.h \
+  minisat/utils/System.cc
 
 all: all-am
 
@@ -368,51 +365,51 @@ $(am__aclocal_m4_deps):
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-src/simp/$(am__dirstamp):
-	@$(MKDIR_P) src/simp
-	@: > src/simp/$(am__dirstamp)
-src/simp/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/simp/$(DEPDIR)
-	@: > src/simp/$(DEPDIR)/$(am__dirstamp)
-src/simp/SimpSolver.$(OBJEXT): src/simp/$(am__dirstamp) \
-	src/simp/$(DEPDIR)/$(am__dirstamp)
-src/core/$(am__dirstamp):
-	@$(MKDIR_P) src/core
-	@: > src/core/$(am__dirstamp)
-src/core/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/core/$(DEPDIR)
-	@: > src/core/$(DEPDIR)/$(am__dirstamp)
-src/core/Solver.$(OBJEXT): src/core/$(am__dirstamp) \
-	src/core/$(DEPDIR)/$(am__dirstamp)
-src/utils/$(am__dirstamp):
-	@$(MKDIR_P) src/utils
-	@: > src/utils/$(am__dirstamp)
-src/utils/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/utils/$(DEPDIR)
-	@: > src/utils/$(DEPDIR)/$(am__dirstamp)
-src/utils/Options.$(OBJEXT): src/utils/$(am__dirstamp) \
-	src/utils/$(DEPDIR)/$(am__dirstamp)
-src/utils/System.$(OBJEXT): src/utils/$(am__dirstamp) \
-	src/utils/$(DEPDIR)/$(am__dirstamp)
+minisat/simp/$(am__dirstamp):
+	@$(MKDIR_P) minisat/simp
+	@: > minisat/simp/$(am__dirstamp)
+minisat/simp/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) minisat/simp/$(DEPDIR)
+	@: > minisat/simp/$(DEPDIR)/$(am__dirstamp)
+minisat/simp/SimpSolver.$(OBJEXT): minisat/simp/$(am__dirstamp) \
+	minisat/simp/$(DEPDIR)/$(am__dirstamp)
+minisat/core/$(am__dirstamp):
+	@$(MKDIR_P) minisat/core
+	@: > minisat/core/$(am__dirstamp)
+minisat/core/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) minisat/core/$(DEPDIR)
+	@: > minisat/core/$(DEPDIR)/$(am__dirstamp)
+minisat/core/Solver.$(OBJEXT): minisat/core/$(am__dirstamp) \
+	minisat/core/$(DEPDIR)/$(am__dirstamp)
+minisat/utils/$(am__dirstamp):
+	@$(MKDIR_P) minisat/utils
+	@: > minisat/utils/$(am__dirstamp)
+minisat/utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) minisat/utils/$(DEPDIR)
+	@: > minisat/utils/$(DEPDIR)/$(am__dirstamp)
+minisat/utils/Options.$(OBJEXT): minisat/utils/$(am__dirstamp) \
+	minisat/utils/$(DEPDIR)/$(am__dirstamp)
+minisat/utils/System.$(OBJEXT): minisat/utils/$(am__dirstamp) \
+	minisat/utils/$(DEPDIR)/$(am__dirstamp)
 
-libglucose.a: $(libglucose_a_OBJECTS) $(libglucose_a_DEPENDENCIES) $(EXTRA_libglucose_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libglucose.a
-	$(AM_V_AR)$(libglucose_a_AR) libglucose.a $(libglucose_a_OBJECTS) $(libglucose_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libglucose.a
+libminisat.a: $(libminisat_a_OBJECTS) $(libminisat_a_DEPENDENCIES) $(EXTRA_libminisat_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libminisat.a
+	$(AM_V_AR)$(libminisat_a_AR) libminisat.a $(libminisat_a_OBJECTS) $(libminisat_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libminisat.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f src/core/*.$(OBJEXT)
-	-rm -f src/simp/*.$(OBJEXT)
-	-rm -f src/utils/*.$(OBJEXT)
+	-rm -f minisat/core/*.$(OBJEXT)
+	-rm -f minisat/simp/*.$(OBJEXT)
+	-rm -f minisat/utils/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@src/core/$(DEPDIR)/Solver.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/simp/$(DEPDIR)/SimpSolver.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/utils/$(DEPDIR)/Options.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/utils/$(DEPDIR)/System.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@minisat/core/$(DEPDIR)/Solver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@minisat/simp/$(DEPDIR)/SimpSolver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@minisat/utils/$(DEPDIR)/Options.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@minisat/utils/$(DEPDIR)/System.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -682,12 +679,12 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f src/core/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/core/$(am__dirstamp)
-	-rm -f src/simp/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/simp/$(am__dirstamp)
-	-rm -f src/utils/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/utils/$(am__dirstamp)
+	-rm -f minisat/core/$(DEPDIR)/$(am__dirstamp)
+	-rm -f minisat/core/$(am__dirstamp)
+	-rm -f minisat/simp/$(DEPDIR)/$(am__dirstamp)
+	-rm -f minisat/simp/$(am__dirstamp)
+	-rm -f minisat/utils/$(DEPDIR)/$(am__dirstamp)
+	-rm -f minisat/utils/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -698,7 +695,7 @@ clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/core/$(DEPDIR) src/simp/$(DEPDIR) src/utils/$(DEPDIR)
+	-rm -rf minisat/core/$(DEPDIR) minisat/simp/$(DEPDIR) minisat/utils/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -746,7 +743,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/core/$(DEPDIR) src/simp/$(DEPDIR) src/utils/$(DEPDIR)
+	-rm -rf minisat/core/$(DEPDIR) minisat/simp/$(DEPDIR) minisat/utils/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -43,7 +43,7 @@ namespace PME
             ModelValue getAssignmentToVar(ID var) const;
 
         private:
-            SAT::Solver m_solver;
+            std::unique_ptr<SAT::Solver> m_solver;
             std::unordered_map<ID, SAT::Variable> m_IDToSATMap;
             std::unordered_map<SAT::Variable, ID> m_SATToIDMap;
 

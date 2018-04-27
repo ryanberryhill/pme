@@ -115,7 +115,7 @@ am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libpme_a_AR = $(AR) $(ARFLAGS)
-libpme_a_DEPENDENCIES = libsat.a
+libpme_a_DEPENDENCIES = $(SAT_LIBS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libpme_a_OBJECTS = src/aiger/aiger.$(OBJEXT) src/pme/pme.$(OBJEXT) \
 	src/pme/id.$(OBJEXT) src/pme/cpme.$(OBJEXT) \
@@ -126,8 +126,11 @@ am_libpme_a_OBJECTS = src/aiger/aiger.$(OBJEXT) src/pme/pme.$(OBJEXT) \
 	src/pme/util/cardinality_constraint.$(OBJEXT)
 libpme_a_OBJECTS = $(am_libpme_a_OBJECTS)
 libsat_a_AR = $(AR) $(ARFLAGS)
-libsat_a_DEPENDENCIES = src/sat/solvers/glucose/libglucose.a
-am_libsat_a_OBJECTS = src/sat/libsat_a-sat.$(OBJEXT)
+libsat_a_DEPENDENCIES = src/sat/solvers/glucose/libglucose.a \
+	src/sat/solvers/minisat/libminisat.a
+am_libsat_a_OBJECTS = src/sat/libsat_a-sat.$(OBJEXT) \
+	src/sat/libsat_a-glucose.$(OBJEXT) \
+	src/sat/libsat_a-minisat.$(OBJEXT)
 libsat_a_OBJECTS = $(am_libsat_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 am__EXEEXT_1 = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
@@ -141,27 +144,23 @@ parseproof_OBJECTS = $(am_parseproof_OBJECTS)
 parseproof_LDADD = $(LDADD)
 am_pme_OBJECTS = src/main/main.$(OBJEXT) src/aiger/aiger.$(OBJEXT)
 pme_OBJECTS = $(am_pme_OBJECTS)
-pme_DEPENDENCIES = libpme.a libsat.a \
-	src/sat/solvers/glucose/libglucose.a
+pme_DEPENDENCIES = libpme.a $(SAT_LIBS)
 am_test_cardinality_constraint_OBJECTS =  \
 	tests/test_cardinality_constraint.$(OBJEXT)
 test_cardinality_constraint_OBJECTS =  \
 	$(am_test_cardinality_constraint_OBJECTS)
-test_cardinality_constraint_DEPENDENCIES = libpme.a libsat.a \
-	src/sat/solvers/glucose/libglucose.a
+test_cardinality_constraint_DEPENDENCIES = libpme.a $(SAT_LIBS)
 am_test_sat_OBJECTS = tests/test_sat.$(OBJEXT)
 test_sat_OBJECTS = $(am_test_sat_OBJECTS)
-test_sat_DEPENDENCIES = libsat.a src/sat/solvers/glucose/libglucose.a
+test_sat_DEPENDENCIES = $(SAT_LIBS)
 am_test_sat_adaptor_OBJECTS = tests/test_sat_adaptor.$(OBJEXT)
 test_sat_adaptor_OBJECTS = $(am_test_sat_adaptor_OBJECTS)
-test_sat_adaptor_DEPENDENCIES = libpme.a libsat.a \
-	src/sat/solvers/glucose/libglucose.a
+test_sat_adaptor_DEPENDENCIES = libpme.a $(SAT_LIBS)
 am_test_transition_relation_OBJECTS =  \
 	tests/test_transition_relation.$(OBJEXT)
 test_transition_relation_OBJECTS =  \
 	$(am_test_transition_relation_OBJECTS)
-test_transition_relation_DEPENDENCIES = libpme.a libsat.a \
-	src/sat/solvers/glucose/libglucose.a
+test_transition_relation_DEPENDENCIES = libpme.a $(SAT_LIBS)
 am_test_variable_manager_OBJECTS =  \
 	tests/test_variable_manager.$(OBJEXT)
 test_variable_manager_OBJECTS = $(am_test_variable_manager_OBJECTS)
@@ -638,15 +637,24 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/util/cardinality_constraint.h \
 				   src/pme/util/cardinality_constraint.cpp 
 
-libpme_a_LIBADD = libsat.a
+libpme_a_LIBADD = $(SAT_LIBS)
 libsat_a_SOURCES = src/sat/sat.h \
-				   src/sat/sat.cpp
+				   src/sat/sat.cpp \
+				   src/sat/glucose.cpp \
+				   src/sat/minisat.cpp
 
-libsat_a_LIBADD = src/sat/solvers/glucose/libglucose.a
+libsat_a_LIBADD = src/sat/solvers/glucose/libglucose.a \
+				  src/sat/solvers/minisat/libminisat.a
 
-# No Werror because glucose headers cause several warnings
+SAT_LIBS = libsat.a \
+		   src/sat/solvers/glucose/libglucose.a \
+		   src/sat/solvers/minisat/libminisat.a 
+
+
+# No Werror because glucose and minisat headers cause several warnings
 libsat_a_CPPFLAGS = -I$(srcdir)/src \
-					-I$(srcdir)/src/sat/solvers/glucose/src 
+					-I$(srcdir)/src/sat/solvers/glucose/src \
+				    -I$(srcdir)/src/sat/solvers/minisat/
 
 libsat_a_CXXFLAGS = -Wall -Wpedantic 
 pme_SOURCES = src/main/main.c \
@@ -654,8 +662,7 @@ pme_SOURCES = src/main/main.c \
 			  src/aiger/aiger.c
 
 pme_LDADD = libpme.a \
-			libsat.a \
-			src/sat/solvers/glucose/libglucose.a \
+			$(SAT_LIBS) \
 			-lstdc++ -lm
 
 parseproof_SOURCES = src/parseproof/main.cpp \
@@ -668,28 +675,24 @@ test_variable_manager_LDADD = libpme.a \
 
 test_sat_adaptor_SOURCES = tests/test_sat_adaptor.cpp  
 test_sat_adaptor_LDADD = libpme.a \
-						 libsat.a \
-						 src/sat/solvers/glucose/libglucose.a \
+						 $(SAT_LIBS) \
 				 		 -lboost_unit_test_framework
 
 test_sat_SOURCES = tests/test_sat.cpp  
-test_sat_LDADD = libsat.a \
-				 src/sat/solvers/glucose/libglucose.a \
+test_sat_LDADD = $(SAT_LIBS) \
 				 -lboost_unit_test_framework
 
 test_transition_relation_SOURCES = tests/test_transition_relation.cpp
 test_transition_relation_LDADD = libpme.a \
-						 		 libsat.a \
-						         src/sat/solvers/glucose/libglucose.a \
+								 $(SAT_LIBS) \
 						         -lboost_unit_test_framework
 
 test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
 test_cardinality_constraint_LDADD = libpme.a \
-						 		    libsat.a \
-						            src/sat/solvers/glucose/libglucose.a \
+									$(SAT_LIBS) \
 						            -lboost_unit_test_framework
 
-SUBDIRS = src/sat/solvers/glucose 
+SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 EXTRA_DIST = LICENSE README.md 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -804,6 +807,10 @@ src/sat/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/sat/$(DEPDIR)
 	@: > src/sat/$(DEPDIR)/$(am__dirstamp)
 src/sat/libsat_a-sat.$(OBJEXT): src/sat/$(am__dirstamp) \
+	src/sat/$(DEPDIR)/$(am__dirstamp)
+src/sat/libsat_a-glucose.$(OBJEXT): src/sat/$(am__dirstamp) \
+	src/sat/$(DEPDIR)/$(am__dirstamp)
+src/sat/libsat_a-minisat.$(OBJEXT): src/sat/$(am__dirstamp) \
 	src/sat/$(DEPDIR)/$(am__dirstamp)
 
 libsat.a: $(libsat_a_OBJECTS) $(libsat_a_DEPENDENCIES) $(EXTRA_libsat_a_DEPENDENCIES) 
@@ -941,6 +948,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/transition_relation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/variable_manager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/util/$(DEPDIR)/cardinality_constraint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-glucose.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-minisat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_cardinality_constraint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat.Po@am__quote@
@@ -993,6 +1002,34 @@ src/sat/libsat_a-sat.obj: src/sat/sat.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/sat.cpp' object='src/sat/libsat_a-sat.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-sat.obj `if test -f 'src/sat/sat.cpp'; then $(CYGPATH_W) 'src/sat/sat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/sat.cpp'; fi`
+
+src/sat/libsat_a-glucose.o: src/sat/glucose.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-glucose.o -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-glucose.Tpo -c -o src/sat/libsat_a-glucose.o `test -f 'src/sat/glucose.cpp' || echo '$(srcdir)/'`src/sat/glucose.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-glucose.Tpo src/sat/$(DEPDIR)/libsat_a-glucose.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/glucose.cpp' object='src/sat/libsat_a-glucose.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-glucose.o `test -f 'src/sat/glucose.cpp' || echo '$(srcdir)/'`src/sat/glucose.cpp
+
+src/sat/libsat_a-glucose.obj: src/sat/glucose.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-glucose.obj -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-glucose.Tpo -c -o src/sat/libsat_a-glucose.obj `if test -f 'src/sat/glucose.cpp'; then $(CYGPATH_W) 'src/sat/glucose.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/glucose.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-glucose.Tpo src/sat/$(DEPDIR)/libsat_a-glucose.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/glucose.cpp' object='src/sat/libsat_a-glucose.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-glucose.obj `if test -f 'src/sat/glucose.cpp'; then $(CYGPATH_W) 'src/sat/glucose.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/glucose.cpp'; fi`
+
+src/sat/libsat_a-minisat.o: src/sat/minisat.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-minisat.o -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-minisat.Tpo -c -o src/sat/libsat_a-minisat.o `test -f 'src/sat/minisat.cpp' || echo '$(srcdir)/'`src/sat/minisat.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-minisat.Tpo src/sat/$(DEPDIR)/libsat_a-minisat.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/minisat.cpp' object='src/sat/libsat_a-minisat.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-minisat.o `test -f 'src/sat/minisat.cpp' || echo '$(srcdir)/'`src/sat/minisat.cpp
+
+src/sat/libsat_a-minisat.obj: src/sat/minisat.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-minisat.obj -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-minisat.Tpo -c -o src/sat/libsat_a-minisat.obj `if test -f 'src/sat/minisat.cpp'; then $(CYGPATH_W) 'src/sat/minisat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/minisat.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-minisat.Tpo src/sat/$(DEPDIR)/libsat_a-minisat.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/minisat.cpp' object='src/sat/libsat_a-minisat.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-minisat.obj `if test -f 'src/sat/minisat.cpp'; then $(CYGPATH_W) 'src/sat/minisat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/minisat.cpp'; fi`
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.

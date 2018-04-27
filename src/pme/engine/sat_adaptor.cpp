@@ -27,6 +27,7 @@
 namespace PME
 {
     SATAdaptor::SATAdaptor()
+        : m_solver(new SAT::GlucoseSolver)
     {
        // Add the clause for ID_TRUE
        introduceVariable(ID_TRUE);
@@ -39,7 +40,7 @@ namespace PME
         auto it = m_IDToSATMap.find(stripped);
         if (it == m_IDToSATMap.end())
         {
-            SAT::Variable satvar = m_solver.newVariable();
+            SAT::Variable satvar = m_solver->newVariable();
             m_IDToSATMap[stripped] = satvar;
             assert(m_SATToIDMap.find(satvar) == m_SATToIDMap.end());
             m_SATToIDMap[satvar] = stripped;
@@ -56,7 +57,7 @@ namespace PME
             SAT::Literal satlit = toSAT(id);
             satcls.push_back(satlit);
         }
-        m_solver.addClause(satcls);
+        m_solver->addClause(satcls);
     }
 
     void SATAdaptor::addClauses(const ClauseVec & vec)
@@ -99,19 +100,19 @@ namespace PME
             introduceVariable(lit);
             satassumps.push_back(toSAT(lit));
         }
-        return m_solver.solve(satassumps);
+        return m_solver->solve(satassumps);
     }
 
     bool SATAdaptor::isSAT() const
     {
-        return m_solver.isSAT();
+        return m_solver->isSAT();
     }
 
     ModelValue SATAdaptor::getAssignment(ID lit) const
     {
         assert(isSAT());
         SAT::Literal satlit = toSAT(lit);
-        return m_solver.getAssignment(satlit);
+        return m_solver->getAssignment(satlit);
     }
 
     ModelValue SATAdaptor::getAssignmentToVar(ID var) const
