@@ -28,72 +28,60 @@
 
 namespace SAT
 {
+    template <> Glucose::Lit mkLit(Glucose::Var v, bool neg)
+    {
+        return Glucose::mkLit(v, neg);
+    }
+
+    template<> bool sign(Glucose::Lit lit)
+    {
+        return Glucose::sign(lit);
+    }
+
+    template<> Glucose::Var toVar(Glucose::Lit lit)
+    {
+        return Glucose::var(lit);
+    }
+
     GlucoseSolver::GlucoseSolver()
-        : m_solver(new Glucose::Solver),
-          m_nextVar(1),
-          m_lastResult(UNKNOWN)
+        : m_solver(new Glucose::Solver)
     { }
 
     GlucoseSolver::~GlucoseSolver()
     { }
 
-    Variable GlucoseSolver::newVariable()
+    Variable GlucoseSolver::createSolverVariable()
     {
-        Glucose::Var gvar = m_solver->newVar();
-        Variable var = getNextVar();
-        m_varMap[var] = gvar;
-        return var;
+        return m_solver->newVar();
     }
 
-    Variable GlucoseSolver::getNextVar()
+    void GlucoseSolver::sendClauseToSolver(const Clause & cls)
     {
-        Variable next = m_nextVar;
-        m_nextVar++;
-        return next;
-    }
-
-    void GlucoseSolver::sendClauseToSolver(const Clause& cls)
-    {
-        Glucose::vec<Glucose::Lit> gcls;
+        Glucose::vec<Glucose::Lit> mcls;
         for (Literal lit : cls)
         {
-            gcls.push(toGlucose(lit));
+            mcls.push(toMinisat(lit));
         }
-        m_solver->addClause(gcls);
+        m_solver->addClause(mcls);
     }
 
-    Glucose::Lit GlucoseSolver::toGlucose(Literal lit) const
+    bool GlucoseSolver::doSolve(const Cube & assumps)
     {
-        bool neg = is_negated(lit);
-        Variable var = strip(lit);
-        auto it = m_varMap.find(var);
-        assert(it != m_varMap.end());
-        Glucose::Var v = it->second;
-        return Glucose::mkLit(v, neg);
-    }
-
-    bool GlucoseSolver::solve(const Cube& assumps)
-    {
-        Glucose::vec<Glucose::Lit> gvec;
+        Glucose::vec<Glucose::Lit> mvec;
         for (Literal lit : assumps)
         {
-            gvec.push(toGlucose(lit));
+            mvec.push(toMinisat(lit));
         }
 
-        bool result = m_solver->solve(gvec);
-        m_lastResult = result ? SAT : UNSAT;
-        return result;
-    }
+        bool result = m_solver->solve(mvec);
 
-    bool GlucoseSolver::isSAT() const
-    {
-        return m_lastResult == SAT;
+        return result;
     }
 
     ModelValue GlucoseSolver::getAssignment(Variable v) const
     {
         assert(isSAT());
-        Glucose::Lit lit = toGlucose(v);
+        Glucose::Lit lit = toMinisat(v);
         Glucose::lbool value = m_solver->modelValue(lit);
         if (value == l_True) { return TRUE; }
         else if (value == l_False) { return FALSE; }

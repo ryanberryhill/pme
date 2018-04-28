@@ -27,96 +27,68 @@
 #include <memory>
 #include <cassert>
 
-// TODO: fix massive code duplication
-
 namespace SAT
 {
+    template <> Minisat::Lit mkLit(Minisat::Var v, bool neg)
+    {
+        return Minisat::mkLit(v, neg);
+    }
+
+    template<> bool sign(Minisat::Lit lit)
+    {
+        return Minisat::sign(lit);
+    }
+
+    template<> Minisat::Var toVar(Minisat::Lit lit)
+    {
+        return Minisat::var(lit);
+    }
+
     //
     // MinisatSolver
     //
 
     MinisatSolver::MinisatSolver()
-        : m_solver(new Minisat::Solver),
-          m_nextVar(1),
-          m_lastResult(UNKNOWN)
+        : m_solver(new Minisat::Solver)
     { }
 
     MinisatSolver::~MinisatSolver()
     { }
 
-    Variable MinisatSolver::newVariable()
+    Variable MinisatSolver::createSolverVariable()
     {
-        Minisat::Var gvar = m_solver->newVar();
-        Variable var = getNextVar();
-        m_varMap[var] = gvar;
-        assert(m_reverseVarMap.find(gvar) == m_reverseVarMap.end());
-        m_reverseVarMap[gvar] = var;
-        return var;
+        return m_solver->newVar();
     }
 
-    Variable MinisatSolver::getNextVar()
+    void MinisatSolver::sendClauseToSolver(const Clause & cls)
     {
-        Variable next = m_nextVar;
-        m_nextVar++;
-        return next;
-    }
-
-    void MinisatSolver::sendClauseToSolver(const Clause& cls)
-    {
-        Minisat::vec<Minisat::Lit> gcls;
+        Minisat::vec<Minisat::Lit> mcls;
         for (Literal lit : cls)
         {
-            gcls.push(toMinisat(lit));
+            mcls.push(toMinisat(lit));
         }
-        m_solver->addClause(gcls);
+        m_solver->addClause(mcls);
     }
 
-    Minisat::Lit MinisatSolver::toMinisat(Literal lit) const
+    bool MinisatSolver::doSolve(const Cube & assumps)
     {
-        bool neg = is_negated(lit);
-        Variable var = strip(lit);
-        auto it = m_varMap.find(var);
-        assert(it != m_varMap.end());
-        Minisat::Var v = it->second;
-        return Minisat::mkLit(v, neg);
-    }
-
-    Literal MinisatSolver::fromMinisat(const Minisat::Lit& lit) const
-    {
-        bool neg = Minisat::sign(lit);
-        Minisat::Var var = Minisat::var(lit);
-        auto it = m_reverseVarMap.find(var);
-        assert(it != m_reverseVarMap.end());
-        Literal l = it->second;
-        return neg ? negate(l) : l;
-    }
-
-    bool MinisatSolver::solve(const Cube& assumps)
-    {
-        Minisat::vec<Minisat::Lit> gvec;
+        Minisat::vec<Minisat::Lit> mvec;
         for (Literal lit : assumps)
         {
-            gvec.push(toMinisat(lit));
+            mvec.push(toMinisat(lit));
         }
 
-        bool result = m_solver->solve(gvec);
+        bool result = m_solver->solve(mvec);
 
-        std::vector<Literal> trail;
+        clearTrail();
         for (auto it = m_solver->trailBegin(); it != m_solver->trailEnd(); ++it)
         {
             const Minisat::Lit & lit = *it;
             Literal l = fromMinisat(lit);
-            trail.push_back(l);
+            addToTrail(l);
         }
-        setTrail(trail);
 
-        m_lastResult = result ? SAT : UNSAT;
         return result;
-    }
-
-    bool MinisatSolver::isSAT() const
-    {
-        return m_lastResult == SAT;
     }
 
     ModelValue MinisatSolver::getAssignment(Variable v) const
@@ -134,90 +106,47 @@ namespace SAT
     //
 
     MinisatSimplifyingSolver::MinisatSimplifyingSolver()
-        : m_solver(new Minisat::SimpSolver),
-          m_nextVar(1),
-          m_lastResult(UNKNOWN)
+        : m_solver(new Minisat::SimpSolver)
     { }
 
     MinisatSimplifyingSolver::~MinisatSimplifyingSolver()
     { }
 
-    Variable MinisatSimplifyingSolver::newVariable()
+    Variable MinisatSimplifyingSolver::createSolverVariable()
     {
-        Minisat::Var gvar = m_solver->newVar();
-        Variable var = getNextVar();
-        m_varMap[var] = gvar;
-        assert(m_reverseVarMap.find(gvar) == m_reverseVarMap.end());
-        m_reverseVarMap[gvar] = var;
-        return var;
+        return m_solver->newVar();
     }
 
-    Variable MinisatSimplifyingSolver::getNextVar()
+    void MinisatSimplifyingSolver::sendClauseToSolver(const Clause & cls)
     {
-        Variable next = m_nextVar;
-        m_nextVar++;
-        return next;
-    }
-
-    void MinisatSimplifyingSolver::sendClauseToSolver(const Clause& cls)
-    {
-        Minisat::vec<Minisat::Lit> gcls;
+        Minisat::vec<Minisat::Lit> mcls;
         for (Literal lit : cls)
         {
-            gcls.push(toMinisat(lit));
+            mcls.push(toMinisat(lit));
         }
-        m_solver->addClause(gcls);
+        m_solver->addClause(mcls);
     }
 
-    Minisat::Lit MinisatSimplifyingSolver::toMinisat(Literal lit) const
+    bool MinisatSimplifyingSolver::doSolve(const Cube & assumps)
     {
-        bool neg = is_negated(lit);
-        Variable var = strip(lit);
-        auto it = m_varMap.find(var);
-        assert(it != m_varMap.end());
-        Minisat::Var v = it->second;
-        return Minisat::mkLit(v, neg);
-    }
-
-    Literal MinisatSimplifyingSolver::fromMinisat(const Minisat::Lit& lit) const
-    {
-        bool neg = Minisat::sign(lit);
-        Minisat::Var var = Minisat::var(lit);
-        auto it = m_reverseVarMap.find(var);
-        assert(it != m_reverseVarMap.end());
-        Literal l = it->second;
-        return neg ? negate(l) : l;
-    }
-
-    bool MinisatSimplifyingSolver::solve(const Cube& assumps)
-    {
-        Minisat::vec<Minisat::Lit> gvec;
+        Minisat::vec<Minisat::Lit> mvec;
         for (Literal lit : assumps)
         {
-            gvec.push(toMinisat(lit));
+            mvec.push(toMinisat(lit));
         }
 
-        // Do not simplify
-        // The current interface is such that eliminate() does simplification
-        // but solve does not
-        bool result = m_solver->solve(gvec, false);
+        // Don't do simplification - only eliminate() should do it
+        bool result = m_solver->solve(mvec, false);
 
-        std::vector<Literal> trail;
+        clearTrail();
         for (auto it = m_solver->trailBegin(); it != m_solver->trailEnd(); ++it)
         {
             const Minisat::Lit & lit = *it;
             Literal l = fromMinisat(lit);
-            trail.push_back(l);
+            addToTrail(l);
         }
-        setTrail(trail);
 
-        m_lastResult = result ? SAT : UNSAT;
         return result;
-    }
-
-    bool MinisatSimplifyingSolver::isSAT() const
-    {
-        return m_lastResult == SAT;
     }
 
     ModelValue MinisatSimplifyingSolver::getAssignment(Variable v) const
@@ -258,16 +187,13 @@ namespace SAT
             addStoredClause(internal_cls);
         }
 
-        std::vector<Literal> trail;
+        clearTrail();
         for (auto it = m_solver->trailBegin(); it != m_solver->trailEnd(); ++it)
         {
             const Minisat::Lit & lit = *it;
             Literal l = fromMinisat(lit);
-            trail.push_back(l);
+            addToTrail(l);
         }
-        setTrail(trail);
-
     }
-
 }
 

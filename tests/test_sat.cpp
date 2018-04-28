@@ -40,8 +40,8 @@ struct SATFixture
         SolverPointer minisat_simp(new MinisatSimplifyingSolver);
         SolverPointer glucose(new GlucoseSolver);
         solvers.push_back(std::move(minisat));
-        solvers.push_back(std::move(glucose));
         solvers.push_back(std::move(minisat_simp));
+        solvers.push_back(std::move(glucose));
     }
 
     std::vector<SolverPointer> solvers;
