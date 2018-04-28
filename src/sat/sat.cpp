@@ -33,6 +33,21 @@ namespace SAT
         return m_clauses.cend();
     }
 
+    auto Solver::begin_trail() const -> decltype(m_trail.cbegin())
+    {
+        return m_trail.cbegin();
+    }
+
+    auto Solver::end_trail() const -> decltype(m_trail.cbegin())
+    {
+        return m_trail.cend();
+    }
+
+    void Solver::setTrail(const std::vector<Literal> & trail)
+    {
+        m_trail = trail;
+    }
+
     void SimplifyingSolver::clearClauses()
     {
         m_clauses.clear();

@@ -27,6 +27,8 @@
 #include <memory>
 #include <cassert>
 
+// TODO: fix massive code duplication
+
 namespace SAT
 {
     //
@@ -47,6 +49,8 @@ namespace SAT
         Minisat::Var gvar = m_solver->newVar();
         Variable var = getNextVar();
         m_varMap[var] = gvar;
+        assert(m_reverseVarMap.find(gvar) == m_reverseVarMap.end());
+        m_reverseVarMap[gvar] = var;
         return var;
     }
 
@@ -77,6 +81,16 @@ namespace SAT
         return Minisat::mkLit(v, neg);
     }
 
+    Literal MinisatSolver::fromMinisat(const Minisat::Lit& lit) const
+    {
+        bool neg = Minisat::sign(lit);
+        Minisat::Var var = Minisat::var(lit);
+        auto it = m_reverseVarMap.find(var);
+        assert(it != m_reverseVarMap.end());
+        Literal l = it->second;
+        return neg ? negate(l) : l;
+    }
+
     bool MinisatSolver::solve(const Cube& assumps)
     {
         Minisat::vec<Minisat::Lit> gvec;
@@ -86,6 +100,16 @@ namespace SAT
         }
 
         bool result = m_solver->solve(gvec);
+
+        std::vector<Literal> trail;
+        for (auto it = m_solver->trailBegin(); it != m_solver->trailEnd(); ++it)
+        {
+            const Minisat::Lit & lit = *it;
+            Literal l = fromMinisat(lit);
+            trail.push_back(l);
+        }
+        setTrail(trail);
+
         m_lastResult = result ? SAT : UNSAT;
         return result;
     }
@@ -177,6 +201,16 @@ namespace SAT
         // The current interface is such that eliminate() does simplification
         // but solve does not
         bool result = m_solver->solve(gvec, false);
+
+        std::vector<Literal> trail;
+        for (auto it = m_solver->trailBegin(); it != m_solver->trailEnd(); ++it)
+        {
+            const Minisat::Lit & lit = *it;
+            Literal l = fromMinisat(lit);
+            trail.push_back(l);
+        }
+        setTrail(trail);
+
         m_lastResult = result ? SAT : UNSAT;
         return result;
     }
@@ -207,6 +241,7 @@ namespace SAT
     {
         bool ok = m_solver->eliminate();
         assert(ok);
+
         clearClauses();
         for (auto it = m_solver->clausesBegin(); it != m_solver->clausesEnd(); ++it)
         {
@@ -222,6 +257,16 @@ namespace SAT
 
             addStoredClause(internal_cls);
         }
+
+        std::vector<Literal> trail;
+        for (auto it = m_solver->trailBegin(); it != m_solver->trailEnd(); ++it)
+        {
+            const Minisat::Lit & lit = *it;
+            Literal l = fromMinisat(lit);
+            trail.push_back(l);
+        }
+        setTrail(trail);
+
     }
 
 }

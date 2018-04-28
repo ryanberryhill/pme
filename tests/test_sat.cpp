@@ -229,6 +229,7 @@ BOOST_AUTO_TEST_CASE(simplifying_simple)
 
     slv.addClause({a, b});
     slv.addClause({negate(a), c});
+    slv.addClause({negate(b), negate(c)});
 
     slv.freeze(b);
     slv.freeze(c);
@@ -236,25 +237,105 @@ BOOST_AUTO_TEST_CASE(simplifying_simple)
     slv.eliminate();
 
     std::vector<Clause> clauses(slv.begin_clauses(), slv.end_clauses());
-    BOOST_CHECK_EQUAL(clauses.size(), 1);
+    BOOST_CHECK_EQUAL(clauses.size(), 2);
     std::vector<Clause> expected;
     expected.push_back({b, c});
+    expected.push_back({negate(b), negate(c)});
 
     sortClauseVec(clauses);
     sortClauseVec(expected);
 
     BOOST_CHECK(clauses == expected);
 
-    BOOST_CHECK(slv.solve({b, c}));
+    BOOST_CHECK(slv.solve({b, negate(c)}));
     BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
+    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
 
     BOOST_CHECK(slv.solve({b}));
     BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
 
     BOOST_CHECK(slv.solve({c}));
+    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
     BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
 
     BOOST_CHECK(!slv.solve({negate(b), negate(c)}));
+}
+
+BOOST_AUTO_TEST_CASE(simplifying_trail)
+{
+    MinisatSimplifyingSolver slv;
+
+    Variable a = slv.newVariable();
+    Variable b = slv.newVariable();
+    Variable c = slv.newVariable();
+    Variable d = slv.newVariable();
+
+    slv.freeze(a);
+    slv.freeze(d);
+
+    slv.addClause({a});
+    slv.addClause({a, b});
+    slv.addClause({negate(b), c});
+    slv.addClause({negate(a), d});
+
+    slv.eliminate();
+
+    // This check mostly checks that the test does something - we
+    // don't really want to test how the SAT solver works internally
+    std::vector<Literal> trail(slv.begin_trail(), slv.end_trail());
+    BOOST_CHECK(!trail.empty());
+
+    BOOST_CHECK(slv.solve({d}));
+    BOOST_CHECK(!slv.solve({negate(d)}));
+
+    // Adding the literals on the trail should not change satisfiability
+    for (Literal lit : trail)
+    {
+        Clause cls { lit };
+        slv.addClause(cls);
+    }
+
+    BOOST_CHECK(slv.solve({d}));
+    BOOST_CHECK(!slv.solve({negate(d)}));
+}
+
+BOOST_AUTO_TEST_CASE(trail)
+{
+    SATFixture f;
+    Cube empty;
+
+    for (auto & slv : f.solvers)
+    {
+        Variable a = slv->newVariable();
+        Variable b = slv->newVariable();
+        Variable c = slv->newVariable();
+        Variable d = slv->newVariable();
+
+        slv->addClause({a});
+        slv->addClause({a, b});
+        slv->addClause({negate(b), c});
+        slv->addClause({negate(a), d});
+
+        BOOST_CHECK(slv->solve(empty));
+
+        // We can't check if the trail is empty here - for solvers like Glucose
+        // that don't implement an interface to access the trail SAT::Solver
+        // should leave it empty
+        std::vector<Literal> trail(slv->begin_trail(), slv->end_trail());
+
+        BOOST_CHECK(slv->solve({d}));
+        BOOST_CHECK(!slv->solve({negate(d)}));
+
+        // Adding the literals on the trail should not change satisfiability
+        for (Literal lit : trail)
+        {
+            Clause cls { lit };
+            slv->addClause(cls);
+        }
+
+        BOOST_CHECK(slv->solve({d}));
+        BOOST_CHECK(!slv->solve({negate(d)}));
+    }
 }
 
