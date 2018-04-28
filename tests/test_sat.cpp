@@ -26,6 +26,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <algorithm>
+
 using namespace SAT;
 
 typedef std::unique_ptr<SAT::Solver> SolverPointer;
@@ -35,13 +37,24 @@ struct SATFixture
     SATFixture()
     {
         SolverPointer minisat(new MinisatSolver);
+        SolverPointer minisat_simp(new MinisatSimplifyingSolver);
         SolverPointer glucose(new GlucoseSolver);
         solvers.push_back(std::move(minisat));
         solvers.push_back(std::move(glucose));
+        solvers.push_back(std::move(minisat_simp));
     }
 
     std::vector<SolverPointer> solvers;
 };
+
+void sortClauseVec(std::vector<Clause> & vec)
+{
+    for (Clause & cls : vec)
+    {
+        std::sort(cls.begin(), cls.end());
+    }
+    std::sort(vec.begin(), vec.end());
+}
 
 BOOST_AUTO_TEST_CASE(one_var)
 {
@@ -114,5 +127,134 @@ BOOST_AUTO_TEST_CASE(get_assignment)
         BOOST_CHECK_EQUAL(slv->getAssignment(a), FALSE);
         BOOST_CHECK_EQUAL(slv->getAssignment(b), TRUE);
     }
+}
+
+BOOST_AUTO_TEST_CASE(clause_iterators)
+{
+    SATFixture f;
+    Cube empty;
+
+    for (auto & slv : f.solvers)
+    {
+        std::vector<Clause> clauses(slv->begin_clauses(), slv->end_clauses());
+        BOOST_CHECK_EQUAL(clauses.size(), 0);
+
+        Variable a = slv->newVariable();
+        Variable b = slv->newVariable();
+
+        // (-a V -b)
+        Clause c0 = {negate(a), negate(b)};
+        slv->addClause(c0);
+
+        std::vector<Clause> expected = {c0};
+        clauses = std::vector<Clause>(slv->begin_clauses(), slv->end_clauses());
+        sortClauseVec(expected);
+        sortClauseVec(clauses);
+
+        BOOST_CHECK_EQUAL(clauses.size(), 1);
+        BOOST_CHECK(clauses == expected);
+
+        BOOST_CHECK(slv->solve(empty));
+
+        // Calling solve didn't change anything
+        clauses = std::vector<Clause>(slv->begin_clauses(), slv->end_clauses());
+        sortClauseVec(clauses);
+
+        BOOST_CHECK_EQUAL(clauses.size(), 1);
+        BOOST_CHECK(clauses == expected);
+
+        // (-a V -b) & (a V b)
+        Clause c1 = {a, b};
+        slv->addClause(c1);
+
+        expected = {c0, c1};
+        clauses = std::vector<Clause>(slv->begin_clauses(), slv->end_clauses());
+        sortClauseVec(expected);
+        sortClauseVec(clauses);
+
+        BOOST_CHECK_EQUAL(clauses.size(), 2);
+        BOOST_CHECK(clauses == expected);
+
+        BOOST_CHECK(slv->solve(empty));
+        BOOST_CHECK(slv->solve({a}));
+        BOOST_CHECK(slv->solve({b}));
+        BOOST_CHECK(slv->solve({negate(a)}));
+        BOOST_CHECK(slv->solve({negate(b)}));
+        BOOST_CHECK(!slv->solve({a, b}));
+        BOOST_CHECK(!slv->solve({negate(a), negate(b)}));
+
+        clauses = std::vector<Clause>(slv->begin_clauses(), slv->end_clauses());
+        sortClauseVec(clauses);
+        BOOST_CHECK_EQUAL(clauses.size(), 2);
+        BOOST_CHECK(clauses == expected);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(simplifying_trivial)
+{
+    MinisatSimplifyingSolver slv;
+
+    Variable a = slv.newVariable();
+    Variable b = slv.newVariable();
+    Variable c = slv.newVariable();
+
+    slv.addClause({a, c});
+    slv.addClause({negate(a), b, negate(c)});
+
+    slv.freeze(a);
+    slv.freeze(b);
+
+    slv.eliminate();
+
+    // Everything should be eliminated
+    std::vector<Clause> clauses(slv.begin_clauses(), slv.end_clauses());
+    BOOST_CHECK_EQUAL(clauses.size(), 0);
+
+    BOOST_CHECK(slv.solve({a, b}));
+    BOOST_CHECK_EQUAL(slv.getAssignment(a), SAT::TRUE);
+    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+
+    BOOST_CHECK(slv.solve({negate(a), negate(b)}));
+    BOOST_CHECK_EQUAL(slv.getAssignment(a), SAT::FALSE);
+    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
+}
+
+BOOST_AUTO_TEST_CASE(simplifying_simple)
+{
+    MinisatSimplifyingSolver slv;
+
+    Variable a = slv.newVariable();
+    Variable b = slv.newVariable();
+    Variable c = slv.newVariable();
+
+    slv.addClause({a, b});
+    slv.addClause({negate(a), c});
+
+    slv.freeze(b);
+    slv.freeze(c);
+
+    slv.eliminate();
+
+    std::vector<Clause> clauses(slv.begin_clauses(), slv.end_clauses());
+    BOOST_CHECK_EQUAL(clauses.size(), 1);
+    std::vector<Clause> expected;
+    expected.push_back({b, c});
+
+    sortClauseVec(clauses);
+    sortClauseVec(expected);
+
+    BOOST_CHECK(clauses == expected);
+
+    BOOST_CHECK(slv.solve({b, c}));
+    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
+
+    BOOST_CHECK(slv.solve({b}));
+    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+
+    BOOST_CHECK(slv.solve({c}));
+    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
+
+    BOOST_CHECK(!slv.solve({negate(b), negate(c)}));
 }
 

@@ -52,7 +52,7 @@ namespace SAT
         return next;
     }
 
-    void GlucoseSolver::addClause(const Clause& cls)
+    void GlucoseSolver::sendClauseToSolver(const Clause& cls)
     {
         Glucose::vec<Glucose::Lit> gcls;
         for (Literal lit : cls)
