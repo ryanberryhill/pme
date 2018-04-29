@@ -53,6 +53,8 @@ namespace PME
     class TransitionRelation
     {
         public:
+            typedef std::vector<ID>::const_iterator id_iterator;
+
             TransitionRelation(VariableManager & varman, aiger * aig);
             TransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
 
@@ -66,11 +68,17 @@ namespace PME
             ClauseVec unrollWithInit(unsigned n = 1) const;
             ClauseVec initState() const;
 
+            id_iterator begin_latches() const { return m_latchIDs.cbegin(); }
+            id_iterator end_latches() const { return m_latchIDs.cend(); }
+            id_iterator begin_constraints() const { return m_constraints.cbegin(); }
+            id_iterator end_constraints() const { return m_constraints.cend(); }
+
         private:
             VariableManager & m_vars;
             ID m_property;
 
             std::unordered_map<ID, Latch> m_latches;
+            std::vector<ID> m_latchIDs;
             std::vector<ID> m_constraints;
 
             std::vector<Clause> m_clauses;

@@ -29,6 +29,8 @@ extern "C" {
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <set>
+
 using namespace PME;
 
 struct CombinationalAigFixture
@@ -414,5 +416,52 @@ BOOST_AUTO_TEST_CASE(init_states)
     BOOST_CHECK(sat1.solve({l0_1,l1_1,l2_1,l3_1}));
     BOOST_CHECK(!sat0.solve({l0_0}));
     BOOST_CHECK(sat1.solve({l0_1}));
+}
+
+BOOST_AUTO_TEST_CASE(latches_iter)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
+
+    std::set<ID> latches(tr.begin_latches(), tr.end_latches());
+
+    BOOST_CHECK_EQUAL(latches.size(), 4);
+    BOOST_CHECK_EQUAL(latches.count(l0), 1);
+    BOOST_CHECK_EQUAL(latches.count(l1), 1);
+    BOOST_CHECK_EQUAL(latches.count(l2), 1);
+    BOOST_CHECK_EQUAL(latches.count(l3), 1);
+
+    CombinationalAigFixture fcomb;
+    fcomb.buildTR();
+    TransitionRelation & trcomb = *fcomb.tr;
+    std::set<ID> latchescomb(trcomb.begin_latches(), trcomb.end_latches());
+    BOOST_CHECK_EQUAL(latchescomb.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(constraints_iter)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    std::set<ID> constraints(tr.begin_constraints(), tr.end_constraints());
+    BOOST_CHECK_EQUAL(constraints.size(), 0);
+
+    AigFixture f2;
+    f2.addConstraint();
+    f2.buildTR();
+    TransitionRelation & tr2 = *f2.tr;
+    ID c0 = tr2.toInternal(f2.c0);
+
+    std::set<ID> constraints2(tr2.begin_constraints(), tr2.end_constraints());
+
+    BOOST_CHECK_EQUAL(constraints2.size(), 1);
+    BOOST_CHECK_EQUAL(constraints2.count(c0), 1);
 }
 
