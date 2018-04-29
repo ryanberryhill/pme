@@ -28,77 +28,126 @@
 
 using namespace PME;
 
+std::vector<SATBackend> backends = { MINISAT, GLUCOSE, MINISATSIMP };
+
 BOOST_AUTO_TEST_CASE(constants)
 {
-    SATAdaptor slv;
-    BOOST_CHECK(!slv.isSAT());
+    for (SATBackend backend : backends)
+    {
+        SATAdaptor slv(backend);
+        BOOST_CHECK(!slv.isSAT());
 
-    BOOST_CHECK(slv.solve());
-    BOOST_CHECK(slv.isSAT());
+        BOOST_CHECK(slv.solve());
+        BOOST_CHECK(slv.isSAT());
 
-    BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
 
-    slv.addClause({MIN_ID});
-    BOOST_CHECK(slv.solve());
-    BOOST_CHECK(slv.isSAT());
+        slv.addClause({MIN_ID});
+        BOOST_CHECK(slv.solve());
+        BOOST_CHECK(slv.isSAT());
 
-    BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(one_var)
 {
-    SATAdaptor slv;
+    for (SATBackend backend : backends)
+    {
+        SATAdaptor slv(backend);
 
-    ID a = MIN_ID;
+        ID a = MIN_ID;
 
-    // (a)
-    slv.addClause({a});
-    BOOST_CHECK(slv.solve());
-    BOOST_CHECK(slv.isSAT());
+        // (a)
+        slv.addClause({a});
+        BOOST_CHECK(slv.solve());
+        BOOST_CHECK(slv.isSAT());
 
-    // (a) & (-a)[assumption]
-    BOOST_CHECK(!slv.solve({negate(a)}));
-    BOOST_CHECK(!slv.isSAT());
+        // (a) & (-a)[assumption]
+        BOOST_CHECK(!slv.solve({negate(a)}));
+        BOOST_CHECK(!slv.isSAT());
 
-    // (a) again
-    BOOST_CHECK(slv.solve());
-    BOOST_CHECK(slv.isSAT());
+        // (a) again
+        BOOST_CHECK(slv.solve());
+        BOOST_CHECK(slv.isSAT());
 
-    // (a) & (-a)
-    slv.addClause({negate(a)});
-    BOOST_CHECK(!slv.solve());
-    BOOST_CHECK(!slv.isSAT());
+        // (a) & (-a)
+        slv.addClause({negate(a)});
+        BOOST_CHECK(!slv.solve());
+        BOOST_CHECK(!slv.isSAT());
+    }
 }
 
 BOOST_AUTO_TEST_CASE(three_var)
 {
-    SATAdaptor slv;
+    for (SATBackend backend : backends)
+    {
+        SATAdaptor slv(backend);
 
-    ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR;
+        ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR;
 
-    // (a) & (b V c) & (-b V -c)
-    slv.addClause({a});
-    slv.addClause({b, c});
-    slv.addClause({negate(b), negate(c)});
+        // (a) & (b V c) & (-b V -c)
+        slv.addClause({a});
+        slv.addClause({b, c});
+        slv.addClause({negate(b), negate(c)});
 
-    BOOST_CHECK(slv.solve());
+        BOOST_CHECK(slv.solve());
 
-    BOOST_CHECK(slv.solve({b}));
-    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
-    BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::FALSE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::FALSE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::TRUE);
+        BOOST_CHECK(slv.solve({b}));
+        BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::TRUE);
 
-    BOOST_CHECK(slv.solve({negate(b)}));
-    BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::FALSE);
-    BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::TRUE);
-    BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::FALSE);
+        BOOST_CHECK(slv.solve({negate(b)}));
+        BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::FALSE);
+        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::TRUE);
+        BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::FALSE);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(simplify)
+{
+    for (SATBackend backend : backends)
+    {
+        SATAdaptor slv(backend);
+        ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR, d = c + ID_INCR;
+
+        slv.addClause({a});
+        slv.addClause({a, b});
+        slv.addClause({negate(b), c});
+        slv.addClause({negate(a), d});
+
+        BOOST_CHECK(slv.solve({d}));
+        BOOST_CHECK(!slv.solve({negate(d)}));
+
+        slv.freeze(a);
+        slv.freeze(d);
+        ClauseVec simplified = slv.simplify();
+        BOOST_CHECK(!simplified.empty());
+
+        // Same satisfiability after simplify
+        BOOST_CHECK(slv.solve({d}));
+        BOOST_CHECK(!slv.solve({negate(d)}));
+
+        // And after taking the simplified clauses to a different solver
+        // Note that for non-simplifying solvers, the clauses after
+        // simplification are the same as those before
+        SATAdaptor slv2(GLUCOSE);
+        for (const Clause & cls : simplified)
+        {
+            slv2.addClause(cls);
+        }
+
+        BOOST_CHECK(slv2.solve({d}));
+        BOOST_CHECK(!slv2.solve({negate(d)}));
+    }
 }
 

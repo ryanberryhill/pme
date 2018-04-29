@@ -30,6 +30,7 @@ libpme_a_LIBADD = $(SAT_LIBS)
 
 libsat_a_SOURCES = src/sat/sat.h \
 				   src/sat/sat.cpp \
+				   src/sat/minisat_style_solver.cpp \
 				   src/sat/glucose.cpp \
 				   src/sat/minisat.cpp
 

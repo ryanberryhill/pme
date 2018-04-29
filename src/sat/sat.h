@@ -34,8 +34,18 @@
  * should not be included in this file.
  */
 
-namespace Glucose { class Solver; class Lit; }
-namespace Minisat { class Solver; class Lit; }
+namespace Glucose
+{
+    class Solver;
+    struct Lit;
+    typedef int Var;
+}
+
+namespace Minisat
+{
+    class Solver; class SimpSolver; struct Lit;
+    typedef int Var;
+}
 
 namespace SAT
 {
@@ -51,67 +61,124 @@ namespace SAT
     bool is_negated(Literal lit);
     Variable strip(Literal lit);
 
+    template <typename Lit, typename Var> Lit mkLit(Var v, bool neg);
+    template<typename Lit> bool sign(Lit lit);
+    template<typename Lit, typename Var> Var toVar(Lit lit);
+
     class Solver
     {
         public:
-            virtual ~Solver() { };
+            typedef std::vector<Clause>::const_iterator clause_iterator;
+            typedef std::vector<Literal>::const_iterator literal_iterator;
+            virtual ~Solver() { }
             virtual Variable newVariable() = 0;
-            virtual void addClause(const Clause& cls) = 0;
-            virtual bool solve(const Cube& assumps) = 0;
+            virtual void addClause(const Clause & cls) = 0;
+            virtual bool solve(const Cube & assumps) = 0;
             virtual ModelValue getAssignment(Variable v) const = 0;
             virtual bool isSAT() const = 0;
+            virtual clause_iterator begin_clauses() const = 0;
+            virtual clause_iterator end_clauses() const = 0;
+            virtual literal_iterator begin_trail() const = 0;
+            virtual literal_iterator end_trail() const = 0;
+            virtual void freeze(Variable v) = 0;
+            virtual void eliminate() = 0;
     };
 
-    class GlucoseSolver : public Solver
+    template<typename MLit, typename MVar>
+    class MinisatStyleSolver : public Solver
     {
         public:
-            GlucoseSolver();
-            ~GlucoseSolver() override;
+            MinisatStyleSolver();
+            virtual ~MinisatStyleSolver() { };
             Variable newVariable() override;
-            void addClause(const Clause& cls) override;
-            bool solve(const Cube& assumps) override;
-            ModelValue getAssignment(Variable v) const override;
+            void addClause(const Clause & cls) override;
+            bool solve(const Cube & assumps) override;
             bool isSAT() const override;
 
-        private:
-            std::unique_ptr<Glucose::Solver> m_solver;
-            // I don't want to include glucose SolverTypes.h in here because
-            // it induces warnings and this file will be included in pme.
-            // So int should be Glucose::Var ideally in m_varMap below
-            std::unordered_map<Variable, int> m_varMap;
-            Variable m_nextVar;
-            SolverResult m_lastResult;
+            clause_iterator begin_clauses() const override;
+            clause_iterator end_clauses() const override;
+            literal_iterator begin_trail() const override;
+            literal_iterator end_trail() const override;
 
-            Glucose::Lit toGlucose(Literal lit) const;
+        protected:
+            virtual void sendClauseToSolver(const Clause& cls) = 0;
+            virtual Variable createSolverVariable() = 0;
+            virtual bool doSolve(const Cube & assumps) = 0;
+
+            MLit toMinisat(Literal lit) const;
+            Literal fromMinisat(const MLit & lit) const;
             Variable getNextVar();
+
+            void clearClauses();
+            void addStoredClause(const Clause & cls);
+            void clearTrail();
+            void addToTrail(Literal lit);
+
+        private:
+            // Minisat's SolverTypes generates warnings, but the ints below
+            // should be Minisat::Var ideally
+            std::unordered_map<Variable, int> m_varMap;
+            std::unordered_map<int, Variable> m_reverseVarMap;
+
+            Variable m_nextVar;
+            std::vector<Clause> m_clauses;
+            std::vector<Literal> m_trail;
+            SolverResult m_lastResult;
     };
 
-    class MinisatSolver : public Solver
+    class MinisatSolver : public MinisatStyleSolver<Minisat::Lit, Minisat::Var>
     {
         public:
             MinisatSolver();
-            ~MinisatSolver() override;
-            Variable newVariable() override;
-            void addClause(const Clause& cls) override;
-            bool solve(const Cube& assumps) override;
+            ~MinisatSolver();
             ModelValue getAssignment(Variable v) const override;
-            bool isSAT() const override;
+            void freeze(Variable v) override { }
+            void eliminate() override { }
+
+        protected:
+            void sendClauseToSolver(const Clause& cls) override;
+            Variable createSolverVariable() override;
+            bool doSolve(const Cube & assumps) override;
 
         private:
             std::unique_ptr<Minisat::Solver> m_solver;
-            // Minisat's SolverTypes generates warnings, but the int below
-            // should be Minisat::Var ideally
-            std::unordered_map<Variable, int> m_varMap;
-            Variable m_nextVar;
-            SolverResult m_lastResult;
-
-            Minisat::Lit toMinisat(Literal lit) const;
-            Variable getNextVar();
     };
 
-    Literal negate(Literal lit);
-    bool is_negated(Literal lit);
-    Variable strip(Literal lit);
+    class MinisatSimplifyingSolver : public MinisatStyleSolver<Minisat::Lit, Minisat::Var>
+    {
+        public:
+            MinisatSimplifyingSolver();
+            ~MinisatSimplifyingSolver();
+            ModelValue getAssignment(Variable v) const override;
+            void freeze(Variable v) override;
+            void eliminate() override;
+
+        protected:
+            void sendClauseToSolver(const Clause& cls) override;
+            Variable createSolverVariable() override;
+            bool doSolve(const Cube & assumps) override;
+
+        private:
+            std::unique_ptr<Minisat::SimpSolver> m_solver;
+    };
+
+    class GlucoseSolver : public MinisatStyleSolver<Glucose::Lit, Glucose::Var>
+    {
+        public:
+            GlucoseSolver();
+            ~GlucoseSolver();
+            ModelValue getAssignment(Variable v) const override;
+            void freeze(Variable v) override { }
+            void eliminate() override { }
+
+        protected:
+            void sendClauseToSolver(const Clause& cls) override;
+            Variable createSolverVariable() override;
+            bool doSolve(const Cube & assumps) override;
+
+        private:
+            std::unique_ptr<Glucose::Solver> m_solver;
+    };
 }
 
 #endif

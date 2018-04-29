@@ -130,6 +130,7 @@ libsat_a_AR = $(AR) $(ARFLAGS)
 libsat_a_DEPENDENCIES = src/sat/solvers/glucose/libglucose.a \
 	src/sat/solvers/minisat/libminisat.a
 am_libsat_a_OBJECTS = src/sat/libsat_a-sat.$(OBJEXT) \
+	src/sat/libsat_a-minisat_style_solver.$(OBJEXT) \
 	src/sat/libsat_a-glucose.$(OBJEXT) \
 	src/sat/libsat_a-minisat.$(OBJEXT)
 libsat_a_OBJECTS = $(am_libsat_a_OBJECTS)
@@ -653,6 +654,7 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 libpme_a_LIBADD = $(SAT_LIBS)
 libsat_a_SOURCES = src/sat/sat.h \
 				   src/sat/sat.cpp \
+				   src/sat/minisat_style_solver.cpp \
 				   src/sat/glucose.cpp \
 				   src/sat/minisat.cpp
 
@@ -822,6 +824,8 @@ src/sat/$(DEPDIR)/$(am__dirstamp):
 	@: > src/sat/$(DEPDIR)/$(am__dirstamp)
 src/sat/libsat_a-sat.$(OBJEXT): src/sat/$(am__dirstamp) \
 	src/sat/$(DEPDIR)/$(am__dirstamp)
+src/sat/libsat_a-minisat_style_solver.$(OBJEXT):  \
+	src/sat/$(am__dirstamp) src/sat/$(DEPDIR)/$(am__dirstamp)
 src/sat/libsat_a-glucose.$(OBJEXT): src/sat/$(am__dirstamp) \
 	src/sat/$(DEPDIR)/$(am__dirstamp)
 src/sat/libsat_a-minisat.$(OBJEXT): src/sat/$(am__dirstamp) \
@@ -964,6 +968,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/util/$(DEPDIR)/cardinality_constraint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-glucose.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-minisat.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_cardinality_constraint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat.Po@am__quote@
@@ -1016,6 +1021,20 @@ src/sat/libsat_a-sat.obj: src/sat/sat.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/sat.cpp' object='src/sat/libsat_a-sat.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-sat.obj `if test -f 'src/sat/sat.cpp'; then $(CYGPATH_W) 'src/sat/sat.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/sat.cpp'; fi`
+
+src/sat/libsat_a-minisat_style_solver.o: src/sat/minisat_style_solver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-minisat_style_solver.o -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Tpo -c -o src/sat/libsat_a-minisat_style_solver.o `test -f 'src/sat/minisat_style_solver.cpp' || echo '$(srcdir)/'`src/sat/minisat_style_solver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Tpo src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/minisat_style_solver.cpp' object='src/sat/libsat_a-minisat_style_solver.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-minisat_style_solver.o `test -f 'src/sat/minisat_style_solver.cpp' || echo '$(srcdir)/'`src/sat/minisat_style_solver.cpp
+
+src/sat/libsat_a-minisat_style_solver.obj: src/sat/minisat_style_solver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-minisat_style_solver.obj -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Tpo -c -o src/sat/libsat_a-minisat_style_solver.obj `if test -f 'src/sat/minisat_style_solver.cpp'; then $(CYGPATH_W) 'src/sat/minisat_style_solver.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/minisat_style_solver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Tpo src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sat/minisat_style_solver.cpp' object='src/sat/libsat_a-minisat_style_solver.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -c -o src/sat/libsat_a-minisat_style_solver.obj `if test -f 'src/sat/minisat_style_solver.cpp'; then $(CYGPATH_W) 'src/sat/minisat_style_solver.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sat/minisat_style_solver.cpp'; fi`
 
 src/sat/libsat_a-glucose.o: src/sat/glucose.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsat_a_CPPFLAGS) $(CPPFLAGS) $(libsat_a_CXXFLAGS) $(CXXFLAGS) -MT src/sat/libsat_a-glucose.o -MD -MP -MF src/sat/$(DEPDIR)/libsat_a-glucose.Tpo -c -o src/sat/libsat_a-glucose.o `test -f 'src/sat/glucose.cpp' || echo '$(srcdir)/'`src/sat/glucose.cpp

@@ -29,12 +29,16 @@ extern "C" {
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <set>
+
 using namespace PME;
 
 struct CombinationalAigFixture
 {
     aiger * aig;
     ExternalID i1, i2, o1, c0;
+    VariableManager vars;
+    std::unique_ptr<TransitionRelation> tr;
 
     CombinationalAigFixture()
     {
@@ -63,12 +67,19 @@ struct CombinationalAigFixture
     {
         aiger_add_constraint(aig, i1, "c0");
     }
+
+    void buildTR()
+    {
+        tr.reset(new TransitionRelation(vars, aig));
+    }
 };
 
 struct AigFixture
 {
     aiger * aig;
     ExternalID i0, i1, l0, l1, l2, l3, a0, o0, c0;
+    VariableManager vars;
+    std::unique_ptr<TransitionRelation> tr;
 
     AigFixture()
     {
@@ -120,6 +131,11 @@ struct AigFixture
     {
         aiger_add_constraint(aig, a0, "c0");
     }
+
+    void buildTR()
+    {
+        tr.reset(new TransitionRelation(vars, aig));
+    }
 };
 
 void sortClauseVec(ClauseVec & vec)
@@ -135,9 +151,9 @@ void sortClauseVec(ClauseVec & vec)
 BOOST_AUTO_TEST_CASE(combinational)
 {
     CombinationalAigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
 
-    VariableManager vars;
-    TransitionRelation tr(vars, f.aig);
     ClauseVec unrolled = tr.unroll(1);
 
     SATAdaptor sat;
@@ -168,11 +184,14 @@ BOOST_AUTO_TEST_CASE(undefined_resets)
     f_zero.addResets(0);
     f_none.clearResets();
 
+    f_default.buildTR();
+    f_zero.buildTR();
+    f_none.buildTR();
+
     // Default reset should be zero
-    VariableManager vars_default, vars_zero, vars_none;
-    TransitionRelation tr_default(vars_default, f_default.aig);
-    TransitionRelation tr_zero(vars_zero, f_zero.aig);
-    TransitionRelation tr_none(vars_none, f_none.aig);
+    TransitionRelation & tr_default = *f_default.tr;
+    TransitionRelation & tr_zero    = *f_zero.tr;
+    TransitionRelation & tr_none    = *f_none.tr;
 
     for (unsigned i = 1; i < 8; ++i)
     {
@@ -206,9 +225,9 @@ BOOST_AUTO_TEST_CASE(undefined_resets)
 BOOST_AUTO_TEST_CASE(sequential_nounroll)
 {
     AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
 
-    VariableManager vars;
-    TransitionRelation tr(vars, f.aig);
     SATAdaptor sat;
     sat.addClauses(tr.unroll(1));
 
@@ -225,9 +244,9 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
 {
     AigFixture f;
     f.addResets(0);
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
 
-    VariableManager vars;
-    TransitionRelation tr(vars, f.aig);
     SATAdaptor sat;
     sat.addClauses(tr.unrollWithInit(1));
 
@@ -254,9 +273,9 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
 BOOST_AUTO_TEST_CASE(sequential_unroll)
 {
     AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
 
-    VariableManager vars;
-    TransitionRelation tr(vars, f.aig);
     ID i0 = tr.toInternal(f.i0);
     ID i1 = tr.toInternal(f.i1);
     ID l0 = tr.toInternal(f.l0);
@@ -310,9 +329,9 @@ BOOST_AUTO_TEST_CASE(combinational_constraints)
 {
     CombinationalAigFixture f;
     f.addConstraint();
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
 
-    VariableManager vars;
-    TransitionRelation tr(vars, f.aig);
     ID i1 = tr.toInternal(f.i1);
     ID i2 = tr.toInternal(f.i2);
     ID o1 = tr.toInternal(f.o1);
@@ -337,9 +356,9 @@ BOOST_AUTO_TEST_CASE(sequential_constraints)
 {
     AigFixture f;
     f.addConstraint();
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
 
-    VariableManager vars;
-    TransitionRelation tr(vars, f.aig);
     ID i0 = tr.toInternal(f.i0);
     ID i1 = tr.toInternal(f.i1);
     ID o0 = tr.toInternal(f.o0);
@@ -367,9 +386,12 @@ BOOST_AUTO_TEST_CASE(init_states)
     AigFixture f0, f1;
     f0.addResets(0);
     f1.addResets(1);
+    f0.buildTR();
+    f1.buildTR();
 
-    VariableManager vars0, vars1;
-    TransitionRelation tr0(vars0, f0.aig), tr1(vars1, f1.aig);
+    TransitionRelation & tr0 = *f0.tr;
+    TransitionRelation & tr1 = *f1.tr;
+
     SATAdaptor sat0, sat1;
 
     ID l0_0 = tr0.toInternal(f0.l0);
@@ -377,10 +399,10 @@ BOOST_AUTO_TEST_CASE(init_states)
     ID l2_0 = tr0.toInternal(f0.l2);
     ID l3_0 = tr0.toInternal(f0.l3);
 
-    ID l0_1 = tr0.toInternal(f1.l0);
-    ID l1_1 = tr0.toInternal(f1.l1);
-    ID l2_1 = tr0.toInternal(f1.l2);
-    ID l3_1 = tr0.toInternal(f1.l3);
+    ID l0_1 = tr1.toInternal(f1.l0);
+    ID l1_1 = tr1.toInternal(f1.l1);
+    ID l2_1 = tr1.toInternal(f1.l2);
+    ID l3_1 = tr1.toInternal(f1.l3);
 
     sat0.addClauses(tr0.initState());
     sat1.addClauses(tr1.initState());
@@ -394,5 +416,52 @@ BOOST_AUTO_TEST_CASE(init_states)
     BOOST_CHECK(sat1.solve({l0_1,l1_1,l2_1,l3_1}));
     BOOST_CHECK(!sat0.solve({l0_0}));
     BOOST_CHECK(sat1.solve({l0_1}));
+}
+
+BOOST_AUTO_TEST_CASE(latches_iter)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
+
+    std::set<ID> latches(tr.begin_latches(), tr.end_latches());
+
+    BOOST_CHECK_EQUAL(latches.size(), 4);
+    BOOST_CHECK_EQUAL(latches.count(l0), 1);
+    BOOST_CHECK_EQUAL(latches.count(l1), 1);
+    BOOST_CHECK_EQUAL(latches.count(l2), 1);
+    BOOST_CHECK_EQUAL(latches.count(l3), 1);
+
+    CombinationalAigFixture fcomb;
+    fcomb.buildTR();
+    TransitionRelation & trcomb = *fcomb.tr;
+    std::set<ID> latchescomb(trcomb.begin_latches(), trcomb.end_latches());
+    BOOST_CHECK_EQUAL(latchescomb.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(constraints_iter)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    std::set<ID> constraints(tr.begin_constraints(), tr.end_constraints());
+    BOOST_CHECK_EQUAL(constraints.size(), 0);
+
+    AigFixture f2;
+    f2.addConstraint();
+    f2.buildTR();
+    TransitionRelation & tr2 = *f2.tr;
+    ID c0 = tr2.toInternal(f2.c0);
+
+    std::set<ID> constraints2(tr2.begin_constraints(), tr2.end_constraints());
+
+    BOOST_CHECK_EQUAL(constraints2.size(), 1);
+    BOOST_CHECK_EQUAL(constraints2.count(c0), 1);
 }
 

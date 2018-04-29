@@ -26,8 +26,23 @@
 
 namespace PME
 {
-    SATAdaptor::SATAdaptor()
-        : m_solver(new SAT::GlucoseSolver)
+    SAT::Solver * newSolver(SATBackend backend)
+    {
+        switch (backend)
+        {
+            case MINISAT:
+                return new SAT::MinisatSolver;
+            case GLUCOSE:
+                return new SAT::GlucoseSolver;
+            case MINISATSIMP:
+                return new SAT::MinisatSimplifyingSolver;
+            default:
+                throw std::logic_error("Unknown SAT backend");
+        }
+    }
+
+    SATAdaptor::SATAdaptor(SATBackend backend)
+        : m_solver(newSolver(backend))
     {
        // Add the clause for ID_TRUE
        introduceVariable(ID_TRUE);
@@ -76,6 +91,36 @@ namespace PME
         return neg ? SAT::negate(satvar) : satvar;
     }
 
+    std::vector<SAT::Literal> SATAdaptor::toSAT(const std::vector<ID> & idvec) const
+    {
+        std::vector<SAT::Literal> satvec;
+        satvec.reserve(idvec.size());
+        for (ID id : idvec)
+        {
+            satvec.push_back(toSAT(id));
+        }
+        return satvec;
+    }
+
+    ID SATAdaptor::fromSAT(SAT::Literal lit) const
+    {
+        bool neg = SAT::is_negated(lit);
+        SAT::Variable var = SAT::strip(lit);
+        ID id = IDOf(var);
+        return neg ? negate(id) : id;
+    }
+
+    std::vector<ID> SATAdaptor::fromSAT(const std::vector<SAT::Literal> & satvec) const
+    {
+        std::vector<ID> idvec;
+        idvec.reserve(satvec.size());
+        for (SAT::Literal lit : satvec)
+        {
+            idvec.push_back(fromSAT(lit));
+        }
+        return idvec;
+    }
+
     SAT::Variable SATAdaptor::SATVarOf(ID id) const
     {
         return m_IDToSATMap.at(id);
@@ -119,6 +164,35 @@ namespace PME
     {
         assert(!is_negated(var));
         return getAssignment(var);
+    }
+
+    void SATAdaptor::freeze(ID id)
+    {
+        introduceVariable(id);
+        m_solver->freeze(toSAT(id));
+    }
+
+    ClauseVec SATAdaptor::simplify()
+    {
+        ClauseVec simplified;
+
+        m_solver->eliminate();
+
+        for (auto it = m_solver->begin_clauses(); it != m_solver->end_clauses(); ++it)
+        {
+            const SAT::Clause & satcls = *it;
+            Clause cls = fromSAT(satcls);
+            simplified.push_back(cls);
+        }
+
+        for (auto it = m_solver->begin_trail(); it != m_solver->end_trail(); ++it)
+        {
+            SAT::Literal satlit = *it;
+            ID lit = fromSAT(satlit);
+            simplified.push_back({lit});
+        }
+
+        return simplified;
     }
 }
 

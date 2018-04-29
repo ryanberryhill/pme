@@ -156,6 +156,7 @@ namespace PME
 
             assert(m_latches.find(latch_id) == m_latches.end());
             m_latches[latch_id] = Latch(latch_id, next_id, reset_id);
+            m_latchIDs.push_back(latch_id);
         }
     }
 
@@ -220,12 +221,12 @@ namespace PME
 
     ClauseVec TransitionRelation::unroll(unsigned n) const
     {
-        ClauseVec unrolled = m_clauses;
+        ClauseVec unrolled;
 
         // Add latch' = next for each latch and constraints
         for (unsigned i = 1; i <= n; ++i)
         {
-            ClauseVec next = primeClauses(m_clauses, i);
+            ClauseVec next = primeClauses(m_clauses, i - 1);
             unrolled.insert(unrolled.end(), next.begin(), next.end());
             // Connect latch next-states
             for (const auto & p : m_latches)
