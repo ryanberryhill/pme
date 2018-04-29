@@ -25,14 +25,22 @@
 #include "pme/pme.h"
 #include "sat/sat.h"
 
+#include <vector>
+#include <memory>
+
 namespace PME
 {
     typedef SAT::ModelValue ModelValue;
 
+    enum SATBackend
+    {
+        MINISAT, MINISATSIMP, GLUCOSE
+    };
+
     class SATAdaptor
     {
         public:
-            SATAdaptor();
+            SATAdaptor(SATBackend backend = GLUCOSE);
             void introduceVariable(ID var);
             void addClause(const Clause & cls);
             void addClauses(const ClauseVec & vec);
@@ -42,6 +50,9 @@ namespace PME
             ModelValue getAssignment(ID lit) const;
             ModelValue getAssignmentToVar(ID var) const;
 
+            void freeze(ID id);
+            ClauseVec simplify();
+
         private:
             std::unique_ptr<SAT::Solver> m_solver;
             std::unordered_map<ID, SAT::Variable> m_IDToSATMap;
@@ -50,6 +61,9 @@ namespace PME
             SAT::Variable SATVarOf(ID id) const;
             ID IDOf(SAT::Variable var) const;
             SAT::Literal toSAT(ID id) const;
+            std::vector<SAT::Literal> toSAT(const std::vector<ID> & idvec) const;
+            ID fromSAT(SAT::Literal lit) const;
+            std::vector<ID> fromSAT(const std::vector<SAT::Literal> & satvec) const;
     };
 }
 
