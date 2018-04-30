@@ -151,3 +151,33 @@ BOOST_AUTO_TEST_CASE(simplify)
     }
 }
 
+BOOST_AUTO_TEST_CASE(groups)
+{
+    for (SATBackend backend : backends)
+    {
+        SATAdaptor slv(backend);
+        ID a = MIN_ID, b = a + ID_INCR;
+
+        slv.addClause({a});
+
+        BOOST_CHECK(slv.solve({a}));
+        BOOST_CHECK(!slv.solve({negate(a)}));
+
+        GroupID gida = slv.createGroup();
+        slv.addGroupClause(gida, {negate(a)});
+
+        BOOST_CHECK(!slv.groupSolve(gida));
+        BOOST_CHECK(slv.solve({a}));
+        BOOST_CHECK(!slv.solve({negate(a)}));
+
+        slv.addClause({a, b});
+        GroupID gidb = slv.createGroup();
+        slv.addGroupClause(gidb, {negate(b)});
+
+        BOOST_CHECK(!slv.groupSolve(gida));
+        BOOST_CHECK(slv.groupSolve(gidb));
+        BOOST_CHECK(!slv.groupSolve(gidb, {negate(a), negate(b)}));
+        BOOST_CHECK(slv.solve());
+    }
+}
+

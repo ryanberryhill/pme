@@ -26,6 +26,8 @@
 
 namespace PME
 {
+    const GroupID GROUP_NULL = 0;
+
     SAT::Solver * newSolver(SATBackend backend)
     {
         switch (backend)
@@ -65,13 +67,7 @@ namespace PME
     void SATAdaptor::addClause(const Clause & cls)
     {
         assert(!cls.empty());
-        SAT::Clause satcls;
-        for (ID id : cls)
-        {
-            introduceVariable(id);
-            SAT::Literal satlit = toSAT(id);
-            satcls.push_back(satlit);
-        }
+        SAT::Clause satcls = toSAT(cls);
         m_solver->addClause(satcls);
     }
 
@@ -91,12 +87,13 @@ namespace PME
         return neg ? SAT::negate(satvar) : satvar;
     }
 
-    std::vector<SAT::Literal> SATAdaptor::toSAT(const std::vector<ID> & idvec) const
+    std::vector<SAT::Literal> SATAdaptor::toSAT(const std::vector<ID> & idvec)
     {
         std::vector<SAT::Literal> satvec;
         satvec.reserve(idvec.size());
         for (ID id : idvec)
         {
+            introduceVariable(id);
             satvec.push_back(toSAT(id));
         }
         return satvec;
@@ -133,11 +130,22 @@ namespace PME
 
     bool SATAdaptor::solve()
     {
-        Cube assumps;
-        return solve(assumps);
+        Cube empty_assumps;
+        return groupSolve(GROUP_NULL, empty_assumps);
     }
 
     bool SATAdaptor::solve(const Cube & assumps)
+    {
+        return groupSolve(GROUP_NULL, assumps);
+    }
+
+    bool SATAdaptor::groupSolve(GroupID group)
+    {
+        Cube empty_assumps;
+        return groupSolve(group, empty_assumps);
+    }
+
+    bool SATAdaptor::groupSolve(GroupID group, const Cube & assumps)
     {
         SAT::Cube satassumps;
         for (ID lit : assumps)
@@ -145,6 +153,13 @@ namespace PME
             introduceVariable(lit);
             satassumps.push_back(toSAT(lit));
         }
+
+        if (group != GROUP_NULL)
+        {
+            assert(m_groups.count(group) > 0);
+            satassumps.push_back(group);
+        }
+
         return m_solver->solve(satassumps);
     }
 
@@ -193,6 +208,21 @@ namespace PME
         }
 
         return simplified;
+    }
+
+    GroupID SATAdaptor::createGroup()
+    {
+        GroupID gid = m_solver->newVariable();
+        m_groups.insert(gid);
+        return gid;
+    }
+
+    void SATAdaptor::addGroupClause(GroupID group, const Clause & cls)
+    {
+        assert(!cls.empty());
+        SAT::Clause satcls = toSAT(cls);
+        satcls.push_back(SAT::negate(group));
+        m_solver->addClause(satcls);
     }
 }
 

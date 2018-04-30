@@ -61,7 +61,7 @@ namespace SAT
     bool is_negated(Literal lit);
     Variable strip(Literal lit);
 
-    template <typename Lit, typename Var> Lit mkLit(Var v, bool neg);
+    template<typename Lit, typename Var> Lit mkLit(Var v, bool neg);
     template<typename Lit> bool sign(Lit lit);
     template<typename Lit, typename Var> Var toVar(Lit lit);
 

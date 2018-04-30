@@ -26,11 +26,14 @@
 #include "sat/sat.h"
 
 #include <vector>
+#include <set>
 #include <memory>
 
 namespace PME
 {
     typedef SAT::ModelValue ModelValue;
+    typedef SAT::Variable GroupID;
+    extern const GroupID GROUP_NULL;
 
     enum SATBackend
     {
@@ -46,14 +49,20 @@ namespace PME
             void addClauses(const ClauseVec & vec);
             bool solve();
             bool solve(const Cube & assumps);
+            bool groupSolve(GroupID group);
+            bool groupSolve(GroupID group, const Cube & assumps);
             bool isSAT() const;
             ModelValue getAssignment(ID lit) const;
             ModelValue getAssignmentToVar(ID var) const;
+
+            GroupID createGroup();
+            void addGroupClause(GroupID group, const Clause & cls);
 
             void freeze(ID id);
             ClauseVec simplify();
 
         private:
+            std::set<GroupID> m_groups;
             std::unique_ptr<SAT::Solver> m_solver;
             std::unordered_map<ID, SAT::Variable> m_IDToSATMap;
             std::unordered_map<SAT::Variable, ID> m_SATToIDMap;
@@ -61,7 +70,7 @@ namespace PME
             SAT::Variable SATVarOf(ID id) const;
             ID IDOf(SAT::Variable var) const;
             SAT::Literal toSAT(ID id) const;
-            std::vector<SAT::Literal> toSAT(const std::vector<ID> & idvec) const;
+            std::vector<SAT::Literal> toSAT(const std::vector<ID> & idvec);
             ID fromSAT(SAT::Literal lit) const;
             std::vector<ID> fromSAT(const std::vector<SAT::Literal> & satvec) const;
     };
