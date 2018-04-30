@@ -187,7 +187,7 @@ namespace PME
         }
     }
 
-    Clause TransitionRelation::makeInternal(ExternalClause cls)
+    Clause TransitionRelation::makeInternal(ExternalClause cls) const
     {
         Clause internal_cls;
         internal_cls.reserve(cls.size());
@@ -200,7 +200,7 @@ namespace PME
         return internal_cls;
     }
 
-    ClauseVec TransitionRelation::makeInternal(ExternalClauseVec vec)
+    ClauseVec TransitionRelation::makeInternal(ExternalClauseVec vec) const
     {
         ClauseVec internal_vec;
         for (const ExternalClause & cls : vec)

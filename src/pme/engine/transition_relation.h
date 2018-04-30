@@ -61,8 +61,8 @@ namespace PME
             ID toInternal(ExternalID aig_id) const;
             ExternalID toExternal(ID pme_id) const;
 
-            Clause makeInternal(ExternalClause cls);
-            ClauseVec makeInternal(ExternalClauseVec vec);
+            Clause makeInternal(ExternalClause cls) const ;
+            ClauseVec makeInternal(ExternalClauseVec vec) const;
 
             ClauseVec unroll(unsigned n = 1) const;
             ClauseVec unrollWithInit(unsigned n = 1) const;
