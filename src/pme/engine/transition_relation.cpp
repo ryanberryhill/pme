@@ -50,22 +50,22 @@ namespace PME
 
     TransitionRelation::TransitionRelation(VariableManager & varman, aiger * aig)
         : m_vars(varman),
-          m_property(ID_NULL)
+          m_bad(ID_NULL)
     {
         assert(aig->num_outputs > 0);
         buildModel(aig);
-        m_property = toInternal(aig->outputs[0].lit);
+        m_bad = toInternal(aig->outputs[0].lit);
     }
 
     TransitionRelation::TransitionRelation(VariableManager & varman,
                                            aiger * aig,
                                            unsigned property)
         : m_vars(varman),
-          m_property(ID_NULL)
+          m_bad(ID_NULL)
     {
         assert(property <= aig->maxvar * 2 + 1);
         buildModel(aig);
-        m_property = toInternal(property);
+        m_bad = toInternal(property);
     }
 
     ID TransitionRelation::toInternal(ExternalID external) const

@@ -18,34 +18,33 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
-#ifndef ID_H_INCLUDED
-#define ID_H_INCLUDED
+#ifndef PROOF_CHECKER_H_INCLUDED
+#define PROOF_CHECKER_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/engine/transition_relation.h"
+#include "pme/engine/sat_adaptor.h"
 
 namespace PME
 {
-    extern const ID ID_NULL;
-    extern const ID ID_TRUE;
-    extern const ID ID_FALSE;
-    extern const ID MAX_ID;
-    extern const ID MIN_ID;
-    extern const size_t ID_INCR;
+    class ProofChecker
+    {
+        public:
+            ProofChecker(const TransitionRelation & tr,
+                         const ClauseVec & proof,
+                         bool simplify = true);
+            bool checkInduction();
+            bool checkInitiation();
+            bool checkSafety();
+            bool checkInductiveStrengthening();
+            bool checkProof();
 
-    ID unprime(ID id);
-    ID prime(ID id, size_t n = 1);
-    size_t nprimes(ID id);
-    bool is_negated(ID id);
-    bool is_valid_id(ID id);
-    ID negate(ID id);
-    std::vector<ID> negateVec(const std::vector<ID> & vec);
-    ID strip(ID id);
-
-    Clause primeClause(const Clause & cls, size_t n = 1);
-    ClauseVec primeClauses(const ClauseVec & vec, size_t n = 1);
-
-    std::vector<ID> primeVec(const std::vector<ID> & vec, size_t n = 1);
+        private:
+            SATAdaptor m_simpSolver;
+            SATAdaptor m_indSolver, m_initSolver;
+            const TransitionRelation & m_tr;
+            const ClauseVec & m_proof;
+    };
 }
 
 #endif

@@ -68,6 +68,8 @@ namespace PME
             ClauseVec unrollWithInit(unsigned n = 1) const;
             ClauseVec initState() const;
 
+            ID bad() const { return m_bad; }
+
             id_iterator begin_latches() const { return m_latchIDs.cbegin(); }
             id_iterator end_latches() const { return m_latchIDs.cend(); }
             id_iterator begin_constraints() const { return m_constraints.cbegin(); }
@@ -75,7 +77,7 @@ namespace PME
 
         private:
             VariableManager & m_vars;
-            ID m_property;
+            ID m_bad;
 
             std::unordered_map<ID, Latch> m_latches;
             std::vector<ID> m_latchIDs;

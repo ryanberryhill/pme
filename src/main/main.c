@@ -193,7 +193,7 @@ int main(int argc, char ** argv)
         return EXIT_FAILURE;
     }
 
-    printf("The proof is %san inductive invariant\n", proof_ok ? "" : "not ");
+    printf("The proof is %sa safe inductive invariant\n", proof_ok ? "" : "not ");
 
     // Clean up the PME library
     free_ok = cpme_free(pme);

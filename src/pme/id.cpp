@@ -109,4 +109,9 @@ namespace PME
         }
         return pvec;
     }
+
+    std::vector<ID> primeVec(const std::vector<ID> & vec, size_t n)
+    {
+        return primeClause(vec, n);
+    }
 }

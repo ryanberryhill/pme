@@ -21,6 +21,7 @@
 
 #include "pme/pme.h"
 #include "pme/engine/engine.h"
+#include "pme/util/proof_checker.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -48,32 +49,8 @@ namespace PME
 
     bool Engine::checkProof()
     {
-        // Quick hack here
-        SATAdaptor ind, init;
-
-        // NOTE: if we're worried about primed constraints, we should do
-        // unroll(2). Ideally we would also simplify after that.
-        ind.addClauses(m_tr.unroll(1));
-        ind.addClauses(m_proof);
-
-        init.addClauses(m_tr.initState());
-
-        // Check that each clause is inductive relative to the proof and
-        // contains all initial states
-        for (const Clause & c : m_proof)
-        {
-            Cube negc;
-            for (ID lit : c) { negc.push_back(negate(lit)); }
-
-            // relative induction
-            if (ind.solve(negc)) { return false; }
-
-            // initiation
-            if (init.solve(negc)) { return false; }
-        }
-
-
-        return true;
+        ProofChecker ind(m_tr, m_proof);
+        return ind.checkProof();
     }
 }
 

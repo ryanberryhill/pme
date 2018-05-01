@@ -91,7 +91,8 @@ bin_PROGRAMS = pme$(EXEEXT) parseproof$(EXEEXT)
 TESTS = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
 	test_transition_relation$(EXEEXT) \
 	test_variable_manager$(EXEEXT) \
-	test_cardinality_constraint$(EXEEXT)
+	test_cardinality_constraint$(EXEEXT) \
+	test_proof_checker$(EXEEXT)
 check_PROGRAMS = $(am__EXEEXT_1)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -124,7 +125,8 @@ am_libpme_a_OBJECTS = src/aiger/aiger.$(OBJEXT) src/pme/pme.$(OBJEXT) \
 	src/pme/engine/transition_relation.$(OBJEXT) \
 	src/pme/engine/sat_adaptor.$(OBJEXT) \
 	src/pme/engine/variable_manager.$(OBJEXT) \
-	src/pme/util/cardinality_constraint.$(OBJEXT)
+	src/pme/util/cardinality_constraint.$(OBJEXT) \
+	src/pme/util/proof_checker.$(OBJEXT)
 libpme_a_OBJECTS = $(am_libpme_a_OBJECTS)
 libsat_a_AR = $(AR) $(ARFLAGS)
 libsat_a_DEPENDENCIES = src/sat/solvers/glucose/libglucose.a \
@@ -138,7 +140,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 am__EXEEXT_1 = test_sat_adaptor$(EXEEXT) test_sat$(EXEEXT) \
 	test_transition_relation$(EXEEXT) \
 	test_variable_manager$(EXEEXT) \
-	test_cardinality_constraint$(EXEEXT)
+	test_cardinality_constraint$(EXEEXT) \
+	test_proof_checker$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am_parseproof_OBJECTS = src/parseproof/main.$(OBJEXT) \
 	src/aiger/aiger.$(OBJEXT)
@@ -152,6 +155,9 @@ am_test_cardinality_constraint_OBJECTS =  \
 test_cardinality_constraint_OBJECTS =  \
 	$(am_test_cardinality_constraint_OBJECTS)
 test_cardinality_constraint_DEPENDENCIES = libpme.a $(SAT_LIBS)
+am_test_proof_checker_OBJECTS = tests/test_proof_checker.$(OBJEXT)
+test_proof_checker_OBJECTS = $(am_test_proof_checker_OBJECTS)
+test_proof_checker_DEPENDENCIES = libpme.a $(SAT_LIBS)
 am_test_sat_OBJECTS = tests/test_sat.$(OBJEXT)
 test_sat_OBJECTS = $(am_test_sat_OBJECTS)
 test_sat_DEPENDENCIES = $(SAT_LIBS)
@@ -214,13 +220,15 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libpme_a_SOURCES) $(libsat_a_SOURCES) \
 	$(parseproof_SOURCES) $(pme_SOURCES) \
-	$(test_cardinality_constraint_SOURCES) $(test_sat_SOURCES) \
+	$(test_cardinality_constraint_SOURCES) \
+	$(test_proof_checker_SOURCES) $(test_sat_SOURCES) \
 	$(test_sat_adaptor_SOURCES) \
 	$(test_transition_relation_SOURCES) \
 	$(test_variable_manager_SOURCES)
 DIST_SOURCES = $(libpme_a_SOURCES) $(libsat_a_SOURCES) \
 	$(parseproof_SOURCES) $(pme_SOURCES) \
-	$(test_cardinality_constraint_SOURCES) $(test_sat_SOURCES) \
+	$(test_cardinality_constraint_SOURCES) \
+	$(test_proof_checker_SOURCES) $(test_sat_SOURCES) \
 	$(test_sat_adaptor_SOURCES) \
 	$(test_transition_relation_SOURCES) \
 	$(test_variable_manager_SOURCES)
@@ -634,78 +642,85 @@ AM_CFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
 noinst_LIBRARIES = libpme.a libsat.a
 libpme_a_SOURCES = src/aiger/aiger.h \
-				   src/aiger/aiger.c \
-				   src/pme/pme.h \
-				   src/pme/pme.cpp \
-				   src/pme/id.h \
-				   src/pme/id.cpp \
-				   src/pme/cpme.cpp \
-				   src/pme/engine/engine.h \
-				   src/pme/engine/engine.cpp \
-				   src/pme/engine/transition_relation.h \
-				   src/pme/engine/transition_relation.cpp \
-				   src/pme/engine/sat_adaptor.h \
-				   src/pme/engine/sat_adaptor.cpp \
-				   src/pme/engine/variable_manager.h \
-				   src/pme/engine/variable_manager.cpp \
-				   src/pme/util/cardinality_constraint.h \
-				   src/pme/util/cardinality_constraint.cpp 
+                   src/aiger/aiger.c \
+                   src/pme/pme.h \
+                   src/pme/pme.cpp \
+                   src/pme/id.h \
+                   src/pme/id.cpp \
+                   src/pme/cpme.cpp \
+                   src/pme/engine/engine.h \
+                   src/pme/engine/engine.cpp \
+                   src/pme/engine/transition_relation.h \
+                   src/pme/engine/transition_relation.cpp \
+                   src/pme/engine/sat_adaptor.h \
+                   src/pme/engine/sat_adaptor.cpp \
+                   src/pme/engine/variable_manager.h \
+                   src/pme/engine/variable_manager.cpp \
+                   src/pme/util/cardinality_constraint.h \
+                   src/pme/util/cardinality_constraint.cpp \
+                   src/pme/util/proof_checker.h \
+                   src/pme/util/proof_checker.cpp 
 
 libpme_a_LIBADD = $(SAT_LIBS)
 libsat_a_SOURCES = src/sat/sat.h \
-				   src/sat/sat.cpp \
-				   src/sat/minisat_style_solver.cpp \
-				   src/sat/glucose.cpp \
-				   src/sat/minisat.cpp
+                   src/sat/sat.cpp \
+                   src/sat/minisat_style_solver.cpp \
+                   src/sat/glucose.cpp \
+                   src/sat/minisat.cpp
 
 libsat_a_LIBADD = src/sat/solvers/glucose/libglucose.a \
-				  src/sat/solvers/minisat/libminisat.a
+                  src/sat/solvers/minisat/libminisat.a
 
 SAT_LIBS = libsat.a \
-		   src/sat/solvers/glucose/libglucose.a \
-		   src/sat/solvers/minisat/libminisat.a 
+           src/sat/solvers/glucose/libglucose.a \
+           src/sat/solvers/minisat/libminisat.a 
 
 
 # No Werror because glucose and minisat headers cause several warnings
 libsat_a_CPPFLAGS = -I$(srcdir)/src \
-					-I$(srcdir)/src/sat/solvers/glucose/src \
-				    -I$(srcdir)/src/sat/solvers/minisat/
+                    -I$(srcdir)/src/sat/solvers/glucose/src \
+                    -I$(srcdir)/src/sat/solvers/minisat/
 
 libsat_a_CXXFLAGS = -Wall -Wpedantic 
 pme_SOURCES = src/main/main.c \
-			  src/aiger/aiger.h \
-			  src/aiger/aiger.c
+              src/aiger/aiger.h \
+              src/aiger/aiger.c
 
 pme_LDADD = libpme.a \
-			$(SAT_LIBS) \
-			-lstdc++ -lm
+            $(SAT_LIBS) \
+            -lstdc++ -lm
 
 parseproof_SOURCES = src/parseproof/main.cpp \
-					 src/aiger/aiger.h \
-					 src/aiger/aiger.c
+                     src/aiger/aiger.h \
+                     src/aiger/aiger.c
 
 test_variable_manager_SOURCES = tests/test_variable_manager.cpp
 test_variable_manager_LDADD = libpme.a \
-				 		 	  -lboost_unit_test_framework
+                                -lboost_unit_test_framework
 
 test_sat_adaptor_SOURCES = tests/test_sat_adaptor.cpp  
 test_sat_adaptor_LDADD = libpme.a \
-						 $(SAT_LIBS) \
-				 		 -lboost_unit_test_framework
+                         $(SAT_LIBS) \
+                          -lboost_unit_test_framework
 
 test_sat_SOURCES = tests/test_sat.cpp  
 test_sat_LDADD = $(SAT_LIBS) \
-				 -lboost_unit_test_framework
+                 -lboost_unit_test_framework
 
 test_transition_relation_SOURCES = tests/test_transition_relation.cpp
 test_transition_relation_LDADD = libpme.a \
-								 $(SAT_LIBS) \
-						         -lboost_unit_test_framework
+                                 $(SAT_LIBS) \
+                                 -lboost_unit_test_framework
 
 test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
 test_cardinality_constraint_LDADD = libpme.a \
-									$(SAT_LIBS) \
-						            -lboost_unit_test_framework
+                                    $(SAT_LIBS) \
+                                    -lboost_unit_test_framework
+
+test_proof_checker_SOURCES = tests/test_proof_checker.cpp  
+test_proof_checker_LDADD = libpme.a \
+                           $(SAT_LIBS) \
+                           -lboost_unit_test_framework
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 EXTRA_DIST = LICENSE README.md glucose.supp
@@ -810,6 +825,8 @@ src/pme/util/$(DEPDIR)/$(am__dirstamp):
 	@: > src/pme/util/$(DEPDIR)/$(am__dirstamp)
 src/pme/util/cardinality_constraint.$(OBJEXT):  \
 	src/pme/util/$(am__dirstamp) \
+	src/pme/util/$(DEPDIR)/$(am__dirstamp)
+src/pme/util/proof_checker.$(OBJEXT): src/pme/util/$(am__dirstamp) \
 	src/pme/util/$(DEPDIR)/$(am__dirstamp)
 
 libpme.a: $(libpme_a_OBJECTS) $(libpme_a_DEPENDENCIES) $(EXTRA_libpme_a_DEPENDENCIES) 
@@ -916,6 +933,12 @@ tests/test_cardinality_constraint.$(OBJEXT): tests/$(am__dirstamp) \
 test_cardinality_constraint$(EXEEXT): $(test_cardinality_constraint_OBJECTS) $(test_cardinality_constraint_DEPENDENCIES) $(EXTRA_test_cardinality_constraint_DEPENDENCIES) 
 	@rm -f test_cardinality_constraint$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_cardinality_constraint_OBJECTS) $(test_cardinality_constraint_LDADD) $(LIBS)
+tests/test_proof_checker.$(OBJEXT): tests/$(am__dirstamp) \
+	tests/$(DEPDIR)/$(am__dirstamp)
+
+test_proof_checker$(EXEEXT): $(test_proof_checker_OBJECTS) $(test_proof_checker_DEPENDENCIES) $(EXTRA_test_proof_checker_DEPENDENCIES) 
+	@rm -f test_proof_checker$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_proof_checker_OBJECTS) $(test_proof_checker_LDADD) $(LIBS)
 tests/test_sat.$(OBJEXT): tests/$(am__dirstamp) \
 	tests/$(DEPDIR)/$(am__dirstamp)
 
@@ -966,11 +989,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/transition_relation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/engine/$(DEPDIR)/variable_manager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pme/util/$(DEPDIR)/cardinality_constraint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/pme/util/$(DEPDIR)/proof_checker.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-glucose.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-minisat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-minisat_style_solver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/sat/$(DEPDIR)/libsat_a-sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_cardinality_constraint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_proof_checker.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_sat_adaptor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/test_transition_relation.Po@am__quote@
@@ -1347,6 +1372,13 @@ test_variable_manager.log: test_variable_manager$(EXEEXT)
 test_cardinality_constraint.log: test_cardinality_constraint$(EXEEXT)
 	@p='test_cardinality_constraint$(EXEEXT)'; \
 	b='test_cardinality_constraint'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_proof_checker.log: test_proof_checker$(EXEEXT)
+	@p='test_proof_checker$(EXEEXT)'; \
+	b='test_proof_checker'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
