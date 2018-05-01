@@ -40,7 +40,7 @@ struct InductionFixture
 
     ExternalID i0, l0, l1, l2, o0, a0, a1;
 
-    InductionFixture()
+    InductionFixture(bool constraint = false)
     {
         i0 = 2;
         l0 = 4;
@@ -49,6 +49,7 @@ struct InductionFixture
         a0 = 10;
         a1 = 12;
         o0 = 14;
+
         aig = aiger_init();
         aiger_add_input(aig, i0, "i0");
 
@@ -66,6 +67,12 @@ struct InductionFixture
 
         // l2 = a1 = ~l0 & l1
         aiger_add_latch(aig, l2, a1, "l2");
+
+        // Constraint: ~l1
+        if (constraint)
+        {
+            aiger_add_constraint(aig, aiger_not(l1), "c0");
+        }
 
         // bad = l2
         o0 = l2;
@@ -144,5 +151,20 @@ BOOST_AUTO_TEST_CASE(check_proof_simplify)
 
 BOOST_AUTO_TEST_CASE(constraints)
 {
+    InductionFixture f(true);
+    ClauseVec proof;
+
+    ID l2 = f.tr->toInternal(f.l2);
+
+    // Proof = (~l2)
+    proof.push_back({negate(l2)});
+
+    ProofChecker ind0(*f.tr, proof);
+
+    BOOST_CHECK(ind0.checkInduction());
+    BOOST_CHECK(ind0.checkInitiation());
+    BOOST_CHECK(ind0.checkSafety());
+    BOOST_CHECK(ind0.checkInductiveStrengthening());
+    BOOST_CHECK(ind0.checkProof());
 }
 
