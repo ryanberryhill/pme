@@ -1,6 +1,9 @@
 Doxyfile
 Makefile
+Makefile.in
+build-aux/
 config.h
+config.h.in
 config.log
 config.status
 .deps/

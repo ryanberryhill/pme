@@ -15,9 +15,9 @@ Building pme
 To build pme you will need a C++11 compiler. The unit tests also depend on the
 boost unit test framework.
 
-
+    $ autoreconf -i # Only if you checked this out from git
     $ ./configure
     $ make
-    $ make check   # optional, requires boost
-    $ make install # optional 
+    $ make check    # optional, requires boost
+    $ make install  # optional 
 
