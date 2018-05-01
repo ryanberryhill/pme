@@ -50,11 +50,11 @@ namespace PME
         ID m_reset;
     };
 
+    typedef std::vector<ID>::const_iterator id_iterator;
+
     class TransitionRelation
     {
         public:
-            typedef std::vector<ID>::const_iterator id_iterator;
-
             TransitionRelation(VariableManager & varman, aiger * aig);
             TransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
 

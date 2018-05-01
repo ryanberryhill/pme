@@ -44,6 +44,8 @@ namespace PME
             SATAdaptor m_indSolver, m_initSolver;
             const TransitionRelation & m_tr;
             const ClauseVec & m_proof;
+
+            void freeze(id_iterator begin, id_iterator end, bool primes = false);
     };
 }
 
