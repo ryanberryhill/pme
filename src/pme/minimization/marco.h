@@ -19,56 +19,29 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef PME_H_INCLUDED
-#define PME_H_INCLUDED
+// MARCO is presented in "Enumerating Infeasibility: Finding Multiple MUSes Quickly"
+// by Liffiton and Malik
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+#ifndef MARCO_H_INCLUDED
+#define MARCO_H_INCLUDED
 
-#include "aiger/aiger.h"
-
-const char * cpme_version();
-void * cpme_init(aiger * aig, void * proof);
-int cpme_free(void * pme);
-
-void * cpme_alloc_proof();
-int cpme_add_clause(void * proof, const unsigned * cls, size_t n);
-int cpme_free_proof(void * proof);
-
-int cpme_check_proof(void * pme);
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
-
-#ifdef __cplusplus
-
-#include <string>
-#include <vector>
-#include <cstdint>
+#include "pme/minimization/minimization.h"
+#include "pme/util/maxsat_solver.h"
 
 namespace PME
 {
-    typedef uint64_t ID;
-    typedef uint64_t ClauseID;
-    typedef unsigned ExternalID;
-
-    typedef std::vector<unsigned> ExternalClause;
-    typedef std::vector<ExternalClause> ExternalClauseVec;
-
-    typedef std::vector<ID> Clause;
-    typedef std::vector<ID> Cube;
-    typedef std::vector<Clause> ClauseVec;
-
-    const std::string& pme_version();
-
-    typedef std::vector<ID>::const_iterator id_iterator;
-    typedef ClauseVec::const_iterator clause_iterator;
+    class MARCOMinimizer : public ProofMinimizer
+    {
+        public:
+            MARCOMinimizer(VariableManager & vars,
+                           const TransitionRelation & tr,
+                           const ClauseVec & proof);
+            void minimize() override;
+        private:
+            VariableManager m_vars;
+            MaxSATSolver m_seedSolver;
+    };
 }
-
-#endif // __cplusplus
-
 
 #endif
 

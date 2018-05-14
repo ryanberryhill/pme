@@ -26,7 +26,7 @@ extern "C" {
 #include "aiger/aiger.h"
 }
 
-#define BOOST_TEST_MODULE SATAdaptorTest
+#define BOOST_TEST_MODULE ProofCheckerTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 

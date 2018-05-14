@@ -19,56 +19,24 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef PME_H_INCLUDED
-#define PME_H_INCLUDED
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
-#include "aiger/aiger.h"
-
-const char * cpme_version();
-void * cpme_init(aiger * aig, void * proof);
-int cpme_free(void * pme);
-
-void * cpme_alloc_proof();
-int cpme_add_clause(void * proof, const unsigned * cls, size_t n);
-int cpme_free_proof(void * proof);
-
-int cpme_check_proof(void * pme);
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
-
-#ifdef __cplusplus
-
-#include <string>
-#include <vector>
-#include <cstdint>
+#include "pme/minimization/marco.h"
 
 namespace PME
 {
-    typedef uint64_t ID;
-    typedef uint64_t ClauseID;
-    typedef unsigned ExternalID;
+    MARCOMinimizer::MARCOMinimizer(VariableManager & vars,
+                                   const TransitionRelation & tr,
+                                   const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof),
+          m_seedSolver(vars)
+    { }
 
-    typedef std::vector<unsigned> ExternalClause;
-    typedef std::vector<ExternalClause> ExternalClauseVec;
-
-    typedef std::vector<ID> Clause;
-    typedef std::vector<ID> Cube;
-    typedef std::vector<Clause> ClauseVec;
-
-    const std::string& pme_version();
-
-    typedef std::vector<ID>::const_iterator id_iterator;
-    typedef ClauseVec::const_iterator clause_iterator;
+    void MARCOMinimizer::minimize()
+    {
+        clearMinimizedProof();
+        for (ClauseID id = 0; id < numClauses(); ++id)
+        {
+            addToMinimizedProof(id);
+        }
+    }
 }
-
-#endif // __cplusplus
-
-
-#endif
 

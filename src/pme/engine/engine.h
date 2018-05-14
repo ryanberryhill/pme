@@ -45,7 +45,6 @@ namespace PME
             VariableManager m_vars;
             TransitionRelation m_tr;
             ClauseVec m_proof;
-            SATAdaptor m_solver;
     };
 }
 

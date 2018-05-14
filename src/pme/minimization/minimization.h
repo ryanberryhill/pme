@@ -18,32 +18,56 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef PROOF_CHECKER_H_INCLUDED
-#define PROOF_CHECKER_H_INCLUDED
+
+#ifndef MINIMIZATION_H_INCLUDED
+#define MINIMIZATION_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/id.h"
 #include "pme/engine/transition_relation.h"
-#include "pme/engine/sat_adaptor.h"
 
 namespace PME
 {
-    class ProofChecker
+    typedef ClauseVec::const_iterator clause_iterator;
+
+    class ProofMinimizer
     {
         public:
-            ProofChecker(const TransitionRelation & tr,
-                         const ClauseVec & proof,
-                         bool simplify = true);
-            bool checkInduction();
-            bool checkInitiation();
-            bool checkSafety();
-            bool checkInductiveStrengthening();
-            bool checkProof();
+            ProofMinimizer(VariableManager & vars,
+                           const TransitionRelation & tr,
+                           const ClauseVec & proof);
+            virtual ~ProofMinimizer() { }
+
+            virtual void minimize() = 0;
+
+            clause_iterator begin_minproof() const;
+            clause_iterator end_minproof() const;
+
+        protected:
+            const TransitionRelation & tr() const;
+            VariableManager & vars();
+
+            const ClauseVec & proof() const;
+
+            void clearMinimizedProof();
+            void addToMinimizedProof(ClauseID id);
+            size_t numClauses() const;
+            const Clause & getClause(ClauseID id) const;
 
         private:
-            SATAdaptor m_simpSolver;
-            SATAdaptor m_indSolver, m_initSolver;
             const TransitionRelation & m_tr;
+            VariableManager & m_vars;
             const ClauseVec & m_proof;
+            ClauseVec m_minimizedProof;
+    };
+
+    class DummyMinimizer : public ProofMinimizer
+    {
+        public:
+            DummyMinimizer(VariableManager & vars,
+                           const TransitionRelation & tr,
+                           const ClauseVec & proof);
+            void minimize() override;
     };
 }
 

@@ -19,61 +19,37 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef SAT_ADAPTOR_H_INCLUDED
-#define SAT_ADAPTOR_H_INCLUDED
+#ifndef MAXSAT_SOLVER_H
+#define MAXSAT_SOLVER_H
 
 #include "pme/pme.h"
-#include "sat/sat.h"
+#include "pme/engine/variable_manager.h"
+#include "pme/engine/sat_adaptor.h"
+#include "pme/util/cardinality_constraint.h"
 
-#include <vector>
 #include <set>
-#include <memory>
 
 namespace PME
 {
-    typedef SAT::ModelValue ModelValue;
-    typedef SAT::Variable GroupID;
-    extern const GroupID GROUP_NULL;
-
-    enum SATBackend
-    {
-        MINISAT, MINISATSIMP, GLUCOSE
-    };
-
-    class SATAdaptor
+    class MaxSATSolver
     {
         public:
-            SATAdaptor(SATBackend backend = GLUCOSE);
+            MaxSATSolver(VariableManager & varman);
             void addClause(const Clause & cls);
-            void addClauses(const ClauseVec & vec);
             bool solve();
-            bool solve(const Cube & assumps);
-            bool groupSolve(GroupID group);
-            bool groupSolve(GroupID group, const Cube & assumps);
+            void addForOptimization(ID lit);
             bool isSAT() const;
             ModelValue getAssignment(ID lit) const;
             ModelValue getAssignmentToVar(ID var) const;
 
-            GroupID createGroup();
-            void addGroupClause(GroupID group, const Clause & cls);
-
-            void freeze(ID id);
-            void freeze(id_iterator begin, id_iterator end, bool primes = false);
-            ClauseVec simplify();
-
         private:
-            std::set<GroupID> m_groups;
-            std::unique_ptr<SAT::Solver> m_solver;
-            std::unordered_map<ID, SAT::Variable> m_IDToSATMap;
-            std::unordered_map<SAT::Variable, ID> m_SATToIDMap;
-
-            void introduceVariable(ID var);
-            SAT::Variable SATVarOf(ID id) const;
-            ID IDOf(SAT::Variable var) const;
-            SAT::Literal toSAT(ID id) const;
-            std::vector<SAT::Literal> toSAT(const std::vector<ID> & idvec);
-            ID fromSAT(SAT::Literal lit) const;
-            std::vector<ID> fromSAT(const std::vector<SAT::Literal> & satvec) const;
+            VariableManager m_vars;
+            CardinalityConstraint m_cardinality;
+            SATAdaptor m_solver;
+            bool m_sat;
+            bool m_dirty;
+            unsigned m_lastCardinality;
+            std::multiset<ID> m_optimizationSet;
     };
 }
 

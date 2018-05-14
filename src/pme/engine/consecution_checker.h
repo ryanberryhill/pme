@@ -18,32 +18,45 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef PROOF_CHECKER_H_INCLUDED
-#define PROOF_CHECKER_H_INCLUDED
 
-#include "pme/pme.h"
+#ifndef CONSECUTION_CHECKER_H_INCLUDED
+#define CONSECUTION_CHECKER_H_INCLUDED
+
+#include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
 
+#include <unordered_map>
+
 namespace PME
 {
-    class ProofChecker
+    class ConsecutionChecker
     {
         public:
-            ProofChecker(const TransitionRelation & tr,
-                         const ClauseVec & proof,
-                         bool simplify = true);
-            bool checkInduction();
-            bool checkInitiation();
-            bool checkSafety();
-            bool checkInductiveStrengthening();
-            bool checkProof();
+            ConsecutionChecker(VariableManager & varman,
+                               const TransitionRelation & tr);
+            void addClause(ClauseID id, const Clause & cls);
+            bool solve(const std::vector<ClauseID> & frame, const Clause & cls);
+            bool solve(const std::vector<ClauseID> & frame, const ClauseID id);
+
+            // With no frame we include every clause
+            bool solve(const ClauseID id);
+            bool solve(const Clause & cls);
 
         private:
-            SATAdaptor m_simpSolver;
-            SATAdaptor m_indSolver, m_initSolver;
+            const Clause & clauseOf(ClauseID id) const;
+            std::string actName(ClauseID id) const;
+            void initSolver();
+            ID activation(ClauseID id) const;
+            Clause getActivatedClause(ClauseID id) const;
+
+            VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            const ClauseVec & m_proof;
+            bool m_solverInited;
+            SATAdaptor m_solver;
+
+            std::unordered_map<ClauseID, Clause> m_IDToClause;
+            std::unordered_map<ClauseID, ID> m_IDToActivation;
     };
 }
 

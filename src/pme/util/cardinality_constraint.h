@@ -41,7 +41,9 @@ namespace PME
 
             unsigned getCardinality() const { return m_cardinality; }
             void increaseCardinality(unsigned n);
+            void setCardinality(unsigned n);
 
+            unsigned getInputCardinality() const;
             unsigned getOutputCardinality() const;
             ClauseVec CNFize();
 
@@ -57,6 +59,7 @@ namespace PME
             std::unique_ptr<TotalizerTree> m_root;
             unsigned m_cardinality;
             std::vector<ID> m_outputs;
+            std::vector<ID> m_inputs;
 
             ID freshVar();
             void increaseNodeCardinality(TotalizerTree * node,

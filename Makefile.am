@@ -23,10 +23,18 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/engine/sat_adaptor.cpp \
                    src/pme/engine/variable_manager.h \
                    src/pme/engine/variable_manager.cpp \
+                   src/pme/engine/consecution_checker.h \
+                   src/pme/engine/consecution_checker.cpp \
                    src/pme/util/cardinality_constraint.h \
                    src/pme/util/cardinality_constraint.cpp \
                    src/pme/util/proof_checker.h \
-                   src/pme/util/proof_checker.cpp 
+                   src/pme/util/proof_checker.cpp \
+				   src/pme/util/maxsat_solver.h \
+				   src/pme/util/maxsat_solver.cpp \
+                   src/pme/minimization/marco.h \
+                   src/pme/minimization/marco.cpp \
+                   src/pme/minimization/minimization.h \
+                   src/pme/minimization/minimization.cpp
 
 libpme_a_LIBADD = $(SAT_LIBS)
 
@@ -42,6 +50,10 @@ libsat_a_LIBADD = src/sat/solvers/glucose/libglucose.a \
 SAT_LIBS = libsat.a \
            src/sat/solvers/glucose/libglucose.a \
            src/sat/solvers/minisat/libminisat.a 
+
+PME_TEST_LIBS = libpme.a \
+                $(SAT_LIBS) \
+                -lboost_unit_test_framework
 
 # No Werror because glucose and minisat headers cause several warnings
 libsat_a_CPPFLAGS = -I$(srcdir)/src \
@@ -68,19 +80,20 @@ TESTS = test_sat_adaptor \
         test_transition_relation \
         test_variable_manager \
         test_cardinality_constraint \
-        test_proof_checker
+        test_proof_checker \
+        test_proof_minimizer \
+		test_maxsat_solver \
+		test_consecution_checker
 
 check_PROGRAMS = $(TESTS)
 
 test_variable_manager_SOURCES = tests/test_variable_manager.cpp
 test_variable_manager_LDADD = libpme.a \
-                                -lboost_unit_test_framework
+                              -lboost_unit_test_framework
 
 
 test_sat_adaptor_SOURCES = tests/test_sat_adaptor.cpp  
-test_sat_adaptor_LDADD = libpme.a \
-                         $(SAT_LIBS) \
-                          -lboost_unit_test_framework
+test_sat_adaptor_LDADD = $(PME_TEST_LIBS)
 
 
 test_sat_SOURCES = tests/test_sat.cpp  
@@ -88,19 +101,22 @@ test_sat_LDADD = $(SAT_LIBS) \
                  -lboost_unit_test_framework
 
 test_transition_relation_SOURCES = tests/test_transition_relation.cpp
-test_transition_relation_LDADD = libpme.a \
-                                 $(SAT_LIBS) \
-                                 -lboost_unit_test_framework
+test_transition_relation_LDADD = $(PME_TEST_LIBS) 
 
 test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
-test_cardinality_constraint_LDADD = libpme.a \
-                                    $(SAT_LIBS) \
-                                    -lboost_unit_test_framework
+test_cardinality_constraint_LDADD = $(PME_TEST_LIBS) 
 
 test_proof_checker_SOURCES = tests/test_proof_checker.cpp  
-test_proof_checker_LDADD = libpme.a \
-                           $(SAT_LIBS) \
-                           -lboost_unit_test_framework
+test_proof_checker_LDADD = $(PME_TEST_LIBS) 
+
+test_proof_minimizer_SOURCES = tests/test_proof_minimizer.cpp  
+test_proof_minimizer_LDADD = $(PME_TEST_LIBS)
+
+test_maxsat_solver_SOURCES = tests/test_maxsat_solver.cpp  
+test_maxsat_solver_LDADD = $(PME_TEST_LIBS)
+
+test_consecution_checker_SOURCES = tests/test_consecution_checker.cpp  
+test_consecution_checker_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

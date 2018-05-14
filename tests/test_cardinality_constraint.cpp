@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(assume_eq)
 
     for (unsigned i = 0; i <= 8; ++i)
     {
-        for (unsigned j = 0; j < 8; ++j)
+        for (unsigned j = 0; j <= 8; ++j)
         {
             Cube assumps = f.assumeTrue(i);
             Cube cassumps = f.cardinality.assumeEq(j);
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(assume_leq)
 
     for (unsigned i = 0; i <= 8; ++i)
     {
-        for (unsigned j = 0; j < 8; ++j)
+        for (unsigned j = 0; j <= 8; ++j)
         {
             Cube assumps = f.assumeTrue(i);
             Cube cassumps = f.cardinality.assumeLEq(j);
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(assume_geq)
 
     for (unsigned i = 0; i <= 8; ++i)
     {
-        for (unsigned j = 0; j < 8; ++j)
+        for (unsigned j = 0; j <= 8; ++j)
         {
             Cube assumps = f.assumeTrue(i);
             Cube cassumps = f.cardinality.assumeGEq(j);
@@ -297,8 +297,6 @@ BOOST_AUTO_TEST_CASE(assume_gt)
         }
     }
 }
-
-
 
 BOOST_AUTO_TEST_CASE(cnfization_large_cardinality)
 {
@@ -383,14 +381,13 @@ BOOST_AUTO_TEST_CASE(cnfization_full_cardinality)
     }
 
     // Should be SAT for all values
-    for (unsigned i = 0; i < 50; ++i)
+    for (unsigned i = 0; i <= 50; ++i)
     {
         BOOST_REQUIRE(f.sat.solve(f.cardinality.assumeEq(i)));
         BOOST_CHECK_EQUAL(f.countAssignedTo(SAT::TRUE), i);
     }
 
     // Should throw for values that are too high
-    BOOST_CHECK_THROW(f.cardinality.assumeEq(50), std::invalid_argument);
     BOOST_CHECK_THROW(f.cardinality.assumeEq(51), std::invalid_argument);
 }
 
@@ -452,10 +449,65 @@ BOOST_AUTO_TEST_CASE(incremental_cardinality)
         }
 
         // Should throw for values that are too high
-        BOOST_CHECK_THROW(f.cardinality.assumeEq(current), std::invalid_argument);
-        BOOST_CHECK_THROW(f.cardinality.assumeEq(current + 1), std::invalid_argument);
+        if (current < 32)
+        {
+            BOOST_CHECK_THROW(f.cardinality.assumeEq(current), std::invalid_argument);
+        }
+        else
+        {
+            // But if we're assuming all variables it's okay to assume Eq
+            BOOST_REQUIRE(f.sat.solve(f.cardinality.assumeEq(32)));
+            BOOST_CHECK_EQUAL(f.countAssignedTo(SAT::TRUE), 32);
+        }
+
+        if (current + 1 < 32)
+        {
+            BOOST_CHECK_THROW(f.cardinality.assumeEq(current + 1), std::invalid_argument);
+        }
     }
 }
 
+BOOST_AUTO_TEST_CASE(start_from_high_cardinality)
+{
+    CardinalityFixture f(3);
+    f.cardinality.setCardinality(4);
 
+    ClauseVec cnf = f.cardinality.CNFize();
+
+    BOOST_REQUIRE(!cnf.empty());
+
+    ID a = f.ids[0];
+    ID b = f.ids[1];
+    ID c = f.ids[2];
+
+    f.sat.addClause({negate(a), negate(b), negate(c)});
+    f.sat.addClauses(cnf);
+
+    BOOST_REQUIRE(f.sat.solve());
+
+    Cube assumps = f.cardinality.assumeGEq(3);
+    BOOST_CHECK(!f.sat.solve(assumps));
+
+    assumps = f.cardinality.assumeGEq(2);
+    BOOST_CHECK(f.sat.solve(assumps));
+    f.sat.addClause({negate(a), negate(c)});
+    BOOST_CHECK(f.sat.solve(assumps));
+    f.sat.addClause({negate(a), negate(b)});
+    BOOST_CHECK(f.sat.solve(assumps));
+    f.sat.addClause({negate(b), negate(c)});
+    BOOST_CHECK(!f.sat.solve(assumps));
+
+    assumps = f.cardinality.assumeGEq(1);
+    BOOST_CHECK(f.sat.solve(assumps));
+    f.sat.addClause({negate(a)});
+    BOOST_CHECK(f.sat.solve(assumps));
+    f.sat.addClause({negate(b)});
+    BOOST_CHECK(f.sat.solve(assumps));
+    f.sat.addClause({negate(c)});
+    BOOST_CHECK(!f.sat.solve(assumps));
+
+    assumps = f.cardinality.assumeGEq(0);
+    BOOST_CHECK(f.sat.solve(assumps));
+    BOOST_CHECK(f.sat.solve());
+}
 

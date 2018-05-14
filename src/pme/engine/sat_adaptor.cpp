@@ -224,5 +224,14 @@ namespace PME
         satcls.push_back(SAT::negate(group));
         m_solver->addClause(satcls);
     }
+
+    void SATAdaptor::freeze(id_iterator begin, id_iterator end, bool primes)
+    {
+        for (auto it = begin; it != end; ++it)
+        {
+            freeze(*it);
+            if (primes) { freeze(prime(*it)); }
+        }
+    }
 }
 

@@ -50,8 +50,6 @@ namespace PME
         ID m_reset;
     };
 
-    typedef std::vector<ID>::const_iterator id_iterator;
-
     class TransitionRelation
     {
         public:

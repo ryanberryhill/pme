@@ -90,6 +90,11 @@ namespace PME
     CardinalityConstraint::~CardinalityConstraint()
     { }
 
+    unsigned CardinalityConstraint::getInputCardinality() const
+    {
+        return m_inputs.size();
+    }
+
     unsigned CardinalityConstraint::getOutputCardinality() const
     {
         return m_root ? m_root->outputSize() : 0;
@@ -120,13 +125,9 @@ namespace PME
         }
     }
 
-    void CardinalityConstraint::increaseCardinality(unsigned n)
+    void CardinalityConstraint::setCardinality(unsigned n)
     {
-        if (n < m_cardinality)
-        {
-            throw std::invalid_argument("n must be at least the current cardinality");
-        }
-        else if (n == m_cardinality) { return; }
+        if (n <= m_cardinality) { return; }
         else
         {
             m_cardinality = n;
@@ -137,6 +138,18 @@ namespace PME
             std::set<TotalizerTree *> visited;
             increaseNodeCardinality(m_root.get(), visited);
             updateCachedOutputs();
+        }
+    }
+
+    void CardinalityConstraint::increaseCardinality(unsigned n)
+    {
+        if (n < m_cardinality)
+        {
+            throw std::invalid_argument("n must be at least the current cardinality");
+        }
+        else
+        {
+            setCardinality(n);
         }
     }
 
@@ -152,6 +165,7 @@ namespace PME
 
     void CardinalityConstraint::addInput(ID id)
     {
+        m_inputs.push_back(id);
         if (m_root)
         {
             TotalizerTree * new_root = new TotalizerTree();
@@ -287,9 +301,13 @@ namespace PME
 
     Cube CardinalityConstraint::assumeEq(unsigned n) const
     {
-        if (n >= getOutputCardinality())
+        if (n == getInputCardinality() && n == getOutputCardinality())
         {
-            throw std::invalid_argument("Tried to assume cardinality >= "
+            return m_inputs;
+        }
+        else if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeEq cardinality >= "
                                         "current output cardinality");
         }
 
@@ -307,9 +325,14 @@ namespace PME
 
     Cube CardinalityConstraint::assumeLEq(unsigned n) const
     {
-        if (n >= getOutputCardinality())
+        if (n == getInputCardinality() && n == getOutputCardinality())
         {
-            throw std::invalid_argument("Tried to assume cardinality >= "
+            Cube empty;
+            return empty;
+        }
+        else if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeLEq cardinality >= "
                                         "current output cardinality");
         }
 
@@ -327,9 +350,9 @@ namespace PME
     Cube CardinalityConstraint::assumeLT(unsigned n) const
     {
         if (n == 0) { throw std::invalid_argument("Tried to assume cardinality < 0"); }
-        if (n >= getOutputCardinality())
+        if (n > getOutputCardinality())
         {
-            throw std::invalid_argument("Tried to assume cardinality >= "
+            throw std::invalid_argument("Tried to assumeLT cardinality >= "
                                         "current output cardinality");
         }
 
@@ -346,9 +369,13 @@ namespace PME
 
     Cube CardinalityConstraint::assumeGEq(unsigned n) const
     {
-        if (n >= getOutputCardinality())
+        if (n == getInputCardinality() && n == getOutputCardinality())
         {
-            throw std::invalid_argument("Tried to assume cardinality >= "
+            return m_inputs;
+        }
+        else if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeGEq cardinality >= "
                                         "current output cardinality");
         }
 
@@ -367,7 +394,7 @@ namespace PME
     {
         if (n >= getOutputCardinality())
         {
-            throw std::invalid_argument("Tried to assume cardinality >= "
+            throw std::invalid_argument("Tried to assumeGT cardinality >= "
                                         "current output cardinality");
         }
 
@@ -381,8 +408,6 @@ namespace PME
 
         return assumps;
     }
-
-
 
 }
 

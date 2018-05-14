@@ -41,8 +41,8 @@ namespace PME
             m_simpSolver.addClauses(m_proof);
 
             // Freeze latches and constraints (including primes)
-            freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
-            freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
+            m_simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
+            m_simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
 
             // Freeze bad and bad'
             m_simpSolver.freeze(m_tr.bad());
@@ -109,15 +109,6 @@ namespace PME
     {
         return checkInitiation() && checkInduction() &&
                (checkSafety() || checkInductiveStrengthening());
-    }
-
-    void ProofChecker::freeze(id_iterator begin, id_iterator end, bool primes)
-    {
-        for (auto it = begin; it != end; ++it)
-        {
-            m_simpSolver.freeze(*it);
-            if (primes) { m_simpSolver.freeze(prime(*it)); }
-        }
     }
 }
 
