@@ -27,29 +27,29 @@ namespace PME
                     const TransitionRelation & tr,
                     const ClauseVec & proof,
                     bool simplify)
-        : m_simpSolver(MINISATSIMP),
-          m_tr(tr),
+        : m_tr(tr),
           m_proof(proof)
     {
         // Unroll 2 frames so we get primed constraints
         ClauseVec unrolled = m_tr.unroll(2);
 
-        ClauseVec simp;
+        ClauseVec simp, simp_init;
         if (simplify)
         {
-            m_simpSolver.addClauses(unrolled);
-            m_simpSolver.addClauses(m_proof);
+            SATAdaptor simpSolver(MINISATSIMP);
+            simpSolver.addClauses(unrolled);
+            simpSolver.addClauses(m_proof);
 
             // Freeze latches and constraints (including primes)
-            m_simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
-            m_simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
+            simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
+            simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
 
             // Freeze bad and bad'
-            m_simpSolver.freeze(m_tr.bad());
-            m_simpSolver.freeze(prime(m_tr.bad()));
+            simpSolver.freeze(m_tr.bad());
+            simpSolver.freeze(prime(m_tr.bad()));
 
             // Simplify
-            simp = m_simpSolver.simplify();
+            simp = simpSolver.simplify();
         }
         else
         {
@@ -61,9 +61,31 @@ namespace PME
         // Copy simplified clauses over to indSolver
         m_indSolver.addClauses(simp);
 
-        // Set up initSolver with initial states
+        // Set up initSolver with initial states and simplified clauses
         ClauseVec init = m_tr.initState();
-        m_initSolver.addClauses(init);
+        if (simplify)
+        {
+            SATAdaptor simpSolver(MINISATSIMP);
+            simpSolver.addClauses(unrolled);
+            simpSolver.addClauses(init);
+
+            // Don't freeze primes except for constraints -- this means an
+            // initial state that inherently leads to a constraint violation
+            // on the next cycle doesn't count
+            simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), false);
+            simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
+            simpSolver.freeze(m_tr.bad());
+
+            simp_init = simpSolver.simplify();
+        }
+        else
+        {
+            simp_init.reserve(init.size() + unrolled.size());
+            simp_init.insert(simp_init.end(), init.begin(), init.end());
+            simp_init.insert(simp_init.end(), unrolled.begin(), unrolled.end());
+        }
+
+        m_initSolver.addClauses(simp_init);
     }
 
     bool ProofChecker::checkInitiation()

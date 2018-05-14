@@ -27,12 +27,21 @@ namespace PME
                                    const TransitionRelation & tr,
                                    const ClauseVec & proof)
         : ProofMinimizer(vars, tr, proof),
-          m_seedSolver(vars)
-    { }
+          m_seedSolver(vars),
+          m_indSolver(vars, tr)
+    {
+        clearMinimizedProof();
+
+        // Add clauses to m_indSolver
+        for (ClauseID id = 0; id < numClauses(); ++id)
+        {
+            const Clause & cls = clauseOf(id);
+            m_indSolver.addClause(id, cls);
+        }
+    }
 
     void MARCOMinimizer::minimize()
     {
-        clearMinimizedProof();
         for (ClauseID id = 0; id < numClauses(); ++id)
         {
             addToMinimizedProof(id);

@@ -26,6 +26,7 @@
 #define MARCO_H_INCLUDED
 
 #include "pme/minimization/minimization.h"
+#include "pme/engine/consecution_checker.h"
 #include "pme/util/maxsat_solver.h"
 
 namespace PME
@@ -40,6 +41,7 @@ namespace PME
         private:
             VariableManager m_vars;
             MaxSATSolver m_seedSolver;
+            ConsecutionChecker m_indSolver;
     };
 }
 

@@ -46,7 +46,34 @@ namespace PME
         : m_tr(tr),
           m_vars(vars),
           m_proof(proof)
-    { }
+    {
+        addPropertyIfMissing();
+    }
+
+    void ProofMinimizer::addPropertyIfMissing()
+    {
+        Clause property = {negate(m_tr.bad())};
+        bool property_found = false;
+
+        // Check if the given proof already contains a clause ~Bad
+        for (ClauseID id = 0; id < numClauses(); ++id)
+        {
+            const Clause & cls = clauseOf(id);
+            if (cls == property)
+            {
+                property_found = true;
+                m_property = id;
+                break;
+            }
+        }
+
+        // If it does not contain ~Bad, then add it
+        if (!property_found)
+        {
+            m_property = m_proof.size();
+            m_proof.push_back(property);
+        }
+    }
 
     clause_iterator ProofMinimizer::begin_minproof() const
     {
@@ -75,7 +102,7 @@ namespace PME
 
     void ProofMinimizer::addToMinimizedProof(ClauseID id)
     {
-        m_minimizedProof.push_back(getClause(id));
+        m_minimizedProof.push_back(clauseOf(id));
     }
 
     size_t ProofMinimizer::numClauses() const
@@ -83,7 +110,7 @@ namespace PME
         return m_proof.size();
     }
 
-    const Clause & ProofMinimizer::getClause(ClauseID id) const
+    const Clause & ProofMinimizer::clauseOf(ClauseID id) const
     {
         assert(id < numClauses());
         return m_proof.at(id);
@@ -92,5 +119,15 @@ namespace PME
     const ClauseVec & ProofMinimizer::proof() const
     {
         return m_proof;
+    }
+
+    Clause ProofMinimizer::property() const
+    {
+        return clauseOf(propertyID());
+    }
+
+    ClauseID ProofMinimizer::propertyID() const
+    {
+        return m_property;
     }
 }

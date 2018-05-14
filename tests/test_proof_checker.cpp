@@ -108,6 +108,16 @@ void check_proof_test(bool simp)
     BOOST_CHECK(ind0.checkInductiveStrengthening());
     BOOST_CHECK(ind0.checkProof());
 
+    // Add ~Bad and ensure it still works
+    proof.push_back({negate(f.tr->bad())});
+    ProofChecker ind0_negbad(*f.tr, proof, simp);
+
+    BOOST_CHECK(ind0_negbad.checkInduction());
+    BOOST_CHECK(ind0_negbad.checkInitiation());
+    BOOST_CHECK(ind0_negbad.checkSafety());
+    BOOST_CHECK(ind0_negbad.checkInductiveStrengthening());
+    BOOST_CHECK(ind0_negbad.checkProof());
+
     // Non-proof due to non-induction
     ClauseVec nonproof;
     nonproof.push_back({negate(l2)});

@@ -52,13 +52,17 @@ namespace PME
             void clearMinimizedProof();
             void addToMinimizedProof(ClauseID id);
             size_t numClauses() const;
-            const Clause & getClause(ClauseID id) const;
+            const Clause & clauseOf(ClauseID id) const;
+            Clause property() const;
+            ClauseID propertyID() const;
 
         private:
+            void addPropertyIfMissing();
             const TransitionRelation & m_tr;
             VariableManager & m_vars;
-            const ClauseVec & m_proof;
+            ClauseVec m_proof;
             ClauseVec m_minimizedProof;
+            ClauseID m_property;
     };
 
     class DummyMinimizer : public ProofMinimizer

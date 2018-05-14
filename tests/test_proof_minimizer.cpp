@@ -107,6 +107,8 @@ struct MinimizationFixture
         eproof.push_back({aiger_not(l2), aiger_not(l1)});
 
         proof = tr->makeInternal(eproof);
+
+        proof.push_back({negate(tr->bad())});
         sortClauseVec(proof);
     }
 
@@ -127,10 +129,10 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
 
     // For minimizers that return the smallest proof, also check that the
     // proof is minimized.
-    // I believe the minimum has two clauses here.
+    // I believe the minimum has two clauses + the property here.
     if (minimal)
     {
-        BOOST_CHECK(minproof.size() == 2);
+        BOOST_CHECK(minproof.size() == 3);
     }
     else
     {
@@ -138,11 +140,16 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
     }
 
     // For now we'll check that the returned clauses are a subset of the
-    // original ones. In principle we could minimize in other ways such that
-    // this won't be the case anymore.
+    // original ones (unless it's the property, which the minimizer may add).
+    // In principle we could minimize in other ways such that this won't be the
+    // case anymore.
+    Clause property = {negate(f.tr->bad())};
     for (const Clause & cls : minproof)
     {
-        BOOST_CHECK(orig_clauses.count(cls) >= 1);
+        if (cls != property)
+        {
+            BOOST_CHECK(orig_clauses.count(cls) >= 1);
+        }
     }
 
     ProofChecker pc(*f.tr, minproof);
@@ -160,6 +167,29 @@ void test_findmin(ProofMinimizer & minimizer, MinimizationFixture & f)
 void test_shrink(ProofMinimizer & minimizer, MinimizationFixture & f)
 {
     test_minimize(minimizer, f, false);
+}
+
+BOOST_AUTO_TEST_CASE(should_add_negbad)
+{
+    MinimizationFixture f;
+
+    // Delete ~Bad from the proof
+    bool found = false;
+    Clause property = {negate(f.tr->bad())};
+    for (unsigned i = 0; i < f.proof.size(); ++i)
+    {
+        if (f.proof[i] == property)
+        {
+            found = true;
+            f.proof.erase(f.proof.begin() + i);
+            break;
+        }
+    }
+    BOOST_REQUIRE(found);
+
+    // Everything should still work
+    MARCOMinimizer minimizer(f.vars, *f.tr, f.proof);
+    test_findmin(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(dummy_minimizer)

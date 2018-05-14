@@ -40,7 +40,6 @@ namespace PME
             bool checkProof();
 
         private:
-            SATAdaptor m_simpSolver;
             SATAdaptor m_indSolver, m_initSolver;
             const TransitionRelation & m_tr;
             const ClauseVec & m_proof;
