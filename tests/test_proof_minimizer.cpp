@@ -47,13 +47,21 @@ void sortClauseVec(ClauseVec & vec)
 
 struct MinimizationFixture
 {
+    MinimizationFixture() { }
+    virtual ~MinimizationFixture() { }
+    virtual TransitionRelation & tr() = 0;
+    virtual ClauseVec & proof() = 0;
+};
+
+struct TrivialProofFixture : public MinimizationFixture
+{
     aiger * aig;
     ExternalID i0, l0, l1, l2, l3, o0, a0, a1, a2, a3;
     VariableManager vars;
-    std::unique_ptr<TransitionRelation> tr;
-    ClauseVec proof;
+    std::unique_ptr<TransitionRelation> m_tr;
+    ClauseVec m_proof;
 
-    MinimizationFixture()
+    TrivialProofFixture()
     {
         aig = aiger_init();
 
@@ -95,28 +103,121 @@ struct MinimizationFixture
         aiger_add_output(aig, a3, "o0");
         o0 = a3;
 
-        tr.reset(new TransitionRelation(vars, aig));
+        m_tr.reset(new TransitionRelation(vars, aig));
 
+        // The minimal proof here is just ~Bad - it's an inductive property
         ExternalClauseVec eproof;
 
-        // From manual calculation, this is the minimal proof
         eproof.push_back({aiger_not(l3), aiger_not(l2)});
         eproof.push_back({l3, aiger_not(l2), aiger_not(l1)});
-
         // A redundant clause found by resolving the above two on l3
         eproof.push_back({aiger_not(l2), aiger_not(l1)});
 
-        proof = tr->makeInternal(eproof);
+        m_proof = m_tr->makeInternal(eproof);
 
-        proof.push_back({negate(tr->bad())});
-        sortClauseVec(proof);
+        m_proof.push_back({negate(m_tr->bad())});
+        sortClauseVec(m_proof);
     }
 
-    ~MinimizationFixture()
+    ~TrivialProofFixture()
     {
         aiger_reset(aig);
         aig = nullptr;
     }
+
+    TransitionRelation & tr() override { return *m_tr; }
+    ClauseVec & proof() override { return m_proof; }
+};
+
+struct NonTrivialProofFixture : public MinimizationFixture
+{
+    aiger * aig;
+    ExternalID l0, l1, l2, l3, o0, a0;
+    VariableManager vars;
+    std::unique_ptr<TransitionRelation> m_tr;
+    ClauseVec m_proof;
+
+    NonTrivialProofFixture()
+    {
+        aig = aiger_init();
+
+        l0 = 2;
+        l1 = 4;
+        l2 = 6;
+        l3 = 8;
+        a0 = 10;
+
+        // l0' = l3
+        aiger_add_latch(aig, l0, l3, "l0");
+
+        // l1' = l0
+        aiger_add_latch(aig, l1, l0, "l1");
+
+        // l2' = l1
+        aiger_add_latch(aig, l2, l1, "l2");
+
+        // l3' = l2
+        aiger_add_latch(aig, l3, l2, "l3");
+
+        // a0 = l3 & l2
+        aiger_add_and(aig, a0, l3, l2);
+
+        // o0 = a0 = l3 & l2
+        aiger_add_output(aig, a0, "o0");
+        o0 = a0;
+
+        // Initial state 0001
+        aiger_add_reset(aig, l0, 1);
+
+        m_tr.reset(new TransitionRelation(vars, aig));
+
+        ExternalClauseVec eproof;
+
+        // Build the proof
+        ExternalID nl0 = aiger_not(l0);
+        ExternalID nl1 = aiger_not(l1);
+        ExternalID nl2 = aiger_not(l2);
+        ExternalID nl3 = aiger_not(l3);
+
+        // The property itself (~l2 V ~l3) is not inductive.
+        // The negation of pairs of "adjacent" registers is sufficient as a
+        // proof, that is (~l0 V ~l1)(~l1 V ~l2)(~l2 V ~l3)(~l3 V ~l0).
+        // We can also add extra pairs (or triples, etc.) to get redundant
+        // clauses. For instance, adding (~l1 V ~l3)(~l0 V ~l2) gives a
+        // stronger proof.
+
+        // Minimal proof (note that nl2, nl3 shadows the property so it should
+        // not appear in the minimal proof)
+        eproof.push_back({nl0, nl1});
+        eproof.push_back({nl1, nl2});
+        eproof.push_back({nl2, nl3});
+        eproof.push_back({nl3, nl0});
+
+        // Stronger proof
+        eproof.push_back({nl0, nl2});
+        eproof.push_back({nl1, nl3});
+
+        // Even stronger (the above requires at most one register is 1,
+        // with the below we require also at least one is 1).
+        eproof.push_back({l0, l1, l2, l3});
+
+        // Subsumed clause
+        eproof.push_back({nl1, nl2, nl3});
+
+        m_proof = m_tr->makeInternal(eproof);
+
+        m_proof.push_back({negate(m_tr->bad())});
+        sortClauseVec(m_proof);
+    }
+
+    ~NonTrivialProofFixture()
+    {
+        aiger_reset(aig);
+        aig = nullptr;
+    }
+
+    TransitionRelation & tr() override { return *m_tr; }
+    ClauseVec & proof() override { return m_proof; }
 };
 
 void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool minimal)
@@ -125,25 +226,13 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
     ClauseVec minproof(minimizer.begin_minproof(), minimizer.end_minproof());
     sortClauseVec(minproof);
 
-    std::set<Clause> orig_clauses(f.proof.begin(), f.proof.end());
-
-    // For minimizers that return the smallest proof, also check that the
-    // proof is minimized.
-    // I believe the minimum has two clauses + the property here.
-    if (minimal)
-    {
-        BOOST_CHECK(minproof.size() == 3);
-    }
-    else
-    {
-        BOOST_CHECK(minproof.size() <= f.proof.size());
-    }
+    std::set<Clause> orig_clauses(f.proof().begin(), f.proof().end());
 
     // For now we'll check that the returned clauses are a subset of the
     // original ones (unless it's the property, which the minimizer may add).
     // In principle we could minimize in other ways such that this won't be the
     // case anymore.
-    Clause property = {negate(f.tr->bad())};
+    Clause property = {negate(f.tr().bad())};
     for (const Clause & cls : minproof)
     {
         if (cls != property)
@@ -152,11 +241,22 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
         }
     }
 
-    ProofChecker pc(*f.tr, minproof);
+    // Check that the result is a proof
+    ProofChecker pc(f.tr(), minproof);
     BOOST_CHECK(pc.checkProof());
 
-    // Could (probably should) also check that for each clause removed the
-    // resulting set is not a proof if minimal is true.
+    // if minimal is true, check that the result is a minimal proof
+    if (minimal && minproof.size() > 1)
+    {
+        for (Clause cls : minproof)
+        {
+            ClauseVec test_proof;
+            std::remove_copy(minproof.begin(), minproof.end(),
+                             std::back_inserter(test_proof), cls);
+            ProofChecker pc_fail(f.tr(), test_proof);
+            BOOST_CHECK(!pc_fail.checkProof());
+        }
+    }
 }
 
 void test_findmin(ProofMinimizer & minimizer, MinimizationFixture & f)
@@ -171,43 +271,62 @@ void test_shrink(ProofMinimizer & minimizer, MinimizationFixture & f)
 
 BOOST_AUTO_TEST_CASE(should_add_negbad)
 {
-    MinimizationFixture f;
+    TrivialProofFixture f;
 
     // Delete ~Bad from the proof
     bool found = false;
-    Clause property = {negate(f.tr->bad())};
-    for (unsigned i = 0; i < f.proof.size(); ++i)
+    Clause property = {negate(f.tr().bad())};
+    for (unsigned i = 0; i < f.proof().size(); ++i)
     {
-        if (f.proof[i] == property)
+        if (f.proof()[i] == property)
         {
             found = true;
-            f.proof.erase(f.proof.begin() + i);
+            f.proof().erase(f.proof().begin() + i);
             break;
         }
     }
     BOOST_REQUIRE(found);
 
     // Everything should still work
-    MARCOMinimizer minimizer(f.vars, *f.tr, f.proof);
-    test_findmin(minimizer, f);
+    DummyMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_shrink(minimizer, f);
 }
 
-BOOST_AUTO_TEST_CASE(dummy_minimizer)
+BOOST_AUTO_TEST_CASE(dummy_minimizer_trivial)
 {
     // This test will be the only one to check that the proof in the fixture is
     // actually a proof
-    MinimizationFixture f;
-    ProofChecker pc(*f.tr, f.proof);
+    TrivialProofFixture f;
+    ProofChecker pc(f.tr(), f.proof());
     BOOST_REQUIRE(pc.checkProof());
 
-    DummyMinimizer dm(f.vars, *f.tr, f.proof);
+    DummyMinimizer dm(f.vars, f.tr(), f.proof());
     test_shrink(dm, f);
 }
 
-BOOST_AUTO_TEST_CASE(marco_minimizer)
+BOOST_AUTO_TEST_CASE(dummy_minimizer_nontrivial)
 {
-    MinimizationFixture f;
-    MARCOMinimizer minimizer(f.vars, *f.tr, f.proof);
+    // This test will be the only one to check that the proof in the fixture is
+    // actually a proof
+    NonTrivialProofFixture f;
+    ProofChecker pc(f.tr(), f.proof());
+    BOOST_REQUIRE(pc.checkProof());
+
+    DummyMinimizer dm(f.vars, f.tr(), f.proof());
+    test_shrink(dm, f);
+}
+
+BOOST_AUTO_TEST_CASE(marco_minimizer_trivial)
+{
+    TrivialProofFixture f;
+    MARCOMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findmin(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(marco_minimizer_nontrivial)
+{
+    NonTrivialProofFixture f;
+    MARCOMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findmin(minimizer, f);
 }
 

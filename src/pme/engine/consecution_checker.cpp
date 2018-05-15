@@ -174,4 +174,14 @@ namespace PME
         cls.push_back(negate(act));
         return cls;
     }
+
+    bool ConsecutionChecker::isInductive(const std::vector<ClauseID> & frame)
+    {
+        for (ClauseID id : frame)
+        {
+            if (!solve(frame, id)) { return false; }
+        }
+
+        return true;
+    }
 }

@@ -67,6 +67,7 @@ namespace PME
             ClauseVec initState() const;
 
             ID bad() const { return m_bad; }
+            Clause propertyClause() const { return { negate(m_bad) }; }
 
             id_iterator begin_latches() const { return m_latchIDs.cbegin(); }
             id_iterator end_latches() const { return m_latchIDs.cend(); }

@@ -208,3 +208,29 @@ BOOST_AUTO_TEST_CASE(test_adding_c_unprimed)
     BOOST_CHECK(f.checker->solve({3}, ind));
 }
 
+BOOST_AUTO_TEST_CASE(test_is_inductive)
+{
+    ConsecutionFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause c0 = {negate(l0)};
+    Clause c1 = {negate(l1)};
+    Clause c2 = {negate(l2)};
+    Clause c3 = {negate(l3)};
+
+    f.checker->addClause(0, c0);
+    f.checker->addClause(1, c1);
+    f.checker->addClause(2, c2);
+    f.checker->addClause(3, c3);
+
+    BOOST_CHECK(f.checker->isInductive({0,1,2,3}));
+    BOOST_CHECK(!f.checker->isInductive({0,1,2}));
+    BOOST_CHECK(!f.checker->isInductive({0,1,3}));
+    BOOST_CHECK(!f.checker->isInductive({0,1}));
+    BOOST_CHECK(!f.checker->isInductive({0}));
+}
+

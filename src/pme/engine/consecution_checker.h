@@ -36,6 +36,9 @@ namespace PME
             ConsecutionChecker(VariableManager & varman,
                                const TransitionRelation & tr);
             void addClause(ClauseID id, const Clause & cls);
+
+            bool isInductive(const std::vector<ClauseID> & frame);
+
             bool solve(const std::vector<ClauseID> & frame, const Clause & cls);
             bool solve(const std::vector<ClauseID> & frame, const ClauseID id);
 

@@ -29,6 +29,8 @@
 #include "pme/engine/consecution_checker.h"
 #include "pme/util/maxsat_solver.h"
 
+#include <unordered_map>
+
 namespace PME
 {
     class MARCOMinimizer : public ProofMinimizer
@@ -39,9 +41,23 @@ namespace PME
                            const ClauseVec & proof);
             void minimize() override;
         private:
+            typedef std::vector<ClauseID> Seed;
+            typedef std::pair<bool, Seed> UnexploredResult;
+
+            UnexploredResult getUnexplored();
+            void initSolvers();
+            ID seedVarOf(ClauseID cls) const;
+            bool isSIS(const Seed & seed);
+            void grow(Seed & seed);
+            void shrink(Seed & seed);
+            bool findSafeMIS(Seed & seed);
+            void blockUp(const Seed & seed);
+            void blockDown(const Seed & seed);
+
             VariableManager m_vars;
             MaxSATSolver m_seedSolver;
             ConsecutionChecker m_indSolver;
+            std::unordered_map<ClauseID, ID> m_clauseToSeedVar;
     };
 }
 
