@@ -54,10 +54,14 @@ namespace PME
             void blockUp(const Seed & seed);
             void blockDown(const Seed & seed);
 
+            void updateProofs(const Seed & seed);
+
             VariableManager m_vars;
             MaxSATSolver m_seedSolver;
             ConsecutionChecker m_indSolver;
             std::unordered_map<ClauseID, ID> m_clauseToSeedVar;
+
+            Seed m_smallestProof;
     };
 }
 

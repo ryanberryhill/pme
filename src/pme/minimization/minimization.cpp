@@ -27,11 +27,12 @@ namespace PME
 {
     void DummyMinimizer::minimize()
     {
-        clearMinimizedProof();
+        std::vector<ClauseID> proof;
         for (ClauseID id = 0; id < numClauses(); ++id)
         {
-            addToMinimizedProof(id);
+            proof.push_back(id);
         }
+        addMinimalProof(proof);
     }
 
     DummyMinimizer::DummyMinimizer(VariableManager & vars,
@@ -75,16 +76,6 @@ namespace PME
         }
     }
 
-    clause_iterator ProofMinimizer::begin_minproof() const
-    {
-        return m_minimizedProof.cbegin();
-    }
-
-    clause_iterator ProofMinimizer::end_minproof() const
-    {
-        return m_minimizedProof.cend();
-    }
-
     const TransitionRelation & ProofMinimizer::tr() const
     {
         return m_tr;
@@ -95,14 +86,14 @@ namespace PME
         return m_vars;
     }
 
-    void ProofMinimizer::clearMinimizedProof()
+    void ProofMinimizer::addMinimalProof(const std::vector<ClauseID> & proof)
     {
-        m_minimizedProof.clear();
+        m_minimalProofs.push_back(proof);
     }
 
-    void ProofMinimizer::addToMinimizedProof(ClauseID id)
+    void ProofMinimizer::setMinimumProof(const std::vector<ClauseID> & proof)
     {
-        m_minimizedProof.push_back(clauseOf(id));
+        m_minimumProof = proof;
     }
 
     size_t ProofMinimizer::numClauses() const
@@ -129,5 +120,40 @@ namespace PME
     ClauseID ProofMinimizer::propertyID() const
     {
         return m_property;
+    }
+
+    size_t ProofMinimizer::numProofs() const
+    {
+        return m_minimalProofs.size();
+    }
+
+    ClauseVec ProofMinimizer::getProof(size_t i) const
+    {
+        assert(i < numProofs());
+        ClauseVec proof;
+
+        const std::vector<ID> & proof_ids = m_minimalProofs.at(i);
+        for (ClauseID id : proof_ids)
+        {
+            proof.push_back(m_proof.at(id));
+        }
+
+        return proof;
+    }
+
+    bool ProofMinimizer::minimumProofKnown() const
+    {
+        return !m_minimumProof.empty();
+    }
+
+    ClauseVec ProofMinimizer::getMinimumProof() const
+    {
+        ClauseVec proof;
+        for (ClauseID id : m_minimumProof)
+        {
+            proof.push_back(m_proof.at(id));
+        }
+
+        return proof;
     }
 }

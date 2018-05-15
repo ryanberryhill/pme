@@ -40,8 +40,10 @@ namespace PME
 
             virtual void minimize() = 0;
 
-            clause_iterator begin_minproof() const;
-            clause_iterator end_minproof() const;
+            size_t numProofs() const;
+            ClauseVec getProof(size_t i) const;
+            bool minimumProofKnown() const;
+            ClauseVec getMinimumProof() const;
 
         protected:
             const TransitionRelation & tr() const;
@@ -49,8 +51,9 @@ namespace PME
 
             const ClauseVec & proof() const;
 
-            void clearMinimizedProof();
-            void addToMinimizedProof(ClauseID id);
+            void addMinimalProof(const std::vector<ClauseID> & proof);
+            void setMinimumProof(const std::vector<ClauseID> & proof);
+
             size_t numClauses() const;
             const Clause & clauseOf(ClauseID id) const;
             Clause property() const;
@@ -61,8 +64,9 @@ namespace PME
             const TransitionRelation & m_tr;
             VariableManager & m_vars;
             ClauseVec m_proof;
-            ClauseVec m_minimizedProof;
             ClauseID m_property;
+            std::vector<std::vector<ClauseID>> m_minimalProofs;
+            std::vector<ClauseID> m_minimumProof;
     };
 
     class DummyMinimizer : public ProofMinimizer

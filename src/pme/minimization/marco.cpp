@@ -71,10 +71,7 @@ namespace PME
             {
                 shrink(seed);
                 blockUp(seed);
-
-                // For now, just record the last MSIS
-                clearMinimizedProof();
-                for (ClauseID id : seed) { addToMinimizedProof(id); }
+                updateProofs(seed);
             }
             else
             {
@@ -82,6 +79,20 @@ namespace PME
                 blockDown(seed);
             }
         }
+
+        assert(!m_smallestProof.empty());
+        setMinimumProof(m_smallestProof);
+    }
+
+    void MARCOMinimizer::updateProofs(const Seed & seed)
+    {
+        assert(!seed.empty());
+        if (m_smallestProof.empty() || seed.size() < m_smallestProof.size())
+        {
+            m_smallestProof = seed;
+        }
+
+        addMinimalProof(seed);
     }
 
     void MARCOMinimizer::blockUp(const Seed & seed)

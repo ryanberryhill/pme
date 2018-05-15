@@ -32,6 +32,7 @@ extern "C" {
 #include <boost/test/unit_test.hpp>
 
 #include <set>
+#include <limits>
 
 using namespace PME;
 
@@ -223,39 +224,53 @@ struct NonTrivialProofFixture : public MinimizationFixture
 void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool minimal)
 {
     minimizer.minimize();
-    ClauseVec minproof(minimizer.begin_minproof(), minimizer.end_minproof());
-    sortClauseVec(minproof);
 
-    std::set<Clause> orig_clauses(f.proof().begin(), f.proof().end());
+    BOOST_REQUIRE(minimizer.numProofs() > 0);
+    size_t smallest_size = std::numeric_limits<size_t>::max();
 
-    // For now we'll check that the returned clauses are a subset of the
-    // original ones (unless it's the property, which the minimizer may add).
-    // In principle we could minimize in other ways such that this won't be the
-    // case anymore.
-    Clause property = {negate(f.tr().bad())};
-    for (const Clause & cls : minproof)
+    for (size_t i = 0; i < minimizer.numProofs(); ++i)
     {
-        if (cls != property)
+        ClauseVec minproof = minimizer.getProof(i);
+        sortClauseVec(minproof);
+        smallest_size = std::min(smallest_size, minproof.size());
+
+        std::set<Clause> orig_clauses(f.proof().begin(), f.proof().end());
+
+        // For now we'll check that the returned clauses are a subset of the
+        // original ones (unless it's the property, which the minimizer may add).
+        // In principle we could minimize in other ways such that this won't be the
+        // case anymore.
+        Clause property = {negate(f.tr().bad())};
+        for (const Clause & cls : minproof)
         {
-            BOOST_CHECK(orig_clauses.count(cls) >= 1);
+            if (cls != property)
+            {
+                BOOST_CHECK(orig_clauses.count(cls) >= 1);
+            }
+        }
+
+        // Check that the result is a proof
+        ProofChecker pc(f.tr(), minproof);
+        BOOST_CHECK(pc.checkProof());
+
+        // if minimal is true, check that the result is a minimal proof
+        if (minimal && minproof.size() > 1)
+        {
+            for (Clause cls : minproof)
+            {
+                ClauseVec test_proof;
+                std::remove_copy(minproof.begin(), minproof.end(),
+                                 std::back_inserter(test_proof), cls);
+                ProofChecker pc_fail(f.tr(), test_proof);
+                BOOST_CHECK(!pc_fail.checkProof());
+            }
         }
     }
 
-    // Check that the result is a proof
-    ProofChecker pc(f.tr(), minproof);
-    BOOST_CHECK(pc.checkProof());
-
-    // if minimal is true, check that the result is a minimal proof
-    if (minimal && minproof.size() > 1)
+    if (minimal)
     {
-        for (Clause cls : minproof)
-        {
-            ClauseVec test_proof;
-            std::remove_copy(minproof.begin(), minproof.end(),
-                             std::back_inserter(test_proof), cls);
-            ProofChecker pc_fail(f.tr(), test_proof);
-            BOOST_CHECK(!pc_fail.checkProof());
-        }
+        BOOST_REQUIRE(minimizer.minimumProofKnown());
+        BOOST_CHECK_EQUAL(minimizer.getMinimumProof().size(), smallest_size);
     }
 }
 
