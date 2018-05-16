@@ -28,6 +28,12 @@ extern "C" {
 
 #include "aiger/aiger.h"
 
+typedef enum
+{
+    PME_MINIMIZATION_MARCO,
+    PME_MINIMIZATION_CAMSIS
+} PMEMinimizationAlgorithm;
+
 const char * cpme_version();
 void * cpme_init(aiger * aig, void * proof);
 int cpme_free(void * pme);
@@ -36,7 +42,15 @@ void * cpme_alloc_proof();
 int cpme_add_clause(void * proof, const unsigned * cls, size_t n);
 int cpme_free_proof(void * proof);
 
+size_t cpme_proof_num_clauses(void * proof);
+size_t cpme_proof_clause_size(void * proof, size_t n);
+size_t cpme_proof_lit(void * proof, size_t cls, size_t n);
+
+size_t cpme_num_proofs(void * pme);
+void * cpme_get_proof(void * pme, size_t i);
+
 int cpme_check_proof(void * pme);
+int cpme_run_marco(void * pme);
 
 #ifdef __cplusplus
 }

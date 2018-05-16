@@ -258,6 +258,7 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
         {
             for (Clause cls : minproof)
             {
+                if (cls == property) { continue; }
                 ClauseVec test_proof;
                 std::remove_copy(minproof.begin(), minproof.end(),
                                  std::back_inserter(test_proof), cls);

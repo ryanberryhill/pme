@@ -148,6 +148,30 @@ void sortClauseVec(ClauseVec & vec)
     std::sort(vec.begin(), vec.end());
 }
 
+BOOST_AUTO_TEST_CASE(internal_and_external)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+
+    ExternalClause ext_cls = { f.l0, aiger_not(f.l1) };
+    Clause cls = tr.makeInternal(ext_cls);
+    Clause expected = { l0, negate(l1) };
+    std::sort(cls.begin(), cls.end());
+    std::sort(expected.begin(), expected.end());
+
+    BOOST_CHECK(expected == cls);
+
+    ExternalClause back_to_ext = tr.makeExternal(cls);
+    std::sort(back_to_ext.begin(), back_to_ext.end());
+    std::sort(ext_cls.begin(), ext_cls.end());
+
+    BOOST_CHECK(back_to_ext == ext_cls);
+}
+
 BOOST_AUTO_TEST_CASE(combinational)
 {
     CombinationalAigFixture f;

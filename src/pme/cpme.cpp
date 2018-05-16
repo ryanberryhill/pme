@@ -23,6 +23,8 @@
 #include "pme/pme.h"
 #include "pme/engine/engine.h"
 
+#include <cassert>
+
 const char * cpme_version()
 {
     return PME::pme_version().c_str();
@@ -124,5 +126,69 @@ int cpme_check_proof(void * pme)
     {
         return -1;
     }
+}
+
+int cpme_run_marco(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->minimize(PME_MINIMIZATION_MARCO);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
+size_t cpme_num_proofs(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return 0; }
+
+    return eng->getNumProofs();
+}
+
+void * cpme_get_proof(void * pme, size_t i)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return NULL; }
+
+    assert(i < eng->getNumProofs());
+    PME::ExternalClauseVec * proof = new PME::ExternalClauseVec;
+    *proof = eng->getProofExternal(i);
+
+    return proof;
+}
+
+size_t cpme_proof_num_clauses(void * proof)
+{
+    PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
+    assert(p);
+
+    return p->size();
+}
+
+size_t cpme_proof_clause_size(void * proof, size_t n)
+{
+    PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
+    assert(p);
+    assert(n < p->size());
+
+    return p->at(n).size();
+}
+
+size_t cpme_proof_lit(void * proof, size_t cls, size_t n)
+{
+    PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
+    assert(p);
+    assert(cls < p->size());
+
+    const PME::ExternalClause & clause = p->at(cls);
+    assert(n < clause.size());
+    return clause.at(n);
 }
 

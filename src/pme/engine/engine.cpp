@@ -22,6 +22,7 @@
 #include "pme/pme.h"
 #include "pme/engine/engine.h"
 #include "pme/util/proof_checker.h"
+#include "pme/minimization/marco.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -51,6 +52,59 @@ namespace PME
     {
         ProofChecker ind(m_tr, m_proof);
         return ind.checkProof();
+    }
+
+    void Engine::minimize(PMEMinimizationAlgorithm algorithm)
+    {
+        switch (algorithm)
+        {
+            case PME_MINIMIZATION_MARCO:
+                m_minimizer.reset(new MARCOMinimizer(m_vars, m_tr, m_proof));
+                break;
+            case PME_MINIMIZATION_CAMSIS:
+                throw std::logic_error("CAMSIS is not implemented");
+                break;
+            default:
+                throw std::logic_error("Unknown minimization algorithm");
+                break;
+        }
+
+        assert(m_minimizer);
+        m_minimizer->minimize();
+    }
+
+    size_t Engine::getNumProofs() const
+    {
+        if (!m_minimizer) { return 0; }
+        return m_minimizer->numProofs();
+    }
+
+    ClauseVec Engine::getProof(size_t i) const
+    {
+        ClauseVec empty;
+        if (!m_minimizer) { return empty; }
+        return m_minimizer->getProof(i);
+    }
+
+    ClauseVec Engine::getMinimumProof() const
+    {
+        ClauseVec empty;
+        if (!m_minimizer) { return empty; }
+        return m_minimizer->getMinimumProof();
+    }
+
+    ExternalClauseVec Engine::getProofExternal(size_t i) const
+    {
+        ExternalClauseVec vec;
+        vec = m_tr.makeExternal(getProof(i));
+        return vec;
+    }
+
+    ExternalClauseVec Engine::getMinimumProofExternal() const
+    {
+        ExternalClauseVec vec;
+        vec = m_tr.makeExternal(getMinimumProof());
+        return vec;
     }
 }
 

@@ -26,6 +26,7 @@
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
+#include "pme/minimization/minimization.h"
 
 #include <vector>
 #include <unordered_map>
@@ -40,11 +41,20 @@ namespace PME
                    const ExternalClauseVec & proof,
                    unsigned property);
             bool checkProof();
+            void minimize(PMEMinimizationAlgorithm algorithm);
+
+            size_t getNumProofs() const;
+            ClauseVec getProof(size_t i) const;
+            ClauseVec getMinimumProof() const;
+
+            ExternalClauseVec getProofExternal(size_t i) const;
+            ExternalClauseVec getMinimumProofExternal() const;
 
         private:
             VariableManager m_vars;
             TransitionRelation m_tr;
             ClauseVec m_proof;
+            std::unique_ptr<ProofMinimizer> m_minimizer;
     };
 }
 

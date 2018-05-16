@@ -211,6 +211,30 @@ namespace PME
         return internal_vec;
     }
 
+    ExternalClause TransitionRelation::makeExternal(Clause cls) const
+    {
+        ExternalClause external_cls;
+        external_cls.reserve(cls.size());
+        for (ID lit : cls)
+        {
+            ID external_lit = toExternal(lit);
+            external_cls.push_back(external_lit);
+        }
+
+        return external_cls;
+    }
+
+    ExternalClauseVec TransitionRelation::makeExternal(ClauseVec vec) const
+    {
+        ExternalClauseVec external_vec;
+        for (const Clause & cls : vec)
+        {
+            external_vec.push_back(makeExternal(cls));
+        }
+
+        return external_vec;
+    }
+
     ClauseVec TransitionRelation::unrollWithInit(unsigned n) const
     {
         ClauseVec unrolled = unroll(n);

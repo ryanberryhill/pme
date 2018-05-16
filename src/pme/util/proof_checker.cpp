@@ -106,9 +106,11 @@ namespace PME
         for (const Clause & c : m_proof)
         {
             Cube negc = negateVec(c);
+            Cube assumps = primeVec(negc);
+            assumps.push_back(negate(m_tr.bad()));
 
             // Check for relative induction
-            if (m_indSolver.solve(primeVec(negc))) { return false; }
+            if (m_indSolver.solve(assumps)) { return false; }
         }
 
         return true;

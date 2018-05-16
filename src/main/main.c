@@ -25,6 +25,9 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <getopt.h>
+#include <limits.h>
+
 #include "pme/pme.h"
 #include "aiger/aiger.h"
 
@@ -86,6 +89,10 @@ void parse_proof(void * proof, FILE * proof_file)
     }
 }
 
+// These need to be global so they can be used in the initializer for
+// long_opts in main() below
+int g_check = 0, g_marco = 0, g_camsis = 0;
+
 int main(int argc, char ** argv)
 {
     const char * opts = "hv";
@@ -93,12 +100,23 @@ int main(int argc, char ** argv)
     char * proof_path = NULL;
     int verbosity = 0;
     int option = 0;
+    int option_index = 0;
+
+    static struct option long_opts[] = {
+            {"check",   no_argument, &g_check,   1 },
+            {"marco",   no_argument, &g_marco,   1 },
+            {"camsis",  no_argument, &g_camsis,  1 },
+            {"help",    no_argument, 0,         'h'},
+            {0,         0,           0,          0 }
+    };
 
     // Parse flags
-    while ((option = getopt(argc, argv, opts)) != -1)
+    while ((option = getopt_long(argc, argv, opts, long_opts, &option_index)) != -1)
     {
         switch(option)
         {
+            case 0:
+                break;
             case 'v':
                 verbosity++;
                 break;
@@ -175,6 +193,9 @@ int main(int argc, char ** argv)
     parse_proof(proof, proof_file);
     fclose(proof_file);
 
+    size_t proof_size = cpme_proof_num_clauses(proof);
+    printf("The proof has %lu clauses\n", proof_size);
+
     // Initialize the PME library
     void * pme = cpme_init(aig, proof);
     assert(pme);
@@ -186,14 +207,48 @@ int main(int argc, char ** argv)
     aig = NULL; proof = NULL;
 
     // Do things in the PME library
-    int proof_ok = cpme_check_proof(pme);
-    if (proof_ok < 0)
+    if (g_check)
     {
-        fprintf(stderr, "Error checking proof\n");
-        return EXIT_FAILURE;
+        int proof_ok = cpme_check_proof(pme);
+        if (proof_ok < 0)
+        {
+            fprintf(stderr, "Error checking proof\n");
+            return EXIT_FAILURE;
+        }
+
+        printf("The proof is %sa safe inductive invariant\n", proof_ok ? "" : "not ");
+        if (!proof_ok)
+        {
+            return EXIT_FAILURE;
+        }
     }
 
-    printf("The proof is %sa safe inductive invariant\n", proof_ok ? "" : "not ");
+    if (g_marco)
+    {
+        int marco_ok = cpme_run_marco(pme);
+        if (marco_ok < 0)
+        {
+            fprintf(stderr, "Error running MARCO\n");
+            return EXIT_FAILURE;
+        }
+
+        size_t num_proofs = cpme_num_proofs(pme);
+        size_t largest = 0;
+        size_t smallest = UINT_MAX;
+        for (size_t i = 0; i < num_proofs; ++i)
+        {
+            void * min_proof = cpme_get_proof(pme, i);
+            unsigned current = cpme_proof_num_clauses(min_proof);
+
+            if (current > largest) { largest = current; }
+            if (current < smallest) { smallest = current; }
+
+            cpme_free_proof(min_proof);
+        }
+
+        printf("Found %lu minimal proof(s) of size %lu-%lu with MARCO\n",
+                num_proofs, smallest, largest);
+    }
 
     // Clean up the PME library
     free_ok = cpme_free(pme);
