@@ -1,0 +1,20 @@
+
+One-step Inductive Strengthening of Property (in CNF):
+Clause 0: !l4 l12 
+Clause 1: l5 !l13 
+Clause 2: !l5 l13 
+Clause 3: !l6 l14 
+Clause 4: l6 !l14 
+Clause 5: !l7 l15 
+Clause 6: l4 !l12 
+Clause 7: l7 !l14 !l15 
+Clause 8: l6 l7 !l15 
+Clause 9: !l0 l8 
+Clause 10: l0 !l8 
+Clause 11: !l1 l8 l9 
+Clause 12: l1 !l9 
+Clause 13: !l0 !l1 l9 
+Clause 14: l2 !l10 
+Clause 15: !l2 l10 
+Clause 16: l3 !l11 
+Clause 17: !l3 l11 

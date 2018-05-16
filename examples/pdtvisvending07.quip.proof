@@ -1,0 +1,48 @@
+
+One-step Inductive Strengthening of Property (in CNF):
+Clause 0: !l22 !l24 l25 l26 
+Clause 1: !l12 !l16 
+Clause 2: l12 l16 l22 !l25 l26 
+Clause 3: !l6 !l16 
+Clause 4: !l6 l12 l22 !l24 
+Clause 5: !l6 !l12 !l22 
+Clause 6: !l6 !l22 !l24 l25 
+Clause 7: l22 !l24 l25 !l26 
+Clause 8: l6 !l12 l22 !l25 l26 l32 
+Clause 9: !l22 !l24 l25 
+Clause 10: l6 l12 l16 !l25 l26 
+Clause 11: !l6 l12 !l24 l32 
+Clause 12: l2 l14 l19 !l22 l23 l25 l26 
+Clause 13: l22 !l24 !l26 !l32 
+Clause 14: !l12 !l24 !l26 
+Clause 15: !l12 !l22 !l32 
+Clause 16: !l19 !l24 l25 
+Clause 17: !l2 !l24 l25 
+Clause 18: l6 l22 !l25 l26 l32 
+Clause 19: !l16 !l24 l25 
+Clause 20: !l6 !l24 l25 
+Clause 21: !l12 !l22 !l26 
+Clause 22: !l14 !l24 l25 
+Clause 23: !l16 !l22 !l26 
+Clause 24: l6 !l22 !l24 !l32 
+Clause 25: !l6 !l22 !l25 l26 l32 
+Clause 26: !l6 l12 l22 !l25 l26 
+Clause 27: !l6 !l24 !l26 
+Clause 28: l2 !l6 l14 l23 l24 
+Clause 29: l2 l14 l19 !l22 l23 l24 
+Clause 30: l2 !l6 !l12 l14 l23 l24 
+Clause 31: !l23 !l24 l25 
+Clause 32: !l16 l22 !l24 l32 
+Clause 33: l2 l14 !l16 !l19 l22 l23 l24 
+Clause 34: l2 !l6 l12 l14 l23 
+Clause 35: l2 !l6 l14 l19 l23 
+Clause 36: l2 !l6 l14 l23 l25 
+Clause 37: l2 l14 !l16 l19 l23 
+Clause 38: !l6 !l12 !l26 
+Clause 39: l2 !l6 l14 !l19 l22 l23 l24 
+Clause 40: l2 !l6 l12 l14 !l19 l22 l23 
+Clause 41: !l6 l14 l19 !l22 l23 
+Clause 42: !l6 l14 l19 !l22 l23 l25 
+Clause 43: l14 !l16 l23 l25 
+Clause 44: l14 !l16 l23 !l26 
+Clause 45: l2 l14 l19 !l22 l23 l25 
