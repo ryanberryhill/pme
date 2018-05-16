@@ -10,8 +10,13 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_SUBDIRS([src/sat/solvers/glucose src/sat/solvers/minisat])
 
 AC_PROG_CXX
+# Enable C++11
 AX_CXX_COMPILE_STDCXX_11
+
 AC_PROG_CC
+# Enable C99
+AC_PROG_CC_C99
+
 AC_PROG_RANLIB
 AM_PROG_AR
 
