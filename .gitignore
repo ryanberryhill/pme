@@ -22,6 +22,7 @@ tags
 parseproof
 !src/parseproof/*
 libsat.a
+configure
 autom4te.cache/
 config.h.in~
 test_*
