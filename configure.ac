@@ -1,4 +1,4 @@
-AC_INIT([pme], [0.0.1], [ryan@berryhill.xyz])
+AC_INIT([pme], [0.1.0], [ryan@berryhill.xyz])
 AC_PREREQ([2.69])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([build-aux])
