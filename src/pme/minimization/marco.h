@@ -41,7 +41,7 @@ namespace PME
                            const ClauseVec & proof);
             void minimize() override;
         private:
-            typedef std::vector<ClauseID> Seed;
+            typedef ClauseIDVec Seed;
             typedef std::pair<bool, Seed> UnexploredResult;
 
             UnexploredResult getUnexplored();

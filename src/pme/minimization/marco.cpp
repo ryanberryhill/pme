@@ -20,6 +20,7 @@
  */
 
 #include "pme/minimization/marco.h"
+#include "pme/util/mis_finder.h"
 
 #include <algorithm>
 #include <cassert>
@@ -222,40 +223,8 @@ namespace PME
     {
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
-
-        // Check if the seed is unsafe
-        if (std::find(seed.begin(), seed.end(), propertyID()) == seed.end())
-        {
-            return false;
-        }
-
-        if (isSIS(seed)) { return true; }
-
-        // Remove all clauses that are non-inductive
-        // TODO simple optimization: remove clauses that are satisfied
-        // by the current assignment
-        bool removed = true;
-        while (removed)
-        {
-            removed = false;
-
-            for (size_t i = 0; i < seed.size(); )
-            {
-                ClauseID id = seed[i];
-                if (!m_indSolver.solve(seed, id))
-                {
-                    if (id == propertyID()) { return false; }
-                    removed = true;
-                    seed.erase(seed.begin() + i);
-                }
-                else
-                {
-                    ++i;
-                }
-            }
-        }
-
-        return true;
+        MISFinder finder(m_indSolver, propertyID());
+        return finder.findSafeMIS(seed);
     }
 
     MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexplored()

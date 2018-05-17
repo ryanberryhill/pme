@@ -68,6 +68,7 @@ namespace PME
             ClauseVec unrollWithInit(unsigned n = 1) const;
             ClauseVec initState() const;
 
+            ID property() const { return negate(m_bad); }
             ID bad() const { return m_bad; }
             Clause propertyClause() const { return { negate(m_bad) }; }
 

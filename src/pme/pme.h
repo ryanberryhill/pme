@@ -75,6 +75,8 @@ namespace PME
     typedef std::vector<ID> Cube;
     typedef std::vector<Clause> ClauseVec;
 
+    typedef std::vector<ClauseID> ClauseIDVec;
+
     const std::string& pme_version();
 
     typedef std::vector<ID>::const_iterator id_iterator;
