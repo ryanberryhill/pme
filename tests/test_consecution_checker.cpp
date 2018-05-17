@@ -234,3 +234,49 @@ BOOST_AUTO_TEST_CASE(test_is_inductive)
     BOOST_CHECK(!f.checker->isInductive({0}));
 }
 
+BOOST_AUTO_TEST_CASE(test_support_set)
+{
+    ConsecutionFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause c0 = {negate(l0)};
+    Clause c1 = {negate(l1)};
+    Clause c2 = {negate(l2)};
+    Clause c3 = {negate(l3)};
+
+    f.checker->addClause(0, c0);
+    f.checker->addClause(1, c1);
+    f.checker->addClause(2, c2);
+    f.checker->addClause(3, c3);
+
+    ClauseIDVec frame = {0, 1, 2, 3};
+
+    for (ClauseID id = 0; id <= 3; ++id)
+    {
+        BOOST_REQUIRE(f.checker->solve(frame, id));
+
+        ClauseIDVec support;
+        BOOST_CHECK(f.checker->supportSolve(frame, id, support));
+
+        // Support only contains clauses from frame
+        BOOST_CHECK(!support.empty());
+        for (ClauseID cls : support)
+        {
+            BOOST_CHECK(std::find(frame.begin(), frame.end(), cls) != frame.end());
+        }
+
+        // Support is sufficient to prove relative induction
+        BOOST_CHECK(f.checker->solve(support, id));
+
+        // Should also work without a frame
+        support.clear();
+        BOOST_CHECK(f.checker->supportSolve(id, support));
+        BOOST_CHECK(!support.empty());
+        BOOST_CHECK(f.checker->solve(support, id));
+    }
+}
+

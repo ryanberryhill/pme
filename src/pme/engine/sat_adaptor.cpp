@@ -169,6 +169,7 @@ namespace PME
             crits->reserve(satcrits.size());
             for (SAT::Literal satlit : satcrits)
             {
+                if (m_groups.count(group) > 0) { continue; }
                 ID lit = fromSAT(satlit);
                 assert(std::find(assumps.begin(), assumps.end(), lit) != assumps.end());
                 crits->push_back(lit);

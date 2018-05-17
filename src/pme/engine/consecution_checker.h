@@ -39,6 +39,18 @@ namespace PME
 
             bool isInductive(const std::vector<ClauseID> & frame);
 
+            // Solve relative to a subset of clauses and return a
+            // (non-minimal) support set
+            bool supportSolve(const std::vector<ClauseID> & frame,
+                       const Clause & cls,
+                       std::vector<ClauseID> & support);
+            bool supportSolve(const std::vector<ClauseID> & frame,
+                       const ClauseID id,
+                       std::vector<ClauseID> & support);
+            bool supportSolve(const ClauseID id, std::vector<ClauseID> & support);
+            bool supportSolve(const Clause & cls, std::vector<ClauseID> & support);
+
+            // Solve relative to a subset of clauses (frame)
             bool solve(const std::vector<ClauseID> & frame, const Clause & cls);
             bool solve(const std::vector<ClauseID> & frame, const ClauseID id);
 
@@ -51,6 +63,8 @@ namespace PME
             std::string actName(ClauseID id) const;
             void initSolver();
             ID activation(ClauseID id) const;
+            ClauseID IDOfActivation(ID act) const;
+            bool isActivation(ID id) const;
             Clause getActivatedClause(ClauseID id) const;
 
             VariableManager & m_vars;
@@ -60,6 +74,7 @@ namespace PME
 
             std::unordered_map<ClauseID, Clause> m_IDToClause;
             std::unordered_map<ClauseID, ID> m_IDToActivation;
+            std::unordered_map<ClauseID, ID> m_activationToID;
     };
 }
 

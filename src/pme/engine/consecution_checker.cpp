@@ -40,10 +40,14 @@ namespace PME
         assert(m_IDToActivation.find(id) == m_IDToActivation.end());
 
         ID act = m_vars.getNewID(actName(id));
+
+        assert(m_activationToID.find(act) == m_activationToID.end());
+
         Clause cls_sorted = cls;
         std::sort(cls_sorted.begin(), cls_sorted.end());
         m_IDToClause[id] = cls_sorted;
         m_IDToActivation[id] = act;
+        m_activationToID[act] = id;
 
         // Add the clause to the already-initialized solver
         if (m_solverInited)
@@ -64,7 +68,21 @@ namespace PME
         return m_IDToActivation.at(id);
     }
 
-    bool ConsecutionChecker::solve(const std::vector<ClauseID> & frame, const Clause & cls)
+    ClauseID ConsecutionChecker::IDOfActivation(ID act) const
+    {
+        auto it = m_activationToID.find(act);
+        assert(it != m_activationToID.end());
+        return it->second;
+    }
+
+    bool ConsecutionChecker::isActivation(ID id) const
+    {
+        return m_activationToID.find(id) != m_activationToID.end();
+    }
+
+    bool ConsecutionChecker::supportSolve(const std::vector<ClauseID> & frame,
+                                          const Clause & cls,
+                                          std::vector<ClauseID> & support)
     {
         if (!m_solverInited) { initSolver(); }
 
@@ -99,8 +117,55 @@ namespace PME
             assumps.push_back(negate(prime(id)));
         }
 
-        bool sat = m_solver.groupSolve(grp, assumps);
+        Cube crits;
+        bool sat = m_solver.groupSolve(grp, assumps, &crits);
+
+        if (!sat)
+        {
+            support.clear();
+            support.reserve(crits.size());
+            for (ID crit : crits)
+            {
+                if (isActivation(crit))
+                {
+                    ClauseID support_cls = IDOfActivation(crit);
+                    support.push_back(support_cls);
+                }
+            }
+        }
+
         return !sat;
+    }
+
+    bool ConsecutionChecker::supportSolve(const std::vector<ClauseID> & frame,
+                                          const ClauseID id,
+                                          std::vector<ClauseID> & support)
+    {
+        const Clause & cls = clauseOf(id);
+        return supportSolve(frame, cls, support);
+    }
+
+    bool ConsecutionChecker::supportSolve(const ClauseID id, std::vector<ClauseID> & support)
+    {
+        const Clause & cls = clauseOf(id);
+        return supportSolve(cls, support);
+    }
+
+    bool ConsecutionChecker::supportSolve(const Clause & cls, std::vector<ClauseID> & support)
+    {
+        std::vector<ClauseID> frame;
+        for (const auto & p : m_IDToClause)
+        {
+            ClauseID id = p.first;
+            frame.push_back(id);
+        }
+        return supportSolve(frame, cls, support);
+    }
+
+    bool ConsecutionChecker::solve(const std::vector<ClauseID> & frame, const Clause & cls)
+    {
+        std::vector<ClauseID> support;
+        return supportSolve(frame, cls, support);
     }
 
     bool ConsecutionChecker::solve(const std::vector<ClauseID> & frame, const ClauseID id)
@@ -111,19 +176,14 @@ namespace PME
 
     bool ConsecutionChecker::solve(const ClauseID id)
     {
-        const Clause & cls = clauseOf(id);
-        return solve(cls);
+        std::vector<ClauseID> support;
+        return supportSolve(id, support);
     }
 
     bool ConsecutionChecker::solve(const Clause & cls)
     {
-        std::vector<ClauseID> frame;
-        for (const auto & p : m_IDToClause)
-        {
-            ClauseID id = p.first;
-            frame.push_back(id);
-        }
-        return solve(frame, cls);
+        std::vector<ClauseID> support;
+        return supportSolve(cls, support);
     }
 
     const Clause & ConsecutionChecker::clauseOf(ClauseID id) const
