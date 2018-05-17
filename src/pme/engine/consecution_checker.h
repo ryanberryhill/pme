@@ -58,8 +58,9 @@ namespace PME
             bool solve(const ClauseID id);
             bool solve(const Clause & cls);
 
-        private:
             const Clause & clauseOf(ClauseID id) const;
+
+        private:
             std::string actName(ClauseID id) const;
             void initSolver();
             ID activation(ClauseID id) const;

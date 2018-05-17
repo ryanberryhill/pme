@@ -19,28 +19,48 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MIS_FINDER_H_INCLUDED
-#define MIS_FINDER_H_INCLUDED
+// The MSIS algorithm implemented here was first described in "Small Inductive
+// Safe Invariants" by Ivrii, Gurfinkel, and Belov
 
-#include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
+#ifndef SISI_H_INCLUDED
+#define SISI_H_INCLUDED
+
+#include "pme/minimization/minimization.h"
 #include "pme/engine/consecution_checker.h"
+
+#include <unordered_map>
 
 namespace PME
 {
-    class MISFinder
+    class SISI
     {
         public:
-            MISFinder(ConsecutionChecker & solver);
-            bool findSafeMIS(ClauseIDVec & vec, ClauseID property);
-            bool findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec);
+            SISI(ConsecutionChecker & solver);
+            bool findSafeMIS(ClauseIDVec & vec);
+            void refineNEC();
+            void refineFEAS();
+            ClauseIDVec bruteForceMinimize();
+            void minimizeSupport(ClauseIDVec & vec, ClauseID cls);
+            void addToFEAS(ClauseID id);
+            void addToNEC(ClauseID id);
 
         private:
-            ConsecutionChecker & m_solver;
+            ConsecutionChecker & m_indSolver;
+            std::set<ClauseID> m_nec, m_feas;
+    };
 
-            bool contains(const ClauseIDVec & vec, ClauseID id) const;
-            bool containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const;
-            bool isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props);
+    class SISIMinimizer : public ProofMinimizer
+    {
+        public:
+            SISIMinimizer(VariableManager & vars,
+                          const TransitionRelation & tr,
+                          const ClauseVec & proof);
+            void minimize() override;
+
+        private:
+            void initSolver();
+            ConsecutionChecker m_indSolver;
+            SISI m_sisi;
     };
 }
 

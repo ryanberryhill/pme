@@ -19,30 +19,37 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MIS_FINDER_H_INCLUDED
-#define MIS_FINDER_H_INCLUDED
-
-#include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
-#include "pme/engine/consecution_checker.h"
+#include "pme/minimization/brute_force.h"
 
 namespace PME
 {
-    class MISFinder
+    BruteForceMinimizer::BruteForceMinimizer(VariableManager & vars,
+                                            const TransitionRelation & tr,
+                                            const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof),
+          m_indSolver(vars, tr),
+          m_sisi(m_indSolver)
     {
-        public:
-            MISFinder(ConsecutionChecker & solver);
-            bool findSafeMIS(ClauseIDVec & vec, ClauseID property);
-            bool findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec);
+        initSolver();
+    }
 
-        private:
-            ConsecutionChecker & m_solver;
+    void BruteForceMinimizer::initSolver()
+    {
+        for (ClauseID id = 0; id < numClauses(); ++id)
+        {
+            const Clause & cls = clauseOf(id);
+            m_indSolver.addClause(id, cls);
+        }
+    }
 
-            bool contains(const ClauseIDVec & vec, ClauseID id) const;
-            bool containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const;
-            bool isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props);
-    };
+    void BruteForceMinimizer::minimize()
+    {
+        // FEAS = { all }
+        for (ClauseID id = 0; id < numClauses(); ++id) { m_sisi.addToFEAS(id); }
+        // NEC = { ~Bad }
+        m_sisi.addToNEC(propertyID());
+
+        addMinimalProof(m_sisi.bruteForceMinimize());
+    }
 }
-
-#endif
 

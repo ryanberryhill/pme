@@ -19,28 +19,23 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MIS_FINDER_H_INCLUDED
-#define MIS_FINDER_H_INCLUDED
+#ifndef MINIMAL_SUPPORT_FINDER_H_INCLUDED
+#define MINIMAL_SUPPORT_FINDER_H_INCLUDED
 
 #include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
 #include "pme/engine/consecution_checker.h"
 
 namespace PME
 {
-    class MISFinder
+    class MinimalSupportFinder
     {
         public:
-            MISFinder(ConsecutionChecker & solver);
-            bool findSafeMIS(ClauseIDVec & vec, ClauseID property);
-            bool findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec);
+            MinimalSupportFinder(ConsecutionChecker & solver);
+            ClauseIDVec findSupport(const ClauseIDVec & frame, ClauseID id);
+            ClauseIDVec findSupport(const ClauseIDVec & frame, const Clause & cls);
 
         private:
             ConsecutionChecker & m_solver;
-
-            bool contains(const ClauseIDVec & vec, ClauseID id) const;
-            bool containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const;
-            bool isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props);
     };
 }
 

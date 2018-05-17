@@ -29,12 +29,18 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/cardinality_constraint.cpp \
                    src/pme/util/proof_checker.h \
                    src/pme/util/proof_checker.cpp \
-				   src/pme/util/maxsat_solver.h \
-				   src/pme/util/maxsat_solver.cpp \
-				   src/pme/util/mis_finder.h \
-				   src/pme/util/mis_finder.cpp \
+                   src/pme/util/maxsat_solver.h \
+                   src/pme/util/maxsat_solver.cpp \
+                   src/pme/util/mis_finder.h \
+                   src/pme/util/mis_finder.cpp \
+                   src/pme/util/minimal_support_finder.h \
+                   src/pme/util/minimal_support_finder.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
+                   src/pme/minimization/brute_force.h \
+                   src/pme/minimization/brute_force.cpp \
+                   src/pme/minimization/sisi.h \
+                   src/pme/minimization/sisi.cpp \
                    src/pme/minimization/minimization.h \
                    src/pme/minimization/minimization.cpp
 
@@ -84,9 +90,10 @@ TESTS = test_sat_adaptor \
         test_cardinality_constraint \
         test_proof_checker \
         test_proof_minimizer \
-		test_maxsat_solver \
-		test_consecution_checker \
-		test_mis_finder
+        test_maxsat_solver \
+        test_consecution_checker \
+        test_mis_finder \
+        test_minimal_support_finder
 
 check_PROGRAMS = $(TESTS)
 
@@ -123,6 +130,9 @@ test_consecution_checker_LDADD = $(PME_TEST_LIBS)
 
 test_mis_finder_SOURCES = tests/test_mis_finder.cpp  
 test_mis_finder_LDADD = $(PME_TEST_LIBS)
+
+test_minimal_support_finder_SOURCES = tests/test_minimal_support_finder.cpp  
+test_minimal_support_finder_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

@@ -22,6 +22,8 @@
 #include "pme/util/proof_checker.h"
 #include "pme/minimization/minimization.h"
 #include "pme/minimization/marco.h"
+#include "pme/minimization/sisi.h"
+#include "pme/minimization/brute_force.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -221,7 +223,7 @@ struct NonTrivialProofFixture : public MinimizationFixture
     ClauseVec & proof() override { return m_proof; }
 };
 
-void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool minimal)
+void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool minimal, bool minimum)
 {
     minimizer.minimize();
 
@@ -268,21 +270,26 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
         }
     }
 
-    if (minimal)
+    if (minimum)
     {
         BOOST_REQUIRE(minimizer.minimumProofKnown());
         BOOST_CHECK_EQUAL(minimizer.getMinimumProof().size(), smallest_size);
     }
 }
 
-void test_findmin(ProofMinimizer & minimizer, MinimizationFixture & f)
+void test_findall(ProofMinimizer & minimizer, MinimizationFixture & f)
 {
-    test_minimize(minimizer, f, true);
+    test_minimize(minimizer, f, true, true);
+}
+
+void test_findminimal(ProofMinimizer & minimizer, MinimizationFixture & f)
+{
+    test_minimize(minimizer, f, true, false);
 }
 
 void test_shrink(ProofMinimizer & minimizer, MinimizationFixture & f)
 {
-    test_minimize(minimizer, f, false);
+    test_minimize(minimizer, f, false, false);
 }
 
 BOOST_AUTO_TEST_CASE(should_add_negbad)
@@ -336,13 +343,41 @@ BOOST_AUTO_TEST_CASE(marco_minimizer_trivial)
 {
     TrivialProofFixture f;
     MARCOMinimizer minimizer(f.vars, f.tr(), f.proof());
-    test_findmin(minimizer, f);
+    test_findall(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(marco_minimizer_nontrivial)
 {
     NonTrivialProofFixture f;
     MARCOMinimizer minimizer(f.vars, f.tr(), f.proof());
-    test_findmin(minimizer, f);
+    test_findall(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(sisi_minimizer_trivial)
+{
+    TrivialProofFixture f;
+    SISIMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findminimal(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(sisi_minimizer_nontrivial)
+{
+    NonTrivialProofFixture f;
+    SISIMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findminimal(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(brute_force_minimizer_trivial)
+{
+    TrivialProofFixture f;
+    BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findminimal(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(brute_force_minimizer_nontrivial)
+{
+    NonTrivialProofFixture f;
+    BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findminimal(minimizer, f);
 }
 

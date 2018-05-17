@@ -25,33 +25,51 @@
 
 namespace PME
 {
-    MISFinder::MISFinder(ConsecutionChecker & solver, ClauseID propertyClause)
-        : m_solver(solver),
-          m_property(propertyClause)
+    MISFinder::MISFinder(ConsecutionChecker & solver)
+        : m_solver(solver)
     { }
 
-    bool MISFinder::containsProperty(const ClauseIDVec & vec) const
+    bool MISFinder::contains(const ClauseIDVec & vec, ClauseID id) const
     {
-        return std::find(vec.begin(), vec.end(), m_property) != vec.end();
+        return std::find(vec.begin(), vec.end(), id) != vec.end();
     }
 
-    bool MISFinder::isSafeInductive(const ClauseIDVec & vec)
+    bool MISFinder::containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const
     {
-        return containsProperty(vec) && m_solver.isInductive(vec);
+        for (ClauseID id : props)
+        {
+            if (!contains(vec, id))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
-    bool MISFinder::findSafeMIS(ClauseIDVec & vec)
+    bool MISFinder::isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props)
+    {
+        return containsAllOf(vec, props) && m_solver.isInductive(vec);
+    }
+
+    bool MISFinder::findSafeMIS(ClauseIDVec & vec, ClauseID property)
+    {
+        ClauseIDVec nec;
+        nec.push_back(property);
+        return findSafeMIS(vec, nec);
+    }
+
+    bool MISFinder::findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec)
     {
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
 
         // Check if the seed is unsafe
-        if (!containsProperty(vec))
+        if (!containsAllOf(vec, nec))
         {
             return false;
         }
 
-        if (isSafeInductive(vec)) { return true; }
+        if (isSafeInductive(vec, nec)) { return true; }
 
         // Remove all clauses that are non-inductive
         // TODO simple optimization: remove clauses that are satisfied
@@ -66,7 +84,7 @@ namespace PME
                 ClauseID id = vec.at(i);
                 if (!m_solver.solve(vec, id))
                 {
-                    if (id == m_property) { return false; }
+                    if (contains(nec, id)) { return false; }
                     removed = true;
                     vec.erase(vec.begin() + i);
                 }

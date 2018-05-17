@@ -19,28 +19,26 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MIS_FINDER_H_INCLUDED
-#define MIS_FINDER_H_INCLUDED
+#ifndef BRUTE_FORCE_H_INCLUDED
+#define BRUTE_FORCE_H_INCLUDED
 
-#include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
-#include "pme/engine/consecution_checker.h"
+#include "pme/minimization/minimization.h"
+#include "pme/minimization/sisi.h"
 
 namespace PME
 {
-    class MISFinder
+    class BruteForceMinimizer : public ProofMinimizer
     {
         public:
-            MISFinder(ConsecutionChecker & solver);
-            bool findSafeMIS(ClauseIDVec & vec, ClauseID property);
-            bool findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec);
+            BruteForceMinimizer(VariableManager & vars,
+                               const TransitionRelation & tr,
+                               const ClauseVec & proof);
+            void minimize() override;
 
         private:
-            ConsecutionChecker & m_solver;
-
-            bool contains(const ClauseIDVec & vec, ClauseID id) const;
-            bool containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const;
-            bool isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props);
+            void initSolver();
+            ConsecutionChecker m_indSolver;
+            SISI m_sisi;
     };
 }
 

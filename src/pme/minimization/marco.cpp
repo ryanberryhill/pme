@@ -223,8 +223,8 @@ namespace PME
     {
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
-        MISFinder finder(m_indSolver, propertyID());
-        return finder.findSafeMIS(seed);
+        MISFinder finder(m_indSolver);
+        return finder.findSafeMIS(seed, propertyID());
     }
 
     MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexplored()
