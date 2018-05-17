@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <cassert>
+#include <set>
 
 namespace SAT
 {
@@ -70,7 +71,7 @@ namespace SAT
         m_solver->addClause(mcls);
     }
 
-    bool MinisatSolver::doSolve(const Cube & assumps)
+    bool MinisatSolver::doSolve(const Cube & assumps, Cube * crits)
     {
         Minisat::vec<Minisat::Lit> mvec;
         for (Literal lit : assumps)
@@ -86,6 +87,26 @@ namespace SAT
             const Minisat::Lit & lit = *it;
             Literal l = fromMinisat(lit);
             addToTrail(l);
+        }
+
+        if (!result && crits != nullptr)
+        {
+            crits->clear();
+            std::set<Literal> assump_set(assumps.begin(), assumps.end());
+            const Minisat::LSet & conflict = m_solver->conflict;
+            for (int i = 0; i < conflict.size(); ++i)
+            {
+                Minisat::Lit mlit = conflict[i];
+                Literal lit = fromMinisat(mlit);
+
+                // We need to negate the literal to get the original assumption
+                // because it came from the conflict clause
+                lit = negate(lit);
+                if (assump_set.count(lit) > 0)
+                {
+                    crits->push_back(lit);
+                }
+            }
         }
 
         return result;
@@ -127,7 +148,7 @@ namespace SAT
         m_solver->addClause(mcls);
     }
 
-    bool MinisatSimplifyingSolver::doSolve(const Cube & assumps)
+    bool MinisatSimplifyingSolver::doSolve(const Cube & assumps, Cube * crits)
     {
         Minisat::vec<Minisat::Lit> mvec;
         for (Literal lit : assumps)
@@ -144,6 +165,26 @@ namespace SAT
             const Minisat::Lit & lit = *it;
             Literal l = fromMinisat(lit);
             addToTrail(l);
+        }
+
+        if (!result && crits != nullptr)
+        {
+            crits->clear();
+            std::set<Literal> assump_set(assumps.begin(), assumps.end());
+            const Minisat::LSet & conflict = m_solver->conflict;
+            for (int i = 0; i < conflict.size(); ++i)
+            {
+                Minisat::Lit mlit = conflict[i];
+                Literal lit = fromMinisat(mlit);
+
+                // We need to negate the literal to get the original assumption
+                // because it came from the conflict clause
+                lit = negate(lit);
+                if (assump_set.count(lit) > 0)
+                {
+                    crits->push_back(lit);
+                }
+            }
         }
 
         return result;

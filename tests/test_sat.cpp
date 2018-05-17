@@ -129,6 +129,36 @@ BOOST_AUTO_TEST_CASE(get_assignment)
     }
 }
 
+BOOST_AUTO_TEST_CASE(critical_assumptions)
+{
+    SATFixture f;
+    for (auto & slv : f.solvers)
+    {
+        Variable a = slv->newVariable();
+        Variable b = slv->newVariable();
+        Variable c = slv->newVariable();
+        Variable d = slv->newVariable();
+
+        slv->addClause({a, b, c, d});
+        slv->addClause({negate(a), negate(b), negate(c), negate(d)});
+        slv->addClause({negate(c), d});
+
+        Cube assumps = { a, b, c, d };
+        Cube crits;
+        BOOST_REQUIRE(!slv->solve(assumps, &crits));
+
+        // Criticals are sufficient to prove UNSAT
+        BOOST_CHECK(!crits.empty());
+        BOOST_CHECK(!slv->solve(crits));
+
+        // Each critical should be from the assumptions
+        for (Literal l : crits)
+        {
+            BOOST_CHECK(std::find(assumps.begin(), assumps.end(), l) != assumps.end());
+        }
+    }
+}
+
 BOOST_AUTO_TEST_CASE(clause_iterators)
 {
     SATFixture f;

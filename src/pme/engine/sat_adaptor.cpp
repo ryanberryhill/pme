@@ -23,6 +23,7 @@
 #include "pme/engine/sat_adaptor.h"
 
 #include <cassert>
+#include <algorithm>
 
 namespace PME
 {
@@ -134,9 +135,9 @@ namespace PME
         return groupSolve(GROUP_NULL, empty_assumps);
     }
 
-    bool SATAdaptor::solve(const Cube & assumps)
+    bool SATAdaptor::solve(const Cube & assumps, Cube * crits)
     {
-        return groupSolve(GROUP_NULL, assumps);
+        return groupSolve(GROUP_NULL, assumps, crits);
     }
 
     bool SATAdaptor::groupSolve(GroupID group)
@@ -145,7 +146,7 @@ namespace PME
         return groupSolve(group, empty_assumps);
     }
 
-    bool SATAdaptor::groupSolve(GroupID group, const Cube & assumps)
+    bool SATAdaptor::groupSolve(GroupID group, const Cube & assumps, Cube * crits)
     {
         SAT::Cube satassumps;
         for (ID lit : assumps)
@@ -160,7 +161,21 @@ namespace PME
             satassumps.push_back(group);
         }
 
-        return m_solver->solve(satassumps);
+        SAT::Cube satcrits;
+        bool sat = m_solver->solve(satassumps, crits ? &satcrits : nullptr);
+
+        if (!sat && crits != nullptr)
+        {
+            crits->reserve(satcrits.size());
+            for (SAT::Literal satlit : satcrits)
+            {
+                ID lit = fromSAT(satlit);
+                assert(std::find(assumps.begin(), assumps.end(), lit) != assumps.end());
+                crits->push_back(lit);
+            }
+        }
+
+        return sat;
     }
 
     bool SATAdaptor::isSAT() const

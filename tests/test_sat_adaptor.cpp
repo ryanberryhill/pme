@@ -113,6 +113,34 @@ BOOST_AUTO_TEST_CASE(three_var)
     }
 }
 
+BOOST_AUTO_TEST_CASE(critical_assumptions)
+{
+    for (SATBackend backend : backends)
+    {
+        SATAdaptor slv(backend);
+
+        ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR, d = c + ID_INCR;
+
+        slv.addClause({a, b, c, d});
+        slv.addClause({negate(a), negate(b), negate(c), negate(d)});
+        slv.addClause({negate(c), d});
+
+        Cube assumps = { a, b, c, d };
+        Cube crits;
+        BOOST_REQUIRE(!slv.solve(assumps, &crits));
+
+        // Criticals are sufficient to prove UNSAT
+        BOOST_CHECK(!crits.empty());
+        BOOST_CHECK(!slv.solve(crits));
+
+        // Each critical should be from the assumptions
+        for (ID l : crits)
+        {
+            BOOST_CHECK(std::find(assumps.begin(), assumps.end(), l) != assumps.end());
+        }
+    }
+}
+
 BOOST_AUTO_TEST_CASE(simplify)
 {
     for (SATBackend backend : backends)

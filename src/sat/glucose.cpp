@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <cassert>
+#include <set>
 
 namespace SAT
 {
@@ -65,7 +66,7 @@ namespace SAT
         m_solver->addClause(mcls);
     }
 
-    bool GlucoseSolver::doSolve(const Cube & assumps)
+    bool GlucoseSolver::doSolve(const Cube & assumps, Cube * crits)
     {
         Glucose::vec<Glucose::Lit> mvec;
         for (Literal lit : assumps)
@@ -74,6 +75,26 @@ namespace SAT
         }
 
         bool result = m_solver->solve(mvec);
+
+        if (!result && crits != nullptr)
+        {
+            crits->clear();
+            std::set<Literal> assump_set(assumps.begin(), assumps.end());
+            const Glucose::vec<Glucose::Lit> & conflict = m_solver->conflict;
+            for (int i = 0; i < conflict.size(); ++i)
+            {
+                Glucose::Lit glit = conflict[i];
+                Literal lit = fromMinisat(glit);
+
+                // We need to negate the literal to get the original assumption
+                // because it came from the conflict clause.
+                lit = negate(lit);
+                if (assump_set.count(lit) > 0)
+                {
+                    crits->push_back(lit);
+                }
+            }
+        }
 
         return result;
     }

@@ -47,9 +47,9 @@ namespace PME
             void addClause(const Clause & cls);
             void addClauses(const ClauseVec & vec);
             bool solve();
-            bool solve(const Cube & assumps);
+            bool solve(const Cube & assumps, Cube * crits = nullptr);
             bool groupSolve(GroupID group);
-            bool groupSolve(GroupID group, const Cube & assumps);
+            bool groupSolve(GroupID group, const Cube & assumps, Cube * crits = nullptr);
             bool isSAT() const;
             ModelValue getAssignment(ID lit) const;
             ModelValue getAssignmentToVar(ID var) const;

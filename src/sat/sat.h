@@ -73,7 +73,7 @@ namespace SAT
             virtual ~Solver() { }
             virtual Variable newVariable() = 0;
             virtual void addClause(const Clause & cls) = 0;
-            virtual bool solve(const Cube & assumps) = 0;
+            virtual bool solve(const Cube & assumps, Cube * crits = NULL) = 0;
             virtual ModelValue getAssignment(Variable v) const = 0;
             virtual bool isSAT() const = 0;
             virtual clause_iterator begin_clauses() const = 0;
@@ -92,7 +92,7 @@ namespace SAT
             virtual ~MinisatStyleSolver() { };
             Variable newVariable() override;
             void addClause(const Clause & cls) override;
-            bool solve(const Cube & assumps) override;
+            bool solve(const Cube & assumps, Cube * crits = nullptr) override;
             bool isSAT() const override;
 
             clause_iterator begin_clauses() const override;
@@ -103,7 +103,7 @@ namespace SAT
         protected:
             virtual void sendClauseToSolver(const Clause& cls) = 0;
             virtual Variable createSolverVariable() = 0;
-            virtual bool doSolve(const Cube & assumps) = 0;
+            virtual bool doSolve(const Cube & assumps, Cube * crits) = 0;
 
             MLit toMinisat(Literal lit) const;
             Literal fromMinisat(const MLit & lit) const;
@@ -138,7 +138,7 @@ namespace SAT
         protected:
             void sendClauseToSolver(const Clause& cls) override;
             Variable createSolverVariable() override;
-            bool doSolve(const Cube & assumps) override;
+            bool doSolve(const Cube & assumps, Cube * crits) override;
 
         private:
             std::unique_ptr<Minisat::Solver> m_solver;
@@ -156,7 +156,7 @@ namespace SAT
         protected:
             void sendClauseToSolver(const Clause& cls) override;
             Variable createSolverVariable() override;
-            bool doSolve(const Cube & assumps) override;
+            bool doSolve(const Cube & assumps, Cube * crits) override;
 
         private:
             std::unique_ptr<Minisat::SimpSolver> m_solver;
@@ -174,7 +174,7 @@ namespace SAT
         protected:
             void sendClauseToSolver(const Clause& cls) override;
             Variable createSolverVariable() override;
-            bool doSolve(const Cube & assumps) override;
+            bool doSolve(const Cube & assumps, Cube * crits) override;
 
         private:
             std::unique_ptr<Glucose::Solver> m_solver;

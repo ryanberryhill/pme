@@ -86,9 +86,9 @@ namespace SAT
     }
 
     template<typename MLit, typename MVar>
-    bool MinisatStyleSolver<MLit, MVar>::solve(const Cube & assumps)
+    bool MinisatStyleSolver<MLit, MVar>::solve(const Cube & assumps, Cube * crits)
     {
-        bool result = doSolve(assumps);
+        bool result = doSolve(assumps, crits);
         m_lastResult = result ? SAT : UNSAT;
         return result;
     }
