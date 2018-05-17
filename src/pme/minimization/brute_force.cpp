@@ -45,7 +45,11 @@ namespace PME
     void BruteForceMinimizer::minimize()
     {
         // FEAS = { all }
-        for (ClauseID id = 0; id < numClauses(); ++id) { m_sisi.addToFEAS(id); }
+        for (ClauseID id = 0; id < numClauses(); ++id)
+        {
+            m_sisi.addToFEAS(id);
+            m_sisi.addClause(id);
+        }
         // NEC = { ~Bad }
         m_sisi.addToNEC(propertyID());
 

@@ -78,10 +78,11 @@ namespace PME
                 ClauseID cls = *it;
                 if (known_ind.count(cls) > 0) { continue; }
 
-                ClauseIDVec support;
                 std::vector<ClauseID> feas_vec(m_feas.begin(), m_feas.end());
-                if (!m_indSolver.supportSolve(feas_vec, cls, support))
+                if (!m_indSolver.solve(feas_vec, cls))
                 {
+                    ClauseIDVec support;
+                    m_indSolver.supportSolve(m_all, cls, support);
                     minimizeSupport(support, cls);
                     size_t old_size = m_feas.size();
                     m_feas.insert(support.begin(), support.end());
@@ -154,6 +155,11 @@ namespace PME
         m_nec.insert(id);
     }
 
+    void SISI::addClause(ClauseID id)
+    {
+        m_all.push_back(id);
+    }
+
     //
     // Minimizer
     //
@@ -181,7 +187,11 @@ namespace PME
     void SISIMinimizer::minimize()
     {
         // FEAS = { all }
-        for (ClauseID id = 0; id < numClauses(); ++id) { m_sisi.addToFEAS(id); }
+        for (ClauseID id = 0; id < numClauses(); ++id)
+        {
+            m_sisi.addToFEAS(id);
+            m_sisi.addClause(id);
+        }
         // NEC = { ~Bad }
         m_sisi.addToNEC(propertyID());
 

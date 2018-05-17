@@ -43,10 +43,12 @@ namespace PME
             void minimizeSupport(ClauseIDVec & vec, ClauseID cls);
             void addToFEAS(ClauseID id);
             void addToNEC(ClauseID id);
+            void addClause(ClauseID id);
 
         private:
             ConsecutionChecker & m_indSolver;
             std::set<ClauseID> m_nec, m_feas;
+            ClauseIDVec m_all;
     };
 
     class SISIMinimizer : public ProofMinimizer
