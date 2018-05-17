@@ -111,7 +111,7 @@ void report_run(void * pme, const char * name)
 
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
-int g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin, g_sisi;
+int g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_checkmin = 0;
 
 int main(int argc, char ** argv)
 {
@@ -123,13 +123,14 @@ int main(int argc, char ** argv)
     int option_index = 0;
 
     static struct option long_opts[] = {
-            {"check",   no_argument, &g_check,   1 },
-            {"marco",   no_argument, &g_marco,   1 },
-            {"camsis",  no_argument, &g_camsis,  1 },
-            {"sisi",    no_argument, &g_sisi,    1 },
-            {"bfmin",   no_argument, &g_bfmin,   1 },
-            {"help",    no_argument, 0,         'h'},
-            {0,         0,           0,          0 }
+            {"check",           no_argument, &g_check,      1 },
+            {"check-minimal",   no_argument, &g_checkmin,   1 },
+            {"marco",           no_argument, &g_marco,      1 },
+            {"camsis",          no_argument, &g_camsis,     1 },
+            {"sisi",            no_argument, &g_sisi,       1 },
+            {"bfmin",           no_argument, &g_bfmin,      1 },
+            {"help",            no_argument, 0,            'h'},
+            {0,                 0,           0,             0 }
     };
 
     // Parse flags
@@ -245,10 +246,46 @@ int main(int argc, char ** argv)
         }
     }
 
+    if (g_checkmin)
+    {
+        int bfmin_ok = cpme_run_bfmin(pme);
+        // Add one because the proofs don't contain the property clause
+        // but we will add it
+        size_t virtual_size = proof_size + 1;
+
+        if (bfmin_ok < 0)
+        {
+            fprintf(stderr, "Error running brute force minimization\n");
+            return EXIT_FAILURE;
+        }
+
+        size_t num_proofs = cpme_num_proofs(pme);
+        assert(num_proofs == 1);
+
+        void * min_proof = cpme_get_proof(pme, 0);
+        size_t min_size = cpme_proof_num_clauses(min_proof);
+
+        assert(min_size <= virtual_size);
+
+        if (min_size < virtual_size)
+        {
+            printf("The proof (size %lu) is non-minimal. "
+                   "A proof with %lu clauses was found.\n", proof_size, min_size);
+            return EXIT_FAILURE;
+        }
+        else
+        {
+            printf("The proof (size %lu) is minimal.\n", proof_size);
+            return EXIT_SUCCESS;
+        }
+
+        cpme_free_proof(min_proof);
+    }
+
     if (g_bfmin)
     {
-        int sisi_ok = cpme_run_bfmin(pme);
-        if (sisi_ok < 0)
+        int bfmin_ok = cpme_run_bfmin(pme);
+        if (bfmin_ok < 0)
         {
             fprintf(stderr, "Error running brute force minimization\n");
             return EXIT_FAILURE;
