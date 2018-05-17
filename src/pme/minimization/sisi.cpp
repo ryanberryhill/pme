@@ -71,6 +71,7 @@ namespace PME
 
         std::set<ClauseID> known_ind;
 
+        std::vector<ClauseID> feas_vec(m_feas.begin(), m_feas.end());
         while (known_ind.size() < m_feas.size())
         {
             for (auto it = m_feas.begin(); it != m_feas.end(); ++it)
@@ -78,7 +79,6 @@ namespace PME
                 ClauseID cls = *it;
                 if (known_ind.count(cls) > 0) { continue; }
 
-                std::vector<ClauseID> feas_vec(m_feas.begin(), m_feas.end());
                 if (!m_indSolver.solve(feas_vec, cls))
                 {
                     ClauseIDVec support;
@@ -89,6 +89,10 @@ namespace PME
                     size_t new_size = m_feas.size();
                     assert(new_size > old_size);
                     it = m_feas.begin();
+
+                    feas_vec.clear();
+                    feas_vec.reserve(m_feas.size());
+                    feas_vec.insert(feas_vec.end(), m_feas.begin(), m_feas.end());
                 }
 
                 known_ind.insert(cls);

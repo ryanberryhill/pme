@@ -23,6 +23,8 @@
 #include "pme/engine/engine.h"
 #include "pme/util/proof_checker.h"
 #include "pme/minimization/marco.h"
+#include "pme/minimization/sisi.h"
+#include "pme/minimization/brute_force.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -63,6 +65,12 @@ namespace PME
                 break;
             case PME_MINIMIZATION_CAMSIS:
                 throw std::logic_error("CAMSIS is not implemented");
+                break;
+            case PME_MINIMIZATION_SISI:
+                m_minimizer.reset(new SISIMinimizer(m_vars, m_tr, m_proof));
+                break;
+            case PME_MINIMIZATION_BRUTEFORCE:
+                m_minimizer.reset(new BruteForceMinimizer(m_vars, m_tr, m_proof));
                 break;
             default:
                 throw std::logic_error("Unknown minimization algorithm");

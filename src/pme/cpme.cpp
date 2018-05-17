@@ -144,6 +144,38 @@ int cpme_run_marco(void * pme)
     }
 }
 
+int cpme_run_sisi(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->minimize(PME_MINIMIZATION_SISI);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
+int cpme_run_bfmin(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->minimize(PME_MINIMIZATION_BRUTEFORCE);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 size_t cpme_num_proofs(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

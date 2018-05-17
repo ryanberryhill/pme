@@ -89,9 +89,29 @@ void parse_proof(void * proof, FILE * proof_file)
     }
 }
 
+void report_run(void * pme, const char * name)
+{
+    size_t num_proofs = cpme_num_proofs(pme);
+    size_t largest = 0;
+    size_t smallest = UINT_MAX;
+    for (size_t i = 0; i < num_proofs; ++i)
+    {
+        void * min_proof = cpme_get_proof(pme, i);
+        unsigned current = cpme_proof_num_clauses(min_proof);
+
+        if (current > largest) { largest = current; }
+        if (current < smallest) { smallest = current; }
+
+        cpme_free_proof(min_proof);
+    }
+
+    printf("Found %lu minimal proof(s) of size %lu-%lu with %s\n",
+            num_proofs, smallest, largest, name);
+}
+
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
-int g_check = 0, g_marco = 0, g_camsis = 0;
+int g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin, g_sisi;
 
 int main(int argc, char ** argv)
 {
@@ -106,6 +126,8 @@ int main(int argc, char ** argv)
             {"check",   no_argument, &g_check,   1 },
             {"marco",   no_argument, &g_marco,   1 },
             {"camsis",  no_argument, &g_camsis,  1 },
+            {"sisi",    no_argument, &g_sisi,    1 },
+            {"bfmin",   no_argument, &g_bfmin,   1 },
             {"help",    no_argument, 0,         'h'},
             {0,         0,           0,          0 }
     };
@@ -223,6 +245,30 @@ int main(int argc, char ** argv)
         }
     }
 
+    if (g_bfmin)
+    {
+        int sisi_ok = cpme_run_bfmin(pme);
+        if (sisi_ok < 0)
+        {
+            fprintf(stderr, "Error running brute force minimization\n");
+            return EXIT_FAILURE;
+        }
+
+        report_run(pme, "BFMIN");
+    }
+
+    if (g_sisi)
+    {
+        int sisi_ok = cpme_run_sisi(pme);
+        if (sisi_ok < 0)
+        {
+            fprintf(stderr, "Error running SISI\n");
+            return EXIT_FAILURE;
+        }
+
+        report_run(pme, "SISI");
+    }
+
     if (g_marco)
     {
         int marco_ok = cpme_run_marco(pme);
@@ -232,22 +278,7 @@ int main(int argc, char ** argv)
             return EXIT_FAILURE;
         }
 
-        size_t num_proofs = cpme_num_proofs(pme);
-        size_t largest = 0;
-        size_t smallest = UINT_MAX;
-        for (size_t i = 0; i < num_proofs; ++i)
-        {
-            void * min_proof = cpme_get_proof(pme, i);
-            unsigned current = cpme_proof_num_clauses(min_proof);
-
-            if (current > largest) { largest = current; }
-            if (current < smallest) { smallest = current; }
-
-            cpme_free_proof(min_proof);
-        }
-
-        printf("Found %lu minimal proof(s) of size %lu-%lu with MARCO\n",
-                num_proofs, smallest, largest);
+        report_run(pme, "MARCO");
     }
 
     // Clean up the PME library
