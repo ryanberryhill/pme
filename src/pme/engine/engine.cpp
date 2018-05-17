@@ -103,16 +103,33 @@ namespace PME
 
     ExternalClauseVec Engine::getProofExternal(size_t i) const
     {
-        ExternalClauseVec vec;
-        vec = m_tr.makeExternal(getProof(i));
+        ClauseVec proof = getProof(i);
+
+        removeProperty(proof);
+
+        ExternalClauseVec vec = m_tr.makeExternal(proof);
         return vec;
     }
 
     ExternalClauseVec Engine::getMinimumProofExternal() const
     {
-        ExternalClauseVec vec;
-        vec = m_tr.makeExternal(getMinimumProof());
+        ClauseVec proof = getMinimumProof();
+        removeProperty(proof);
+        ExternalClauseVec vec = m_tr.makeExternal(proof);
         return vec;
+    }
+
+    void Engine::removeProperty(ClauseVec & proof) const
+    {
+        for (unsigned i = 0; i < proof.size(); ++i)
+        {
+            const Clause & cls = proof.at(i);
+            if (cls == m_tr.propertyClause())
+            {
+                proof.erase(proof.begin() + i);
+                break;
+            }
+        }
     }
 }
 

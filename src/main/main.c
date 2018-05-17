@@ -97,7 +97,7 @@ void report_run(void * pme, const char * name)
     for (size_t i = 0; i < num_proofs; ++i)
     {
         void * min_proof = cpme_get_proof(pme, i);
-        unsigned current = cpme_proof_num_clauses(min_proof);
+        size_t current = cpme_proof_num_clauses(min_proof);
 
         if (current > largest) { largest = current; }
         if (current < smallest) { smallest = current; }
@@ -109,9 +109,59 @@ void report_run(void * pme, const char * name)
             num_proofs, smallest, largest, name);
 }
 
+void save_proof(void * pme, size_t pindex, const char * filepath)
+{
+    FILE * fp = fopen(filepath, "w");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "Couldn't open %s for writing\n", filepath);
+        return;
+    }
+
+    void * proof = cpme_get_proof(pme, pindex);
+    size_t size = cpme_proof_num_clauses(proof);
+    for (size_t i = 0; i < size; ++i)
+    {
+        size_t cls_size = cpme_proof_clause_size(proof, i);
+        for (size_t j = 0; j < cls_size; ++j)
+        {
+            char last = j == (cls_size - 1);
+            unsigned lit = cpme_proof_lit(proof, i, j);
+            fprintf(fp, "%u%s", lit, last ? "" : " ");
+        }
+        fprintf(fp, "\n");
+    }
+
+    fclose(fp);
+
+    cpme_free_proof(proof);
+}
+
+char g_save_path[512];
+
+void save_proofs(void * pme, char * name)
+{
+    char filepath[1024];
+
+    unsigned num_proofs = cpme_num_proofs(pme);
+    for (size_t i = 0; i < num_proofs; ++i)
+    {
+        size_t len = snprintf(filepath, sizeof(filepath),
+                              "%s.%s%lu.pme", g_save_path, name, i);
+        if (len >= sizeof(filepath))
+        {
+            fprintf(stderr, "Filepath ``%s...'' is too long\n", filepath);
+            continue;
+        }
+
+        save_proof(pme, i, filepath);
+    }
+}
+
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
 int g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_checkmin = 0;
+int g_saveproofs = 0;
 
 int main(int argc, char ** argv)
 {
@@ -123,14 +173,15 @@ int main(int argc, char ** argv)
     int option_index = 0;
 
     static struct option long_opts[] = {
-            {"check",           no_argument, &g_check,      1 },
-            {"check-minimal",   no_argument, &g_checkmin,   1 },
-            {"marco",           no_argument, &g_marco,      1 },
-            {"camsis",          no_argument, &g_camsis,     1 },
-            {"sisi",            no_argument, &g_sisi,       1 },
-            {"bfmin",           no_argument, &g_bfmin,      1 },
-            {"help",            no_argument, 0,            'h'},
-            {0,                 0,           0,             0 }
+            {"check",           no_argument,        &g_check,      1 },
+            {"check-minimal",   no_argument,        &g_checkmin,   1 },
+            {"save-proofs",     required_argument,  &g_saveproofs, 1 },
+            {"marco",           no_argument,        &g_marco,      1 },
+            {"camsis",          no_argument,        &g_camsis,     1 },
+            {"sisi",            no_argument,        &g_sisi,       1 },
+            {"bfmin",           no_argument,        &g_bfmin,      1 },
+            {"help",            no_argument,        0,            'h'},
+            {0,                 0,                  0,             0 }
     };
 
     // Parse flags
@@ -139,6 +190,18 @@ int main(int argc, char ** argv)
         switch(option)
         {
             case 0:
+                if (strcmp(long_opts[option_index].name, "save-proofs") == 0)
+                {
+                    if (strlen(optarg) >= sizeof(g_save_path))
+                    {
+                        fprintf(stderr, "argument to save-proofs is too long\n");
+                        return EXIT_FAILURE;
+                    }
+                    else
+                    {
+                        strncpy(g_save_path, optarg, sizeof(g_save_path));
+                    }
+                }
                 break;
             case 'v':
                 verbosity++;
@@ -249,9 +312,6 @@ int main(int argc, char ** argv)
     if (g_checkmin)
     {
         int bfmin_ok = cpme_run_bfmin(pme);
-        // Add one because the proofs don't contain the property clause
-        // but we will add it
-        size_t virtual_size = proof_size + 1;
 
         if (bfmin_ok < 0)
         {
@@ -265,9 +325,9 @@ int main(int argc, char ** argv)
         void * min_proof = cpme_get_proof(pme, 0);
         size_t min_size = cpme_proof_num_clauses(min_proof);
 
-        assert(min_size <= virtual_size);
+        assert(min_size <= proof_size);
 
-        if (min_size < virtual_size)
+        if (min_size < proof_size)
         {
             printf("The proof (size %lu) is non-minimal. "
                    "A proof with %lu clauses was found.\n", proof_size, min_size);
@@ -292,6 +352,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "BFMIN");
+
+        if (g_saveproofs)
+        {
+            save_proofs(pme, "bfmin");
+        }
     }
 
     if (g_sisi)

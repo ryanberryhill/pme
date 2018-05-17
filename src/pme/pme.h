@@ -46,7 +46,7 @@ int cpme_free_proof(void * proof);
 
 size_t cpme_proof_num_clauses(void * proof);
 size_t cpme_proof_clause_size(void * proof, size_t n);
-size_t cpme_proof_lit(void * proof, size_t cls, size_t n);
+unsigned cpme_proof_lit(void * proof, size_t cls, size_t n);
 
 size_t cpme_num_proofs(void * pme);
 void * cpme_get_proof(void * pme, size_t i);

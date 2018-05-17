@@ -213,7 +213,7 @@ size_t cpme_proof_clause_size(void * proof, size_t n)
     return p->at(n).size();
 }
 
-size_t cpme_proof_lit(void * proof, size_t cls, size_t n)
+unsigned cpme_proof_lit(void * proof, size_t cls, size_t n)
 {
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
     assert(p);

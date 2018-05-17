@@ -55,6 +55,8 @@ namespace PME
             TransitionRelation m_tr;
             ClauseVec m_proof;
             std::unique_ptr<ProofMinimizer> m_minimizer;
+
+            void removeProperty(ClauseVec & proof) const;
     };
 }
 
