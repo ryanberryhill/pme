@@ -1,0 +1,132 @@
+#!/bin/bash
+
+
+PME=./pme
+tmpdir=$(mktemp -d)
+
+VALGRIND=
+VALGRIND_COMMAND="valgrind --tool=memcheck --leak-check=full --error-exitcode=1"
+tests_passed=0
+tests_failed=0
+
+POSITIONAL=()
+while [[ $# -gt 0 ]] ; do
+    key="$1"
+
+    case $key in
+        --valgrind)
+        VALGRIND=$VALGRIND_COMMAND
+        shift
+        ;;
+        *)    # unknown option
+        POSITIONAL+=("$1")
+        shift
+        ;;
+    esac
+done
+set -- "${POSITIONAL[@]}" #
+
+function integration() {
+    name=$1 ; shift
+    errors=0
+    for aig_file in examples/*.aig; do
+        prefix=${aig_file%.*}
+        aig_name=${prefix##*/}
+        aig_tmpdir=$tmpdir/$name/$aig_name
+
+        mkdir -p $aig_tmpdir
+
+        for pme_file in $prefix.*.pme ; do
+            # Skip AIGs for which we don't have any proofs
+            [ -f "$pme_file" ] || break
+            pme_name=${pme_file%.*}
+            pme_name=${pme_name##*/}
+            pme_tmpdir=$tmpdir/$name/$aig_name/$pme_name
+
+            mkdir -p $pme_tmpdir
+
+            logfile=$pme_tmpdir/pme.log
+
+            $VALGRIND \
+            $PME $@ \
+            --save-proofs $pme_tmpdir/integration $aig_file $pme_file \
+            > $logfile 2>&1
+
+            if (($? != 0)) ; then
+                echo "Error running PME for $pme_file: see $logfile for details"
+                errors=$((errors+1))
+            fi
+        done
+
+        non_proof=0
+        non_minimal=0
+        good_proof=0
+
+        for proof_file in $aig_tmpdir/**/*.pme ; do
+            # Skip if the pattern only matches literally *.pme, which means
+            # no proofs were generated.
+            [ -f "$proof_file" ] || break
+            $PME --check $aig_file $proof_file > /dev/null 2>&1
+            if (($? != 0)) ; then
+                non_proof=$((non_proof+1))
+                echo $proof_file is not a proof
+                continue
+            fi
+
+            $PME --check-minimal $aig_file $proof_file > /dev/null 2>&1
+            if (($? != 0)) ; then
+                non_minimal=$((non_minimal+1))
+                echo $proof_file is non-minimal
+                continue
+            fi
+
+            good_proof=$((good_proof+1))
+        done
+
+        if ((non_proof > 0)) || ((non_minimal > 0)) ; then
+            echo -n "Found $non_proof non-proofs and "
+            echo    "$non_minimal non-minimal proofs for $aig_file"
+            errors=$(($errors+1))
+        elif ((good_proof == 0)) ; then
+            echo No proofs were generated for $aig_file
+            errors=$(($errors+1))
+        else
+            echo All $good_proof proofs validated for $aig_file
+        fi
+    done
+
+    if ((errors > 0)) ; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+function run_test() {
+    name=$1 ; shift
+    args=$@
+    echo -n "Running test $name: "
+    integration $name $args > $tmpdir/$name.log
+
+    if [ $? -eq 0 ] ; then
+        echo passed
+        tests_passed=$((tests_passed+1))
+    else
+        echo failed
+        tests_failed=$((tests_failed+1))
+    fi
+}
+
+run_test BRUTEFORCE --bfmin
+run_test SISI --sisi
+run_test MARCO --marco
+
+echo PASS: $tests_passed
+echo FAIL: $tests_failed
+
+if (($tests_failed > 0)) ; then
+    echo "Results are available in $tmpdir"
+else
+    rm -r $tmpdir
+fi
+

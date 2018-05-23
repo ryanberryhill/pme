@@ -1,0 +1,72 @@
+#!/bin/bash
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+bindir="@bindir@"
+
+CANONICALIZE="$bindir/pme-canonicalize"
+PME="$bindir/pme"
+PARSEPROOF="$bindir/parseproof"
+
+if (($# < 2)) ; then
+    echo USAGE $0 AIGFILE PMEFILE
+    exit 1
+fi
+
+aig_file=$1
+pme_file=$2
+pme_ident=${pme_file%.*}
+pme_ident=${pme_ident##*/}
+dstdir=${pme_file}.minimized
+tmpdir=$(mktemp -d)
+dst_pattern=${tmpdir}/${pme_ident}
+
+if [ -d $dstdir ] ; then
+    echo $dstdir already exits, refusing to run
+    exit 1
+fi
+
+echo Working in $tmpdir
+
+$PME --marco --save-proofs $dst_pattern $aig_file $pme_file
+
+echo Checking proofs
+
+non_proof=0
+non_minimal=0
+
+for proof in $tmpdir/*.pme ; do
+    $PME --check $aig_file $proof > /dev/null
+    if (($? != 0)) ; then
+        echo $proof is not a proof
+        non_proof=$((non_proof+1))
+        continue
+    fi
+
+    $PME --check-minimal $aig_file $proof > /dev/null
+    if (($? != 0)) ; then
+        echo $proof is non-minimal
+        non_minimal=$((non_minimal+1))
+        continue
+    fi
+done
+
+if (($non_proof > 0)) || (($non_minimal > 0)) ; then
+    echo $non_proof non-proofs found
+    echo $non_minimal non-minimal proofs found
+    echo Terminating
+    exit 1
+fi
+
+echo Canonicalizing proofs
+
+for proof in $tmpdir/* ; do
+    $CANONICALIZE $proof
+done
+
+echo Copying canonical proofs to $dstdir
+mkdir $dstdir
+mv $tmpdir/* $dstdir/
+
+rm -rf $tmpdir
+

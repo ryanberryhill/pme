@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SORT_LINES_AWK='{for(i=1; i<=NF; i++) c[i]=$i; n=asort(c);
+for (i=1; i<=n; i++) printf "%s%s", c[i], (i<n?OFS:RS); delete c}'
+
+pme_file=$1
+tmp_file=$(mktemp)
+
+awk "$SORT_LINES_AWK" $pme_file > $tmp_file
+sort $tmp_file -o $tmp_file
+mv $tmp_file $pme_file
+

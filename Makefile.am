@@ -6,6 +6,9 @@ AM_CFLAGS = -Wall -Werror
 
 ACLOCAL_AMFLAGS = -I m4
 
+bin_SCRIPTS = scripts/pme-canonicalize
+noinst_SCRIPTS = scripts/run-integration scripts/make-golden
+
 noinst_LIBRARIES = libpme.a libsat.a
 
 libpme_a_SOURCES = src/aiger/aiger.h \

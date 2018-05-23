@@ -228,7 +228,8 @@ int main(int argc, char ** argv)
     }
 
     printf("pme version %s\n", cpme_version());
-    printf("Input file: %s\n", aig_path);
+    printf("Input AIG: %s\n", aig_path);
+    printf("Input proof: %s\n", proof_path);
 
     // Check if the AIG file is readable
     if (access(aig_path, R_OK) == -1)
@@ -369,6 +370,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "SISI");
+
+        if (g_saveproofs)
+        {
+            save_proofs(pme, "sisi");
+        }
     }
 
     if (g_marco)
@@ -381,6 +387,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "MARCO");
+
+        if (g_saveproofs)
+        {
+            save_proofs(pme, "marco");
+        }
     }
 
     // Clean up the PME library
