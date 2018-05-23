@@ -192,7 +192,9 @@ echo FAIL: $tests_failed
 
 if (($tests_failed > 0)) ; then
     echo "Results are available in $tmpdir"
+    exit 1
 else
     rm -r $tmpdir
 fi
+exit 0
 

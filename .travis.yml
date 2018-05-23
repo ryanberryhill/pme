@@ -4,7 +4,12 @@ dist: trusty
 sudo: required
 script:
     - autoreconf -fvi
-    - ./configure && make && make check && make check-valgrind
+    - > ./configure && 
+        make && 
+        make check && 
+        make check-valgrind && 
+        scripts/run-integration && 
+        scripts/run-integration --valgrind
 
 matrix:
   include:
