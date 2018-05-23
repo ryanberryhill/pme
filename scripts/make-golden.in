@@ -1,12 +1,8 @@
 #!/bin/bash
 
-prefix="@prefix@"
-exec_prefix="@exec_prefix@"
-bindir="@bindir@"
-
-CANONICALIZE="$bindir/pme-canonicalize"
-PME="$bindir/pme"
-PARSEPROOF="$bindir/parseproof"
+CANONICALIZE="scripts/pme-canonicalize"
+PME="./pme"
+PARSEPROOF="./parseproof"
 
 if (($# < 2)) ; then
     echo USAGE $0 AIGFILE PMEFILE

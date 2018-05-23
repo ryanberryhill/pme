@@ -2,6 +2,7 @@
 
 
 PME=./pme
+CANONICALIZE=scripts/pme-canonicalize
 tmpdir=$(mktemp -d)
 
 VALGRIND=
@@ -28,6 +29,12 @@ set -- "${POSITIONAL[@]}" #
 
 function integration() {
     name=$1 ; shift
+    all_msis_arg=$1
+    all_msis=0
+    if [ "$all_msis_arg" == "--all" ] ; then
+        all_msis=1
+        shift
+    fi
     errors=0
     for aig_file in examples/*.aig; do
         prefix=${aig_file%.*}
@@ -56,6 +63,52 @@ function integration() {
                 echo "Error running PME for $pme_file: see $logfile for details"
                 errors=$((errors+1))
             fi
+
+            minimized_dir=$pme_file.minimized
+            golden_missing=0
+            integration_missing=0
+            if [ -d $minimized_dir ] ; then
+                echo Checking golden result for $pme_file versus $minimized_dir
+
+                # Always check that the proof we found is in the golden result
+                for integration_file in $pme_tmpdir/*.pme ; do
+                    $CANONICALIZE $integration_file
+                    integration_sha=$(sha1sum $integration_file | cut -f1 -d' ')
+                    find $minimized_dir -type f -name "*.pme" \
+                        -exec sha1sum {} + \
+                        | grep "^$integration_sha" > /dev/null
+                    if [ $? -ne 0 ] ; then
+                        echo $integration_file is not in the golden result
+                        errors=$((errors+1))
+                        integration_missing=$((integration_missing+1))
+                    fi
+                done
+
+                # For all-msis algorithms, check that each golden proof was
+                # found
+                if (($all_msis != 0)) ; then
+                    for golden_file in $minimized_dir/*.pme ; do
+                        golden_sha=$(sha1sum $golden_file | cut -f1 -d' ')
+                        find $pme_tmpdir -type f -name "*.pme" \
+                            -exec sha1sum {} + \
+                            | grep "^$golden_sha" > /dev/null
+                        if [ $? -ne 0 ] ; then
+                            echo $golden_file is not in the integration test result
+                            errors=$((errors+1))
+                            golden_missing=$((golden_missing+1))
+                        fi
+                    done
+                fi
+
+                if ((golden_missing > 0)) || ((integration_missing > 0)) ; then
+                    echo "Golden result is missing $integration_missing proofs"
+                    echo "Test result is missing $golden_missing proofs"
+                else
+                    echo "Golden result matches"
+                fi
+            else
+                echo No golden result for $pme_file
+            fi
         done
 
         non_proof=0
@@ -83,18 +136,19 @@ function integration() {
             good_proof=$((good_proof+1))
         done
 
-        # TODO check against golden results, if any
-
         if ((non_proof > 0)) || ((non_minimal > 0)) ; then
             echo -n "Found $non_proof non-proofs and "
             echo    "$non_minimal non-minimal proofs for $aig_file"
             errors=$(($errors+1))
+            continue
         elif ((good_proof == 0)) ; then
             echo No proofs were generated for $aig_file
             errors=$(($errors+1))
+            continue
         else
             echo All $good_proof proofs validated for $aig_file
         fi
+
     done
 
     if ((errors > 0)) ; then
@@ -119,9 +173,19 @@ function run_test() {
     fi
 }
 
-run_test BRUTEFORCE --bfmin
-run_test SISI --sisi
-run_test MARCO --marco
+function run_msis_test() {
+    run_test $@
+}
+
+function run_all_msis_test() {
+    name=$1 ; shift
+    args=$@
+    run_test $name --all $@
+}
+
+run_msis_test BRUTEFORCE --bfmin
+run_msis_test SISI --sisi
+run_all_msis_test MARCO --marco
 
 echo PASS: $tests_passed
 echo FAIL: $tests_failed

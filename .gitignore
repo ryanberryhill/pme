@@ -29,3 +29,7 @@ test_*
 !test_*.cpp
 *.tar.gz
 *.log
+scripts/make-golden
+scripts/pme-canonicalize
+scripts/run-integration
+
