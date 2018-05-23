@@ -3,8 +3,9 @@ compiler: gcc
 dist: trusty
 sudo: required
 script:
+    - mkdir $TMPDIR
     - autoreconf -fvi
-    - ./configure && make && make check && make check-valgrind && scripts/run-integration && scripts/run-integration --valgrind
+    - ./configure --enable-valgrind && make && make check && make check-valgrind && scripts/run-integration && scripts/run-integration --valgrind
 
 matrix:
   include:
@@ -16,6 +17,7 @@ matrix:
           packages:
             - libboost-all-dev
             - g++-5
+            - valgrind
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
@@ -27,6 +29,7 @@ matrix:
           packages:
             - libboost-all-dev
             - g++-4.9
+            - valgrind
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -38,6 +41,7 @@ matrix:
           packages:
             - libboost-all-dev
             - g++-4.8
+            - valgrind
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
 
@@ -49,6 +53,7 @@ matrix:
           packages:
             - libboost-all-dev
             - clang-3.9
+            - valgrind
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
