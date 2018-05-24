@@ -6,7 +6,7 @@ CANONICALIZE=scripts/pme-canonicalize
 tmpdir=$(mktemp -d)
 
 VALGRIND=
-VALGRIND_COMMAND="valgrind --tool=memcheck --leak-check=full --error-exitcode=1"
+VALGRIND_COMMAND="valgrind --tool=memcheck --leak-check=full --error-exitcode=1 --suppressions=glucose.supp"
 tests_passed=0
 tests_failed=0
 
