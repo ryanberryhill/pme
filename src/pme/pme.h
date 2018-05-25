@@ -38,11 +38,14 @@ typedef enum
 
 const char * cpme_version();
 void * cpme_init(aiger * aig, void * proof);
-int cpme_free(void * pme);
+void cpme_free(void * pme);
+
+void cpme_log_to_stdout(void * pme);
+void cpme_set_verbosity(void * pme, int v);
 
 void * cpme_alloc_proof();
-int cpme_add_clause(void * proof, const unsigned * cls, size_t n);
-int cpme_free_proof(void * proof);
+void cpme_add_clause(void * proof, const unsigned * cls, size_t n);
+void cpme_free_proof(void * proof);
 
 size_t cpme_proof_num_clauses(void * proof);
 size_t cpme_proof_clause_size(void * proof, size_t n);

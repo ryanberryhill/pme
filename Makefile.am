@@ -28,6 +28,10 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/engine/variable_manager.cpp \
                    src/pme/engine/consecution_checker.h \
                    src/pme/engine/consecution_checker.cpp \
+                   src/pme/engine/global_state.h \
+                   src/pme/engine/global_state.cpp \
+                   src/pme/engine/logger.h \
+                   src/pme/engine/logger.cpp \
                    src/pme/util/cardinality_constraint.h \
                    src/pme/util/cardinality_constraint.cpp \
                    src/pme/util/proof_checker.h \
@@ -96,7 +100,8 @@ TESTS = test_sat_adaptor \
         test_maxsat_solver \
         test_consecution_checker \
         test_mis_finder \
-        test_minimal_support_finder
+        test_minimal_support_finder \
+        test_logger
 
 check_PROGRAMS = $(TESTS)
 
@@ -136,6 +141,9 @@ test_mis_finder_LDADD = $(PME_TEST_LIBS)
 
 test_minimal_support_finder_SOURCES = tests/test_minimal_support_finder.cpp  
 test_minimal_support_finder_LDADD = $(PME_TEST_LIBS)
+
+test_logger_SOURCES = tests/test_logger.cpp
+test_logger_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

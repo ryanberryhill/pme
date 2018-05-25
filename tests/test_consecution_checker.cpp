@@ -34,8 +34,9 @@ struct ConsecutionFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<ConsecutionChecker> checker;
+    GlobalState gs;
 
-    ConsecutionFixture()
+    ConsecutionFixture(bool simplify = true)
     {
         aig = aiger_init();
 
@@ -60,8 +61,9 @@ struct ConsecutionFixture
         aiger_add_output(aig, l3, "o0");
         o0 = l3;
 
+        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        checker.reset(new ConsecutionChecker(vars, *tr));
+        checker.reset(new ConsecutionChecker(vars, *tr, gs));
     }
 
     ~ConsecutionFixture()
@@ -172,6 +174,60 @@ BOOST_AUTO_TEST_CASE(test_nonincremental)
     BOOST_CHECK(f.checker->solve(c3));
     BOOST_CHECK(f.checker->solve(c0));
 }
+
+BOOST_AUTO_TEST_CASE(test_nosimplify)
+{
+    ConsecutionFixture f(false);
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause c0 = {negate(l0)};
+    Clause c1 = {negate(l1)};
+    Clause c2 = {negate(l2)};
+    Clause c3 = {negate(l3)};
+
+    f.checker->addClause(0, c0);
+    f.checker->addClause(1, c1);
+    f.checker->addClause(2, c2);
+    f.checker->addClause(3, c3);
+
+    BOOST_CHECK(f.checker->solve({0}, c1));
+    BOOST_CHECK(f.checker->solve({0,1}, c1));
+    BOOST_CHECK(f.checker->solve({1}, c2));
+    BOOST_CHECK(f.checker->solve({0,1}, c2));
+
+    BOOST_CHECK(!f.checker->solve({1}, c1));
+    BOOST_CHECK(!f.checker->solve({0}, c2));
+    BOOST_CHECK(!f.checker->solve({0}, c3));
+    BOOST_CHECK(!f.checker->solve({0}, c0));
+
+    BOOST_CHECK(f.checker->solve({2}, c3));
+    BOOST_CHECK(f.checker->solve({1,2}, c3));
+    BOOST_CHECK(f.checker->solve({0,2}, c3));
+    BOOST_CHECK(f.checker->solve({0,1,2}, c3));
+
+    BOOST_CHECK(!f.checker->solve({0}, c3));
+    BOOST_CHECK(!f.checker->solve({1}, c3));
+    BOOST_CHECK(!f.checker->solve({0,1}, c3));
+
+    BOOST_CHECK(f.checker->solve({3}, c0));
+    BOOST_CHECK(f.checker->solve({2,3}, c0));
+    BOOST_CHECK(f.checker->solve({1,2,3}, c0));
+    BOOST_CHECK(f.checker->solve({0,1,2,3}, c0));
+
+    BOOST_CHECK(!f.checker->solve({2}, c0));
+    BOOST_CHECK(!f.checker->solve({1}, c0));
+    BOOST_CHECK(!f.checker->solve({0}, c0));
+
+    BOOST_CHECK(f.checker->solve(c1));
+    BOOST_CHECK(f.checker->solve(c2));
+    BOOST_CHECK(f.checker->solve(c3));
+    BOOST_CHECK(f.checker->solve(c0));
+}
+
 
 // The two above tests don't depend on adding c unprimed
 BOOST_AUTO_TEST_CASE(test_adding_c_unprimed)

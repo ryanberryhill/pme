@@ -38,8 +38,11 @@ namespace PME
         public:
             MARCOMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
-                           const ClauseVec & proof);
+                           const ClauseVec & proof,
+                           GlobalState & gs = g_null_gs);
             void minimize() override;
+        protected:
+            std::ostream & log(int verbosity) const override;
         private:
             typedef ClauseIDVec Seed;
             typedef std::pair<bool, Seed> UnexploredResult;

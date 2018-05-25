@@ -43,12 +43,24 @@ namespace PME
 
     ProofMinimizer::ProofMinimizer(VariableManager & vars,
                                    const TransitionRelation & tr,
-                                   const ClauseVec & proof)
+                                   const ClauseVec & proof,
+                                   GlobalState & gs)
         : m_tr(tr),
           m_vars(vars),
-          m_proof(proof)
+          m_proof(proof),
+          m_gs(gs)
     {
         addPropertyIfMissing();
+    }
+
+    std::ostream & ProofMinimizer::log(int verbosity) const
+    {
+        return log(LOG_MINIMIZATION, verbosity);
+    }
+
+    std::ostream & ProofMinimizer::log(LogChannelID channel, int verbosity) const
+    {
+        return m_gs.logger.log(channel, verbosity);
     }
 
     void ProofMinimizer::addPropertyIfMissing()
@@ -62,6 +74,7 @@ namespace PME
             const Clause & cls = clauseOf(id);
             if (cls == property)
             {
+                log(4) << "Proof contains the property, not adding it" << std::endl;
                 property_found = true;
                 m_property = id;
                 break;
@@ -71,6 +84,7 @@ namespace PME
         // If it does not contain ~Bad, then add it
         if (!property_found)
         {
+            log(3) << "Property not included in the proof, adding it" << std::endl;
             m_property = m_proof.size();
             m_proof.push_back(property);
         }

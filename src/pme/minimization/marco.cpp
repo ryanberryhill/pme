@@ -29,8 +29,9 @@ namespace PME
 {
     MARCOMinimizer::MARCOMinimizer(VariableManager & vars,
                                    const TransitionRelation & tr,
-                                   const ClauseVec & proof)
-        : ProofMinimizer(vars, tr, proof),
+                                   const ClauseVec & proof,
+                                   GlobalState & gs)
+        : ProofMinimizer(vars, tr, proof, gs),
           m_seedSolver(vars),
           m_indSolver(vars, tr)
     {
@@ -59,6 +60,11 @@ namespace PME
         }
     }
 
+    std::ostream & MARCOMinimizer::log(int verbosity) const
+    {
+        return ProofMinimizer::log(LOG_MARCO, verbosity);
+    }
+
     void MARCOMinimizer::minimize()
     {
         while (true)
@@ -70,13 +76,17 @@ namespace PME
             if (!sat) { break; }
             else if (isSIS(seed))
             {
+                log(2) << "Found a SIS seed of size " << seed.size() << std::endl;
                 shrink(seed);
+                log(1) << "MSIS of size " << seed.size() << std::endl;
                 blockUp(seed);
                 updateProofs(seed);
             }
             else
             {
+                log(2) << "Found a non-SIS seed of size " << seed.size() << std::endl;
                 grow(seed);
+                log(1) << "MNIS of size " << seed.size() << std::endl;
                 blockDown(seed);
             }
         }

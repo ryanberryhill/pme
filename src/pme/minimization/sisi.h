@@ -45,6 +45,9 @@ namespace PME
             void addToNEC(ClauseID id);
             void addClause(ClauseID id);
 
+            size_t sizeNEC() const { return m_nec.size(); }
+            size_t sizeFEAS() const { return m_feas.size(); }
+
         private:
             ConsecutionChecker & m_indSolver;
             std::set<ClauseID> m_nec, m_feas;
@@ -56,8 +59,12 @@ namespace PME
         public:
             SISIMinimizer(VariableManager & vars,
                           const TransitionRelation & tr,
-                          const ClauseVec & proof);
+                          const ClauseVec & proof,
+                          GlobalState & gs = g_null_gs);
             void minimize() override;
+
+        protected:
+            std::ostream & log(int verbosity) const override;
 
         private:
             void initSolver();

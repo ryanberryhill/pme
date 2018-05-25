@@ -32,8 +32,12 @@ namespace PME
         public:
             BruteForceMinimizer(VariableManager & vars,
                                const TransitionRelation & tr,
-                               const ClauseVec & proof);
+                               const ClauseVec & proof,
+                               GlobalState & gs = g_null_gs);
             void minimize() override;
+
+        protected:
+            std::ostream & log(int verbosity) const override;
 
         private:
             void initSolver();

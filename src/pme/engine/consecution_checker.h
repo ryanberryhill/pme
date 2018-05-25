@@ -22,6 +22,7 @@
 #ifndef CONSECUTION_CHECKER_H_INCLUDED
 #define CONSECUTION_CHECKER_H_INCLUDED
 
+#include "pme/engine/global_state.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
@@ -34,7 +35,8 @@ namespace PME
     {
         public:
             ConsecutionChecker(VariableManager & varman,
-                               const TransitionRelation & tr);
+                               const TransitionRelation & tr,
+                               GlobalState & gs = g_null_gs);
             void addClause(ClauseID id, const Clause & cls);
 
             bool isInductive(const std::vector<ClauseID> & frame);
@@ -72,6 +74,7 @@ namespace PME
             const TransitionRelation & m_tr;
             bool m_solverInited;
             SATAdaptor m_solver;
+            GlobalState & m_gs;
 
             std::unordered_map<ClauseID, Clause> m_IDToClause;
             std::unordered_map<ClauseID, ID> m_IDToActivation;

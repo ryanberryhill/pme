@@ -26,10 +26,13 @@
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
+#include "pme/engine/logger.h"
+#include "pme/engine/global_state.h"
 #include "pme/minimization/minimization.h"
 
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
 namespace PME
 {
@@ -50,12 +53,18 @@ namespace PME
             ExternalClauseVec getProofExternal(size_t i) const;
             ExternalClauseVec getMinimumProofExternal() const;
 
+            void setLogStream(std::ostream & stream);
+            void setVerbosity(int v);
+            void setChannelVerbosity(LogChannelID channel, int v);
+
         private:
             VariableManager m_vars;
             TransitionRelation m_tr;
             ClauseVec m_proof;
             std::unique_ptr<ProofMinimizer> m_minimizer;
+            GlobalState m_gs;
 
+            std::ostream & log(int v) const;
             void removeProperty(ClauseVec & proof) const;
     };
 }

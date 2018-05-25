@@ -18,35 +18,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef PROOF_CHECKER_H_INCLUDED
-#define PROOF_CHECKER_H_INCLUDED
 
-#include "pme/pme.h"
 #include "pme/engine/global_state.h"
-#include "pme/engine/transition_relation.h"
-#include "pme/engine/sat_adaptor.h"
 
 namespace PME
 {
-    class ProofChecker
-    {
-        public:
-            ProofChecker(const TransitionRelation & tr,
-                         const ClauseVec & proof,
-                         GlobalState & gs = g_null_gs);
-            bool checkInduction();
-            bool checkInitiation();
-            bool checkSafety();
-            bool checkInductiveStrengthening();
-            bool checkProof();
+    GlobalState g_null_gs;
 
-        private:
-            SATAdaptor m_indSolver, m_initSolver;
-            const TransitionRelation & m_tr;
-            const ClauseVec & m_proof;
-            GlobalState & m_gs;
-    };
+    PMEOptions::PMEOptions() :
+        simplify(true)
+    { }
 }
-
-#endif
-

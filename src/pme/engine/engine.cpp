@@ -33,7 +33,6 @@ extern "C" {
 #include <sstream>
 #include <cassert>
 
-
 namespace PME
 {
     Engine::Engine(aiger * aig, const ExternalClauseVec & proof)
@@ -61,16 +60,20 @@ namespace PME
         switch (algorithm)
         {
             case PME_MINIMIZATION_MARCO:
-                m_minimizer.reset(new MARCOMinimizer(m_vars, m_tr, m_proof));
+                log(1) << "Starting MARCO" << std::endl;
+                m_minimizer.reset(new MARCOMinimizer(m_vars, m_tr, m_proof, m_gs));
                 break;
             case PME_MINIMIZATION_CAMSIS:
+                log(1) << "Starting CAMSIS" << std::endl;
                 throw std::logic_error("CAMSIS is not implemented");
                 break;
             case PME_MINIMIZATION_SISI:
-                m_minimizer.reset(new SISIMinimizer(m_vars, m_tr, m_proof));
+                log(1) << "Starting SISI" << std::endl;
+                m_minimizer.reset(new SISIMinimizer(m_vars, m_tr, m_proof, m_gs));
                 break;
             case PME_MINIMIZATION_BRUTEFORCE:
-                m_minimizer.reset(new BruteForceMinimizer(m_vars, m_tr, m_proof));
+                log(1) << "Starting BFMIN" << std::endl;
+                m_minimizer.reset(new BruteForceMinimizer(m_vars, m_tr, m_proof, m_gs));
                 break;
             default:
                 throw std::logic_error("Unknown minimization algorithm");
@@ -130,6 +133,26 @@ namespace PME
                 break;
             }
         }
+    }
+
+    void Engine::setLogStream(std::ostream & stream)
+    {
+        m_gs.logger.setLogStream(stream);
+    }
+
+    void Engine::setVerbosity(int v)
+    {
+        m_gs.logger.setAllVerbosities(v);
+    }
+
+    void Engine::setChannelVerbosity(LogChannelID channel, int v)
+    {
+        m_gs.logger.setVerbosity(channel, v);
+    }
+
+    std::ostream & Engine::log(int v) const
+    {
+        return m_gs.logger.log(LOG_PME, v);
     }
 }
 

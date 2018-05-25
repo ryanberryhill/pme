@@ -289,11 +289,12 @@ int main(int argc, char ** argv)
 
     // Clean up the AIG and proof
     aiger_reset(aig);
-    int free_ok = cpme_free_proof(proof);
-    assert(free_ok == 0);
+    cpme_free_proof(proof);
     aig = NULL; proof = NULL;
 
     // Do things in the PME library
+    cpme_log_to_stdout(pme);
+    cpme_set_verbosity(pme, verbosity);
     if (g_check)
     {
         int proof_ok = cpme_check_proof(pme);
@@ -395,8 +396,7 @@ int main(int argc, char ** argv)
     }
 
     // Clean up the PME library
-    free_ok = cpme_free(pme);
-    assert(free_ok == 0);
+    cpme_free(pme);
     pme = NULL;
 
     return EXIT_SUCCESS;

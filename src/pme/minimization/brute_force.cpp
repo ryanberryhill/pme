@@ -25,8 +25,9 @@ namespace PME
 {
     BruteForceMinimizer::BruteForceMinimizer(VariableManager & vars,
                                             const TransitionRelation & tr,
-                                            const ClauseVec & proof)
-        : ProofMinimizer(vars, tr, proof),
+                                            const ClauseVec & proof,
+                                            GlobalState & gs)
+        : ProofMinimizer(vars, tr, proof, gs),
           m_indSolver(vars, tr),
           m_sisi(m_indSolver)
     {
@@ -42,6 +43,11 @@ namespace PME
         }
     }
 
+    std::ostream & BruteForceMinimizer::log(int verbosity) const
+    {
+        return ProofMinimizer::log(LOG_BFMIN, verbosity);
+    }
+
     void BruteForceMinimizer::minimize()
     {
         // FEAS = { all }
@@ -53,7 +59,13 @@ namespace PME
         // NEC = { ~Bad }
         m_sisi.addToNEC(propertyID());
 
-        addMinimalProof(m_sisi.bruteForceMinimize());
+        log(1) << "Proof size: " << numClauses() << std::endl;
+
+        ClauseIDVec minimized = m_sisi.bruteForceMinimize();
+
+        log(1) << "Minimized proof size: " << minimized.size() << std::endl;
+
+        addMinimalProof(minimized);
     }
 }
 

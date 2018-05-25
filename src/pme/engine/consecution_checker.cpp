@@ -28,10 +28,12 @@
 namespace PME
 {
     ConsecutionChecker::ConsecutionChecker(VariableManager & varman,
-                                           const TransitionRelation & tr)
+                                           const TransitionRelation & tr,
+                                           GlobalState & gs)
         : m_vars(varman),
           m_tr(tr),
-          m_solverInited(false)
+          m_solverInited(false),
+          m_gs(gs)
     { }
 
     void ConsecutionChecker::addClause(ClauseID id, const Clause & cls)
@@ -196,35 +198,48 @@ namespace PME
         assert(!m_solverInited);
         m_solverInited = true;
 
-        SATAdaptor simpSolver(MINISATSIMP);
 
         // Unroll 2 so we get primed constraints
         ClauseVec unrolled = m_tr.unroll(2);
-
-        simpSolver.addClauses(unrolled);
-
         for (const auto & p : m_IDToClause)
         {
             ClauseID id = p.first;
-            ID act = activation(id);
             Clause cls = getActivatedClause(id);
 
-            simpSolver.addClause(cls);
-
-            // Freeze activation literals
-            simpSolver.freeze(act);
+            unrolled.push_back(cls);
         }
 
-        // Freeze latches and constraints (including primes)
-        simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
-        simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
+        if (m_gs.opts.simplify)
+        {
+            SATAdaptor simpSolver(MINISATSIMP);
 
-        // Freeze bad and bad'
-        simpSolver.freeze(m_tr.bad());
-        simpSolver.freeze(prime(m_tr.bad()));
+            simpSolver.addClauses(unrolled);
 
-        ClauseVec simp = simpSolver.simplify();
-        m_solver.addClauses(simp);
+            for (const auto & p : m_IDToClause)
+            {
+                ClauseID id = p.first;
+                ID act = activation(id);
+
+                // Freeze activation literals
+                simpSolver.freeze(act);
+            }
+
+            // Freeze latches and constraints (including primes)
+            simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
+            simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
+
+            // Freeze bad and bad'
+            simpSolver.freeze(m_tr.bad());
+            simpSolver.freeze(prime(m_tr.bad()));
+
+            ClauseVec simp = simpSolver.simplify();
+
+            m_solver.addClauses(simp);
+        }
+        else
+        {
+            m_solver.addClauses(unrolled);
+        }
     }
 
     Clause ConsecutionChecker::getActivatedClause(ClauseID id) const

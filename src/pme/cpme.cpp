@@ -24,6 +24,7 @@
 #include "pme/engine/engine.h"
 
 #include <cassert>
+#include <iostream>
 
 const char * cpme_version()
 {
@@ -58,10 +59,24 @@ void * cpme_alloc_proof()
     }
 }
 
-int cpme_add_clause(void * proof, const unsigned * cls, size_t n)
+void cpme_log_to_stdout(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+    eng->setLogStream(std::cout);
+}
+
+void cpme_set_verbosity(void * pme, int v)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+    eng->setVerbosity(v);
+}
+
+void cpme_add_clause(void * proof, const unsigned * cls, size_t n)
 {
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
-    if (!p) { return 1; }
+    assert(p);
 
     try
     {
@@ -75,15 +90,14 @@ int cpme_add_clause(void * proof, const unsigned * cls, size_t n)
     }
     catch (...)
     {
-        return 1;
+        assert(false);
     }
-    return 0;
 }
 
-int cpme_free_proof(void * proof)
+void cpme_free_proof(void * proof)
 {
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
-    if (!p) { return 1; }
+    assert(p);
 
     try
     {
@@ -91,24 +105,22 @@ int cpme_free_proof(void * proof)
     }
     catch(...)
     {
-        return 1;
+        assert(false);
     }
 
-    return 0;
 }
 
-int cpme_free(void * pme)
+void cpme_free(void * pme)
 {
     try
     {
         PME::Engine * eng = static_cast<PME::Engine *>(pme);
-        if (!eng) { return 1; }
+        assert(eng);
         delete eng;
-        return 0;
     }
     catch(...)
     {
-        return 1;
+        assert(false);
     }
 }
 

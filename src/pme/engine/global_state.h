@@ -18,34 +18,30 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef PROOF_CHECKER_H_INCLUDED
-#define PROOF_CHECKER_H_INCLUDED
 
-#include "pme/pme.h"
-#include "pme/engine/global_state.h"
-#include "pme/engine/transition_relation.h"
-#include "pme/engine/sat_adaptor.h"
+#ifndef GLOBAL_STATE_H_INCLUDED
+#define GLOBAL_STATE_H_INCLUDED
+
+#include "pme/engine/logger.h"
 
 namespace PME
 {
-    class ProofChecker
+    struct PMEOptions
     {
-        public:
-            ProofChecker(const TransitionRelation & tr,
-                         const ClauseVec & proof,
-                         GlobalState & gs = g_null_gs);
-            bool checkInduction();
-            bool checkInitiation();
-            bool checkSafety();
-            bool checkInductiveStrengthening();
-            bool checkProof();
-
-        private:
-            SATAdaptor m_indSolver, m_initSolver;
-            const TransitionRelation & m_tr;
-            const ClauseVec & m_proof;
-            GlobalState & m_gs;
+        bool simplify;
+        PMEOptions();
     };
+
+    struct GlobalState
+    {
+        // The logger is mutable because changing it should not be considered
+        // as conceptually changing the state of any object with a reference to
+        // this GlobalState. i.e., const functions should be able to log
+        mutable Logger logger;
+        PMEOptions opts;
+    };
+
+    extern GlobalState g_null_gs;
 }
 
 #endif
