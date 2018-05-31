@@ -28,15 +28,15 @@
 namespace PME
 {
     const ID ID_NULL = 0;
-    const ID ID_TRUE = 2;
-    const ID ID_FALSE = negate(ID_TRUE);
+    const ID ID_FALSE = 2;
+    const ID ID_TRUE = negate(ID_FALSE);
 
     static const size_t PRIME_BITS = 16;
     static const size_t PRIME_SHIFT = sizeof(ID) * 8 - PRIME_BITS;
     static const size_t MAX_PRIMES = (1 << PRIME_BITS) - 1;
     const ID MAX_ID = (std::numeric_limits<ID>::max() >> PRIME_BITS);
     const size_t ID_INCR = 2;
-    const ID MIN_ID = ID_TRUE + ID_INCR;
+    const ID MIN_ID = ID_FALSE + ID_INCR;
     static const ID UNPRIME_MASK = MAX_ID;
     static const ID PRIMES_MASK = ~UNPRIME_MASK;
 

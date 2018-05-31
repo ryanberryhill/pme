@@ -22,6 +22,7 @@
 #include "pme/util/proof_checker.h"
 #include "pme/minimization/minimization.h"
 #include "pme/minimization/marco.h"
+#include "pme/minimization/camsis.h"
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
 
@@ -338,6 +339,20 @@ BOOST_AUTO_TEST_CASE(dummy_minimizer_nontrivial)
     DummyMinimizer dm(f.vars, f.tr(), f.proof());
     test_shrink(dm, f);
 }
+
+//BOOST_AUTO_TEST_CASE(camsis_minimizer_trivial)
+//{
+//    TrivialProofFixture f;
+//    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
+//    test_findall(minimizer, f);
+//}
+//
+//BOOST_AUTO_TEST_CASE(camsis_minimizer_nontrivial)
+//{
+//    NonTrivialProofFixture f;
+//    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
+//    test_findall(minimizer, f);
+//}
 
 BOOST_AUTO_TEST_CASE(marco_minimizer_trivial)
 {

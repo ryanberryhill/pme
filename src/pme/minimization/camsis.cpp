@@ -19,45 +19,25 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MAXSAT_SOLVER_H
-#define MAXSAT_SOLVER_H
-
-#include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
-#include "pme/engine/sat_adaptor.h"
-#include "pme/util/cardinality_constraint.h"
-
-#include <set>
-#include <map>
+#include "pme/minimization/camsis.h"
 
 namespace PME
 {
-    class MaxSATSolver
+    CAMSISMinimizer::CAMSISMinimizer(VariableManager & vars,
+                                     const TransitionRelation & tr,
+                                     const ClauseVec & proof,
+                                     GlobalState & gs)
+        : ProofMinimizer(vars, tr, proof, gs)
+    { }
+
+    void CAMSISMinimizer::minimize()
     {
-        public:
-            MaxSATSolver(VariableManager & varman);
-            void addClause(const Clause & cls);
-            void addClauses(const ClauseVec & vec);
-            bool solve();
-            bool solve(const Cube & assumps);
-            void addForOptimization(ID lit);
-            bool isSAT() const;
-            ModelValue getAssignment(ID lit) const;
-            ModelValue getAssignmentToVar(ID var) const;
+    }
 
-        private:
-            unsigned lastCardinality(const Cube & assumps) const;
-            void recordCardinality(const Cube & assumps, unsigned c);
 
-            VariableManager m_vars;
-            CardinalityConstraint m_cardinality;
-            SATAdaptor m_solver;
-            bool m_sat;
-            bool m_dirty;
-            std::multiset<ID> m_optimizationSet;
-            std::map<Cube, unsigned> m_lastCardinality;
-    };
+    std::ostream & CAMSISMinimizer::log(int verbosity) const
+    {
+        return ProofMinimizer::log(LOG_CAMSIS, verbosity);
+    }
 }
-
-#endif
 

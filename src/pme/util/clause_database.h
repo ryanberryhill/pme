@@ -19,44 +19,41 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MAXSAT_SOLVER_H
-#define MAXSAT_SOLVER_H
+#ifndef CLAUSE_DB_H_INCLUDED
+#define CLAUSE_DB_H_INCLUDED
 
 #include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
-#include "pme/engine/sat_adaptor.h"
-#include "pme/util/cardinality_constraint.h"
 
-#include <set>
-#include <map>
+#include <unordered_map>
 
 namespace PME
 {
-    class MaxSATSolver
+    template<typename T>
+    class ClauseDatabaseT
     {
         public:
-            MaxSATSolver(VariableManager & varman);
-            void addClause(const Clause & cls);
-            void addClauses(const ClauseVec & vec);
-            bool solve();
-            bool solve(const Cube & assumps);
-            void addForOptimization(ID lit);
-            bool isSAT() const;
-            ModelValue getAssignment(ID lit) const;
-            ModelValue getAssignmentToVar(ID var) const;
+            typedef std::unordered_map<ClauseID, Clause>::const_iterator iterator;
+            ClauseDatabaseT();
+            void addClause(ClauseID id, ID activation, const Clause & cls);
+            void addClause(ClauseID id, ID activation, const Clause & cls, const T & data);
+            ID activationOfID(ClauseID id) const;
+            ClauseID IDOfActivation(ID act) const;
+            const Clause & clauseOf(ClauseID id) const;
+            const T & getData(ClauseID id) const;
+            bool isActivation(ID id) const;
+
+            iterator begin();
+            iterator end();
 
         private:
-            unsigned lastCardinality(const Cube & assumps) const;
-            void recordCardinality(const Cube & assumps, unsigned c);
-
-            VariableManager m_vars;
-            CardinalityConstraint m_cardinality;
-            SATAdaptor m_solver;
-            bool m_sat;
-            bool m_dirty;
-            std::multiset<ID> m_optimizationSet;
-            std::map<Cube, unsigned> m_lastCardinality;
+            std::unordered_map<ClauseID, Clause> m_IDToClause;
+            std::unordered_map<ClauseID, ID> m_IDToActivation;
+            std::unordered_map<ClauseID, ID> m_activationToID;
+            std::unordered_map<ClauseID, T> m_IDToData;
     };
+
+    typedef ClauseDatabaseT<bool> ClauseDatabase;
+    typedef ClauseDatabaseT<ID> DualActivationClauseDatabase;
 }
 
 #endif

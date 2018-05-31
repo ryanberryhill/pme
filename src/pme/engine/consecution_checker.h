@@ -26,6 +26,7 @@
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
+#include "pme/util/clause_database.h"
 
 #include <unordered_map>
 
@@ -75,10 +76,7 @@ namespace PME
             bool m_solverInited;
             SATAdaptor m_solver;
             GlobalState & m_gs;
-
-            std::unordered_map<ClauseID, Clause> m_IDToClause;
-            std::unordered_map<ClauseID, ID> m_IDToActivation;
-            std::unordered_map<ClauseID, ID> m_activationToID;
+            ClauseDatabase m_clausedb;
     };
 }
 

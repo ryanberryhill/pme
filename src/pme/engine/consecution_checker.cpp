@@ -38,18 +38,9 @@ namespace PME
 
     void ConsecutionChecker::addClause(ClauseID id, const Clause & cls)
     {
-        assert(m_IDToClause.find(id) == m_IDToClause.end());
-        assert(m_IDToActivation.find(id) == m_IDToActivation.end());
-
         ID act = m_vars.getNewID(actName(id));
 
-        assert(m_activationToID.find(act) == m_activationToID.end());
-
-        Clause cls_sorted = cls;
-        std::sort(cls_sorted.begin(), cls_sorted.end());
-        m_IDToClause[id] = cls_sorted;
-        m_IDToActivation[id] = act;
-        m_activationToID[act] = id;
+        m_clausedb.addClause(id, act, cls);
 
         // Add the clause to the already-initialized solver
         if (m_solverInited)
@@ -67,19 +58,22 @@ namespace PME
 
     ID ConsecutionChecker::activation(ClauseID id) const
     {
-        return m_IDToActivation.at(id);
+        return m_clausedb.activationOfID(id);
     }
 
     ClauseID ConsecutionChecker::IDOfActivation(ID act) const
     {
-        auto it = m_activationToID.find(act);
-        assert(it != m_activationToID.end());
-        return it->second;
+        return m_clausedb.IDOfActivation(act);
     }
 
     bool ConsecutionChecker::isActivation(ID id) const
     {
-        return m_activationToID.find(id) != m_activationToID.end();
+        return m_clausedb.isActivation(id);
+    }
+
+    const Clause & ConsecutionChecker::clauseOf(ClauseID id) const
+    {
+        return m_clausedb.clauseOf(id);
     }
 
     bool ConsecutionChecker::supportSolve(const std::vector<ClauseID> & frame,
@@ -156,7 +150,7 @@ namespace PME
     bool ConsecutionChecker::supportSolve(const Clause & cls, std::vector<ClauseID> & support)
     {
         std::vector<ClauseID> frame;
-        for (const auto & p : m_IDToClause)
+        for (const auto & p : m_clausedb)
         {
             ClauseID id = p.first;
             frame.push_back(id);
@@ -188,11 +182,6 @@ namespace PME
         return supportSolve(cls, support);
     }
 
-    const Clause & ConsecutionChecker::clauseOf(ClauseID id) const
-    {
-        return m_IDToClause.at(id);
-    }
-
     void ConsecutionChecker::initSolver()
     {
         assert(!m_solverInited);
@@ -201,7 +190,7 @@ namespace PME
 
         // Unroll 2 so we get primed constraints
         ClauseVec unrolled = m_tr.unroll(2);
-        for (const auto & p : m_IDToClause)
+        for (const auto & p : m_clausedb)
         {
             ClauseID id = p.first;
             Clause cls = getActivatedClause(id);
@@ -215,7 +204,7 @@ namespace PME
 
             simpSolver.addClauses(unrolled);
 
-            for (const auto & p : m_IDToClause)
+            for (const auto & p : m_clausedb)
             {
                 ClauseID id = p.first;
                 ID act = activation(id);

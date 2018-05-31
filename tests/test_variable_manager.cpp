@@ -41,6 +41,17 @@ BOOST_AUTO_TEST_CASE(new_ids_are_valid)
     BOOST_CHECK(v.isKnown(id1));
 }
 
+BOOST_AUTO_TEST_CASE(const_true_false)
+{
+    VariableManager v;
+
+    BOOST_CHECK_EQUAL(v.toInternal(0), ID_FALSE);
+    BOOST_CHECK_EQUAL(v.toInternal(1), ID_TRUE);
+
+    BOOST_CHECK_EQUAL(v.toExternal(ID_TRUE), 1);
+    BOOST_CHECK_EQUAL(v.toExternal(ID_FALSE), 0);
+}
+
 BOOST_AUTO_TEST_CASE(ids_are_unique)
 {
     std::set<ID> ids;

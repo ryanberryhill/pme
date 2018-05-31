@@ -29,6 +29,7 @@ using namespace PME;
 
 unsigned countAndBlock(const MaxSATSolver & solver, const std::vector<ID> & ids, Clause & block)
 {
+    block.clear();
     BOOST_REQUIRE(solver.isSAT());
     unsigned count = 0;
     for (ID id : ids)
@@ -65,41 +66,164 @@ BOOST_AUTO_TEST_CASE(basic_maxsat)
     // First assignment should have two variables set to 1
     Clause block;
     unsigned count = countAndBlock(solver, ids, block);
-    BOOST_CHECK(count == 2);
+    BOOST_CHECK_EQUAL(count, 2);
     solver.addClause(block);
 
     // The second one should also have 2
     BOOST_REQUIRE(solver.solve());
-    block.clear();
     count = countAndBlock(solver, ids, block);
-    BOOST_CHECK(count == 2);
+    BOOST_CHECK_EQUAL(count, 2);
     solver.addClause(block);
 
     // And the third
     BOOST_REQUIRE(solver.solve());
-    block.clear();
     count = countAndBlock(solver, ids, block);
-    BOOST_CHECK(count == 2);
+    BOOST_CHECK_EQUAL(count, 2);
     solver.addClause(block);
 
     // Then there should be three with one
     for (unsigned i = 0; i < 3; ++i)
     {
         BOOST_REQUIRE(solver.solve());
-        block.clear();
         count = countAndBlock(solver, ids, block);
-        BOOST_CHECK(count == 1);
+        BOOST_CHECK_EQUAL(count, 1);
         solver.addClause(block);
     }
 
     // Then it should be SAT with cardinality 0
-    BOOST_CHECK(solver.solve());
-    block.clear();
+    BOOST_REQUIRE(solver.solve());
     count = countAndBlock(solver, ids, block);
-    BOOST_CHECK(count == 0);
+    BOOST_CHECK_EQUAL(count, 0);
 
     // And finally UNSAT if we force a literal to be 1
     solver.addClause({a});
+    BOOST_CHECK(!solver.solve());
+}
+
+BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)
+{
+    VariableManager vars;
+    MaxSATSolver solver(vars);
+
+    ID a = vars.getNewID();
+    ID b = vars.getNewID();
+    ID c = vars.getNewID();
+    ID d = vars.getNewID();
+    ID e = vars.getNewID();
+
+    std::vector<ID> ids = {a, b, c};
+
+    // Maximizing a, b, c
+    solver.addForOptimization(a);
+    solver.addForOptimization(b);
+    solver.addForOptimization(c);
+
+    // a V b V c
+    solver.addClause({a, b, c});
+    // And an extra constraint depending on d
+    solver.addClause({negate(d), negate(e), negate(a), negate(b), negate(c)});
+
+    BOOST_REQUIRE(solver.solve());
+
+    // First assumption-less assignment should have all three set to 1
+    Clause block;
+    unsigned count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 3);
+    // don't block it yet
+
+    // First with assumption (d) should have all three
+    BOOST_REQUIRE(solver.solve({d}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 3);
+    // Same for (e)
+    BOOST_REQUIRE(solver.solve({e}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 3);
+    // With (e) and (d) it should be 2
+    BOOST_REQUIRE(solver.solve({d, e}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+    // Order shouldn't matter
+    BOOST_REQUIRE(solver.solve({e, d}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+    // Nor should calling it several times
+    BOOST_REQUIRE(solver.solve({e, d}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+
+    // Now go back to assumptionless and block it
+    BOOST_REQUIRE(solver.solve());
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 3);
+    solver.addClause(block);
+
+    // Going back to assumption-less there should be three cardinality 2s
+    BOOST_REQUIRE(solver.solve());
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+    // Don't block it yet
+
+    // Add some clauses depending on d
+    solver.addClause({negate(d), negate(a)});
+    solver.addClause({negate(d), negate(b)});
+    solver.addClause({negate(e), negate(a)});
+
+    // There should not be a two true assingment with (d)
+    BOOST_REQUIRE(solver.solve({d}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 1);
+    // Don't block it
+
+    // With (e) there should be only 1 cardinality 2 solution
+    BOOST_REQUIRE(solver.solve({e}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+    solver.addClause(block);
+
+    BOOST_REQUIRE(solver.solve({e}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 1);
+
+    // Back to assumption-less there should be two more at cardinality 2
+    BOOST_REQUIRE(solver.solve());
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+    solver.addClause(block);
+
+    BOOST_REQUIRE(solver.solve());
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 2);
+    solver.addClause(block);
+
+    // With (d) there should only be a single cardinality 1 solution
+    BOOST_REQUIRE(solver.solve({d}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 1);
+    BOOST_CHECK(solver.getAssignment(c) == SAT::TRUE);
+    solver.addClause(block);
+
+    // No more solutions under (d)
+    BOOST_CHECK(!solver.solve({d}));
+
+    // With (e) there should be one more
+    BOOST_REQUIRE(solver.solve({e}));
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 1);
+    BOOST_CHECK(solver.getAssignment(b) == SAT::TRUE);
+    solver.addClause(block);
+
+    // No more solutions under (e)
+    BOOST_CHECK(!solver.solve({e}));
+
+    // Assumptionless there should be one more solution
+    BOOST_REQUIRE(solver.solve());
+    count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 1);
+    BOOST_CHECK(solver.getAssignment(a) == SAT::TRUE);
+    solver.addClause(block);
+
+    // And now UNSAT
     BOOST_CHECK(!solver.solve());
 }
 

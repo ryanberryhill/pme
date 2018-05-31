@@ -19,43 +19,29 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MAXSAT_SOLVER_H
-#define MAXSAT_SOLVER_H
+// CAMUS is presented in "On Finding All Minimally Unsatisfiable Subformulas"
+// by Liffiton and Sakallah and CAMSIS is presented in "Finding all Minimal
+// Safe Inductive Sets" by Berryhill, Ivrii, and Veneris
 
-#include "pme/pme.h"
-#include "pme/engine/variable_manager.h"
-#include "pme/engine/sat_adaptor.h"
-#include "pme/util/cardinality_constraint.h"
+#ifndef CAMSIS_H_INCLUDED
+#define CAMSIS_H_INCLUDED
 
-#include <set>
-#include <map>
+#include "pme/minimization/minimization.h"
+
+#include <unordered_map>
 
 namespace PME
 {
-    class MaxSATSolver
+    class CAMSISMinimizer : public ProofMinimizer
     {
         public:
-            MaxSATSolver(VariableManager & varman);
-            void addClause(const Clause & cls);
-            void addClauses(const ClauseVec & vec);
-            bool solve();
-            bool solve(const Cube & assumps);
-            void addForOptimization(ID lit);
-            bool isSAT() const;
-            ModelValue getAssignment(ID lit) const;
-            ModelValue getAssignmentToVar(ID var) const;
-
-        private:
-            unsigned lastCardinality(const Cube & assumps) const;
-            void recordCardinality(const Cube & assumps, unsigned c);
-
-            VariableManager m_vars;
-            CardinalityConstraint m_cardinality;
-            SATAdaptor m_solver;
-            bool m_sat;
-            bool m_dirty;
-            std::multiset<ID> m_optimizationSet;
-            std::map<Cube, unsigned> m_lastCardinality;
+            CAMSISMinimizer(VariableManager & vars,
+                            const TransitionRelation & tr,
+                            const ClauseVec & proof,
+                            GlobalState & gs = g_null_gs);
+            void minimize() override;
+        protected:
+            std::ostream & log(int verbosity) const override;
     };
 }
 

@@ -27,7 +27,11 @@ namespace PME
 {
     VariableManager::VariableManager()
         : m_nextID(MIN_ID)
-    { }
+    {
+        m_vars[ID_FALSE] = Variable(ID_FALSE, 0, "false");
+        m_internalToExternal[ID_FALSE] = 0;
+        m_externalToInternal[0] = ID_FALSE;
+    }
 
     ID VariableManager::getNewID(std::string name, ExternalID external)
     {

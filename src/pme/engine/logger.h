@@ -65,6 +65,7 @@ namespace PME
         LOG_PME,
         LOG_MINIMIZATION,
         LOG_MARCO,
+        LOG_CAMSIS,
         LOG_SISI,
         LOG_BFMIN,
         LOG_INVALID,

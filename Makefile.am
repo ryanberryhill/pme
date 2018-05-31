@@ -28,12 +28,16 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/engine/variable_manager.cpp \
                    src/pme/engine/consecution_checker.h \
                    src/pme/engine/consecution_checker.cpp \
+                   src/pme/engine/collapse_set_finder.h \
+                   src/pme/engine/collapse_set_finder.cpp \
                    src/pme/engine/global_state.h \
                    src/pme/engine/global_state.cpp \
                    src/pme/engine/logger.h \
                    src/pme/engine/logger.cpp \
                    src/pme/util/cardinality_constraint.h \
                    src/pme/util/cardinality_constraint.cpp \
+                   src/pme/util/clause_database.h \
+                   src/pme/util/clause_database.cpp \
                    src/pme/util/proof_checker.h \
                    src/pme/util/proof_checker.cpp \
                    src/pme/util/maxsat_solver.h \
@@ -44,6 +48,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/minimal_support_finder.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
+                   src/pme/minimization/camsis.h \
+                   src/pme/minimization/camsis.cpp \
                    src/pme/minimization/brute_force.h \
                    src/pme/minimization/brute_force.cpp \
                    src/pme/minimization/sisi.h \
@@ -101,7 +107,9 @@ TESTS = test_sat_adaptor \
         test_consecution_checker \
         test_mis_finder \
         test_minimal_support_finder \
-        test_logger
+        test_logger \
+        test_clause_database \
+        test_collapse_set_finder
 
 check_PROGRAMS = $(TESTS)
 
@@ -144,6 +152,12 @@ test_minimal_support_finder_LDADD = $(PME_TEST_LIBS)
 
 test_logger_SOURCES = tests/test_logger.cpp
 test_logger_LDADD = $(PME_TEST_LIBS)
+
+test_clause_database_SOURCES = tests/test_clause_database.cpp
+test_clause_database_LDADD = $(PME_TEST_LIBS)
+
+test_collapse_set_finder_SOURCES = tests/test_collapse_set_finder.cpp
+test_collapse_set_finder_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 
