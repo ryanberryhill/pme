@@ -105,12 +105,7 @@ namespace PME
     {
         std::vector<ClauseID> proof_copy = proof;
         std::sort(proof_copy.begin(), proof_copy.end());
-        log(2) << "Minimal proof: [ ";
-        for (ClauseID c : proof_copy)
-        {
-            log(2) << c << " ";
-        }
-        log(2) << "]" << std::endl;
+        log(2) << "Minimal proof: " << proof_copy << std::endl;
         m_minimalProofs.push_back(proof_copy);
     }
 

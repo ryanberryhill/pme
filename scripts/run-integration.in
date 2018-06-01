@@ -186,6 +186,7 @@ function run_all_msis_test() {
 run_msis_test BRUTEFORCE --bfmin
 run_msis_test SISI --sisi
 run_all_msis_test MARCO --marco
+run_all_msis_test CAMSIS --camsis
 
 echo PASS: $tests_passed
 echo FAIL: $tests_failed

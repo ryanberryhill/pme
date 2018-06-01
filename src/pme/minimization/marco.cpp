@@ -73,20 +73,24 @@ namespace PME
             Seed seed;
             std::tie(sat, seed) = getUnexplored();
 
+            Seed mis = seed;
+
             if (!sat) { break; }
-            else if (isSIS(seed))
+            else if (findSafeMIS(mis))
             {
-                log(2) << "Found a SIS seed of size " << seed.size() << std::endl;
-                shrink(seed);
-                log(1) << "MSIS of size " << seed.size() << std::endl;
-                blockUp(seed);
-                updateProofs(seed);
+                log(3) << "Found a SIS seed of size " << mis.size() << std::endl;
+                shrink(mis);
+                log(1) << "MSIS of size " << mis.size() << std::endl;
+                log(3) << "MSIS: " << seed << std::endl;
+                blockUp(mis);
+                updateProofs(mis);
             }
             else
             {
-                log(2) << "Found a non-SIS seed of size " << seed.size() << std::endl;
+                log(3) << "Found a non-SIS seed of size " << seed.size() << std::endl;
                 grow(seed);
                 log(1) << "MNIS of size " << seed.size() << std::endl;
+                log(3) << "MNIS: " << seed << std::endl;
                 blockDown(seed);
             }
         }

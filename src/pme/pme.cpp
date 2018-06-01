@@ -30,5 +30,16 @@ namespace PME
     {
         return pme_version_string;
     }
+
+    std::ostream & operator<<(std::ostream & os, const ClauseIDVec & vec)
+    {
+        os << "[ ";
+        for (ClauseID id : vec)
+        {
+            os << id << " ";
+        }
+        os << "]";
+        return os;
+    }
 }
 

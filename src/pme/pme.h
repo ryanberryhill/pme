@@ -69,6 +69,7 @@ int cpme_run_bfmin(void * pme);
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <iostream>
 
 namespace PME
 {
@@ -89,6 +90,8 @@ namespace PME
 
     typedef std::vector<ID>::const_iterator id_iterator;
     typedef ClauseVec::const_iterator clause_iterator;
+
+    std::ostream & operator<<(std::ostream &, const ClauseIDVec &);
 }
 
 #endif // __cplusplus

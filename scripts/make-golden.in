@@ -24,7 +24,7 @@ fi
 
 echo Working in $tmpdir
 
-$PME --marco --save-proofs $dst_pattern $aig_file $pme_file
+$PME --camsis --save-proofs $dst_pattern $aig_file $pme_file
 
 echo Checking proofs
 
