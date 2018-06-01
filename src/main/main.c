@@ -105,8 +105,15 @@ void report_run(void * pme, const char * name)
         cpme_free_proof(min_proof);
     }
 
-    printf("Found %lu minimal proof(s) of size %lu-%lu with %s\n",
-            num_proofs, smallest, largest, name);
+    if (num_proofs > 0)
+    {
+        printf("Found %lu minimal proof(s) of size %lu-%lu with %s\n",
+                num_proofs, smallest, largest, name);
+    }
+    else
+    {
+        printf("Found no proofs with %s\n", name);
+    }
 }
 
 void save_proof(void * pme, size_t pindex, const char * filepath)
@@ -392,6 +399,23 @@ int main(int argc, char ** argv)
         if (g_saveproofs)
         {
             save_proofs(pme, "marco");
+        }
+    }
+
+    if (g_camsis)
+    {
+        int camsis_ok = cpme_run_camsis(pme);
+        if (camsis_ok < 0)
+        {
+            fprintf(stderr, "Error running CAMSIS\n");
+            return EXIT_FAILURE;
+        }
+
+        report_run(pme, "CAMSIS");
+
+        if (g_saveproofs)
+        {
+            save_proofs(pme, "camsis");
         }
     }
 

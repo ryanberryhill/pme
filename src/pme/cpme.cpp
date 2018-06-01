@@ -156,6 +156,22 @@ int cpme_run_marco(void * pme)
     }
 }
 
+int cpme_run_camsis(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->minimize(PME_MINIMIZATION_CAMSIS);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 int cpme_run_sisi(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

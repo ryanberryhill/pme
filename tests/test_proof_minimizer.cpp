@@ -340,19 +340,19 @@ BOOST_AUTO_TEST_CASE(dummy_minimizer_nontrivial)
     test_shrink(dm, f);
 }
 
-//BOOST_AUTO_TEST_CASE(camsis_minimizer_trivial)
-//{
-//    TrivialProofFixture f;
-//    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
-//    test_findall(minimizer, f);
-//}
-//
-//BOOST_AUTO_TEST_CASE(camsis_minimizer_nontrivial)
-//{
-//    NonTrivialProofFixture f;
-//    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
-//    test_findall(minimizer, f);
-//}
+BOOST_AUTO_TEST_CASE(camsis_minimizer_trivial)
+{
+    TrivialProofFixture f;
+    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findall(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(camsis_minimizer_nontrivial)
+{
+    NonTrivialProofFixture f;
+    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
+    test_findall(minimizer, f);
+}
 
 BOOST_AUTO_TEST_CASE(marco_minimizer_trivial)
 {

@@ -23,6 +23,7 @@
 #include "pme/engine/engine.h"
 #include "pme/util/proof_checker.h"
 #include "pme/minimization/marco.h"
+#include "pme/minimization/camsis.h"
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
 
@@ -65,7 +66,7 @@ namespace PME
                 break;
             case PME_MINIMIZATION_CAMSIS:
                 log(1) << "Starting CAMSIS" << std::endl;
-                throw std::logic_error("CAMSIS is not implemented");
+                m_minimizer.reset(new CAMSISMinimizer(m_vars, m_tr, m_proof, m_gs));
                 break;
             case PME_MINIMIZATION_SISI:
                 log(1) << "Starting SISI" << std::endl;

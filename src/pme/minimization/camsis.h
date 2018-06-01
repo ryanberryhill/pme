@@ -27,8 +27,9 @@
 #define CAMSIS_H_INCLUDED
 
 #include "pme/minimization/minimization.h"
+#include "pme/engine/collapse_set_finder.h"
 
-#include <unordered_map>
+#include <vector>
 
 namespace PME
 {
@@ -42,6 +43,21 @@ namespace PME
             void minimize() override;
         protected:
             std::ostream & log(int verbosity) const override;
+        private:
+            typedef std::vector<ClauseID> MSIS;
+
+            bool attemptRefinement(ClauseID c);
+            bool findCollapse(ClauseID c, CollapseSet & collapse);
+            ID createClauseSelect(ClauseID c);
+            Clause collapseClause(ClauseID c, const CollapseSet & collapse) const;
+            void naiveMinimize();
+            bool extractMSIS(MSIS & msis);
+            void blockMSIS(const MSIS & msis);
+
+            CollapseSetFinder m_collapseFinder;
+            MaxSATSolver m_solver;
+            ClauseDatabase m_clausedb;
+            VariableManager m_vars;
     };
 }
 

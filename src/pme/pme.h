@@ -56,6 +56,7 @@ void * cpme_get_proof(void * pme, size_t i);
 
 int cpme_check_proof(void * pme);
 int cpme_run_marco(void * pme);
+int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
 

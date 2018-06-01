@@ -22,6 +22,7 @@
 #include "pme/minimization/minimization.h"
 
 #include <cassert>
+#include <algorithm>
 
 namespace PME
 {
@@ -102,7 +103,15 @@ namespace PME
 
     void ProofMinimizer::addMinimalProof(const std::vector<ClauseID> & proof)
     {
-        m_minimalProofs.push_back(proof);
+        std::vector<ClauseID> proof_copy = proof;
+        std::sort(proof_copy.begin(), proof_copy.end());
+        log(2) << "Minimal proof: [ ";
+        for (ClauseID c : proof_copy)
+        {
+            log(2) << c << " ";
+        }
+        log(2) << "]" << std::endl;
+        m_minimalProofs.push_back(proof_copy);
     }
 
     void ProofMinimizer::setMinimumProof(const std::vector<ClauseID> & proof)
