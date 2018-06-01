@@ -53,12 +53,12 @@ BOOST_AUTO_TEST_CASE(logging_to_stream)
 
     BOOST_CHECK_NO_THROW(log.log(channel, 1) << "test1" << std::endl);
 
-    BOOST_CHECK_EQUAL(dst.str(), "TEST: test1\n");
+    BOOST_CHECK_EQUAL(dst.str(), "test1\n");
     dst.str("");
 
     BOOST_CHECK_NO_THROW(log.log(channel, 0) << "test0" << std::endl);
 
-    BOOST_CHECK_EQUAL(dst.str(), "TEST: test0\n");
+    BOOST_CHECK_EQUAL(dst.str(), "test0\n");
 }
 
 BOOST_AUTO_TEST_CASE(set_stream)
@@ -67,13 +67,13 @@ BOOST_AUTO_TEST_CASE(set_stream)
     Logger log(dst1, 1);
 
     BOOST_CHECK_NO_THROW(log.log(LOG_TEST, 1) << "test1");
-    BOOST_CHECK_EQUAL(dst1.str(), "TEST: test1");
+    BOOST_CHECK_EQUAL(dst1.str(), "test1");
     BOOST_CHECK_EQUAL(dst2.str(), "");
 
     log.setLogStream(dst2);
     BOOST_CHECK_NO_THROW(log.log(LOG_TEST, 1) << "test2");
-    BOOST_CHECK_EQUAL(dst1.str(), "TEST: test1");
-    BOOST_CHECK_EQUAL(dst2.str(), "TEST: test2");
+    BOOST_CHECK_EQUAL(dst1.str(), "test1");
+    BOOST_CHECK_EQUAL(dst2.str(), "test2");
 }
 
 BOOST_AUTO_TEST_CASE(channel_verbosity)
@@ -91,6 +91,6 @@ BOOST_AUTO_TEST_CASE(channel_verbosity)
     BOOST_CHECK_NO_THROW(log.log(channel1, 3) << "test13");
     BOOST_CHECK_NO_THROW(log.log(channel2, 3) << "test23");
 
-    BOOST_CHECK_EQUAL(dst.str(), "TEST: test22");
+    BOOST_CHECK_EQUAL(dst.str(), "test22");
 }
 

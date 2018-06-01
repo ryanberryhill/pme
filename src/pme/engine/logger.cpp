@@ -23,32 +23,9 @@
 
 #include <cassert>
 
-#define CHANNEL_MAP(channel, str) \
-    case channel: \
-        stream << str << ": "; \
-        break;
-
-
 namespace PME
 {
     null_out_stream g_null_ostream;
-
-    std::ostream& operator<< (std::ostream& stream, LogChannelID channel)
-    {
-        switch (channel)
-        {
-            CHANNEL_MAP(LOG_TEST,           "TEST")
-            CHANNEL_MAP(LOG_PME,            "PME")
-            CHANNEL_MAP(LOG_MINIMIZATION,   "MINIMIZATION")
-            CHANNEL_MAP(LOG_MARCO,          "MARCO")
-            CHANNEL_MAP(LOG_SISI,           "SISI")
-            CHANNEL_MAP(LOG_BFMIN,          "BFMIN")
-            default:
-                stream << "UNKNOWN: ";
-                break;
-        }
-        return stream;
-    }
 
     Logger::Logger() : Logger(g_null_ostream)
     { }
@@ -91,7 +68,7 @@ namespace PME
         assert(channel < NUM_LOG_CHANNELS);
         if (verbosity(channel) >= v)
         {
-            return (*m_log << channel);
+            return *m_log;
         }
         else
         {
