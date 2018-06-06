@@ -26,6 +26,7 @@ namespace PME
     GlobalState g_null_gs;
 
     PMEOptions::PMEOptions() :
-        simplify(true)
+        simplify(true),
+        camsis_abstraction_refinement(true)
     { }
 }

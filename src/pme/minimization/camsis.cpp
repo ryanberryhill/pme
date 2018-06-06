@@ -31,11 +31,12 @@ namespace PME
                                      const ClauseVec & proof,
                                      GlobalState & gs)
         : ProofMinimizer(vars, tr, proof, gs),
+          m_cons(vars, tr, gs),
           m_collapseFinder(vars, tr, gs),
           m_solver(vars)
     {
-        // Set up collapse set finder and clause-select variables for the MSIS
-        // solver
+        // Set up collapse set finder and consecution checker and clause-select
+        // variables for the MSIS solver
         for (ClauseID c = 0; c < numClauses(); ++c)
         {
             const Clause & cls = clauseOf(c);
@@ -45,6 +46,8 @@ namespace PME
 
             m_clausedb.addClause(c, select, cls);
             m_solver.addForOptimization(negate(select));
+
+            m_cons.addClause(c, cls);
         }
 
         // Add a clause to the MSIS solver forcing it to select ~Bad
@@ -53,9 +56,56 @@ namespace PME
         m_solver.addClause({selp});
     }
 
+    void CAMSISMinimizer::recordMSIS(const MSIS & msis)
+    {
+        if (numProofs() == 0)
+        {
+            setMinimumProof(msis);
+        }
+        addMinimalProof(msis);
+    }
+
     void CAMSISMinimizer::minimize()
     {
-        naiveMinimize();
+        if (opts().camsis_abstraction_refinement)
+        {
+            abstractionRefinementMinimize();
+        }
+        else
+        {
+            naiveMinimize();
+        }
+    }
+
+    void CAMSISMinimizer::abstractionRefinementMinimize()
+    {
+        MSISCandidate candidate;
+
+        while (extractCandidate(candidate))
+        {
+            std::vector<ClauseID> unsupported;
+            if (isSIS(candidate, unsupported))
+            {
+                log(1) << "Found MSIS of size " << candidate.size() << std::endl;
+                blockMSIS(candidate);
+                recordMSIS(candidate);
+            }
+            else
+            {
+                log(2) << "Found non-SIS of size " << candidate.size()
+                       << " with " << unsupported.size()
+                       << " unsupported clauses"
+                       << std::endl;
+
+                for (ClauseID c : unsupported)
+                {
+                    log(3) << "Attempting refinement with unsupported clause " << c
+                           << std::endl;
+                    bool refined = attemptRefinement(c);
+                    assert(refined);
+                }
+            }
+        }
     }
 
     void CAMSISMinimizer::naiveMinimize()
@@ -68,19 +118,31 @@ namespace PME
 
         // And then extracts MSISes
         std::vector<ClauseID> msis;
-        bool first = true;
-        while (extractMSIS(msis))
+        while (extractCandidate(msis))
         {
             log(1) << "Found MSIS of size " << msis.size() << std::endl;
             blockMSIS(msis);
-
-            if (first) { setMinimumProof(msis); }
-            first = false;
-            addMinimalProof(msis);
+            recordMSIS(msis);
         }
     }
 
-    bool CAMSISMinimizer::extractMSIS(MSIS & msis)
+    bool CAMSISMinimizer::isSIS(const MSISCandidate & candidate,
+                                std::vector<ClauseID> & unsupported)
+    {
+        unsupported.clear();
+
+        for (ClauseID c : candidate)
+        {
+            if (!m_cons.solve(candidate, c))
+            {
+                unsupported.push_back(c);
+            }
+        }
+
+        return unsupported.empty();
+    }
+
+    bool CAMSISMinimizer::extractCandidate(MSISCandidate & msis)
     {
         msis.clear();
         bool sat = m_solver.solve();

@@ -27,6 +27,7 @@
 #define CAMSIS_H_INCLUDED
 
 #include "pme/minimization/minimization.h"
+#include "pme/engine/consecution_checker.h"
 #include "pme/engine/collapse_set_finder.h"
 
 #include <vector>
@@ -45,15 +46,23 @@ namespace PME
             std::ostream & log(int verbosity) const override;
         private:
             typedef std::vector<ClauseID> MSIS;
+            typedef std::vector<ClauseID> MSISCandidate;
 
-            bool attemptRefinement(ClauseID c);
-            bool findCollapse(ClauseID c, CollapseSet & collapse);
             ID createClauseSelect(ClauseID c);
             Clause collapseClause(ClauseID c, const CollapseSet & collapse) const;
-            void naiveMinimize();
-            bool extractMSIS(MSIS & msis);
-            void blockMSIS(const MSIS & msis);
 
+            bool findCollapse(ClauseID c, CollapseSet & collapse);
+            bool attemptRefinement(ClauseID c);
+            bool extractCandidate(MSIS & msis);
+            void blockMSIS(const MSIS & msis);
+            bool isSIS(const MSISCandidate & candidate, std::vector<ClauseID> & unsupported);
+
+            void recordMSIS(const MSIS & msis);
+
+            void naiveMinimize();
+            void abstractionRefinementMinimize();
+
+            ConsecutionChecker m_cons;
             CollapseSetFinder m_collapseFinder;
             MaxSATSolver m_solver;
             ClauseDatabase m_clausedb;

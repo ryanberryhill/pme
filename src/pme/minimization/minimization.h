@@ -64,6 +64,8 @@ namespace PME
             virtual std::ostream & log(int verbosity) const;
             std::ostream & log(LogChannelID channel, int verbosity) const;
 
+            const PMEOptions & opts() const { return m_gs.opts; }
+
         private:
             void addPropertyIfMissing();
             const TransitionRelation & m_tr;

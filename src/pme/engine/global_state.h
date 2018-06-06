@@ -29,6 +29,7 @@ namespace PME
     struct PMEOptions
     {
         bool simplify;
+        bool camsis_abstraction_refinement;
         PMEOptions();
     };
 
