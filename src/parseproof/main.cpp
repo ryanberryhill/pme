@@ -100,6 +100,9 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
             ParsedClause cls;
             std::string disjunct;
             std::istringstream iss(line);
+
+            bool ok = true;
+
             while (iss >> disjunct)
             {
                 bool neg = false;
@@ -111,9 +114,19 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
                 }
 
                 unsigned id = name_to_id[disjunct];
+                if (id == 0) {
+                    std::cerr << "WARNING: line " << lineno << ": "
+                              << "unmapped name ``" << disjunct << "''"
+                              << ", skipping line"
+                              << std::endl;
+                    ok = false;
+                    break;
+                }
                 if (neg) { id = aiger_not(id); }
                 cls.push_back(id);
             }
+
+            if (!ok) { continue; }
             parsed.push_back(cls);
         }
         else if (!line.empty() && line != ignorable)
