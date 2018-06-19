@@ -20,7 +20,7 @@
  */
 
 #include "pme/minimization/marco.h"
-#include "pme/util/mis_finder.h"
+#include "pme/util/find_safe_mis.h"
 
 #include <algorithm>
 #include <cassert>
@@ -76,7 +76,7 @@ namespace PME
             Seed mis = seed;
 
             if (!sat) { break; }
-            else if (findSafeMIS(mis))
+            else if (findSIS(mis))
             {
                 log(3) << "Found a SIS seed of size " << mis.size() << std::endl;
                 shrink(mis);
@@ -215,7 +215,7 @@ namespace PME
             std::remove_copy(seed_copy.begin(), seed_copy.end(),
                              std::back_inserter(test_seed), id);
 
-            if (findSafeMIS(test_seed))
+            if (findSIS(test_seed))
             {
                 seed_copy = test_seed;
                 std::sort(seed_copy.begin(), seed_copy.end());
@@ -233,12 +233,11 @@ namespace PME
         if (seed_copy.size() < seed.size()) { seed = seed_copy; }
     }
 
-    bool MARCOMinimizer::findSafeMIS(Seed & seed)
+    bool MARCOMinimizer::findSIS(Seed & seed)
     {
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
-        MISFinder finder(m_indSolver);
-        return finder.findSafeMIS(seed, propertyID());
+        return findSafeMIS(m_indSolver, seed, propertyID());
     }
 
     MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexplored()

@@ -28,20 +28,8 @@
 
 namespace PME
 {
-    class MISFinder
-    {
-        public:
-            MISFinder(ConsecutionChecker & solver);
-            bool findSafeMIS(ClauseIDVec & vec, ClauseID property);
-            bool findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec);
-
-        private:
-            ConsecutionChecker & m_solver;
-
-            bool contains(const ClauseIDVec & vec, ClauseID id) const;
-            bool containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const;
-            bool isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props);
-    };
+    bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, ClauseID property);
+    bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, const ClauseIDVec & nec);
 }
 
 #endif

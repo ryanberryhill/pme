@@ -53,7 +53,7 @@ namespace PME
             bool isSIS(const Seed & seed);
             void grow(Seed & seed);
             void shrink(Seed & seed);
-            bool findSafeMIS(Seed & seed);
+            bool findSIS(Seed & seed);
             void blockUp(const Seed & seed);
             void blockDown(const Seed & seed);
 

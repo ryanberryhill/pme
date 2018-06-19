@@ -20,7 +20,7 @@
  */
 
 #include "pme/minimization/sisi.h"
-#include "pme/util/mis_finder.h"
+#include "pme/util/find_safe_mis.h"
 #include "pme/util/minimal_support_finder.h"
 
 #include <algorithm>
@@ -55,7 +55,7 @@ namespace PME
             std::remove_copy(m_feas.begin(), m_feas.end(),
                              std::back_inserter(test_feas), id);
 
-            if (!findSafeMIS(test_feas))
+            if (!findSIS(test_feas))
             {
                 m_nec.insert(id);
             }
@@ -117,7 +117,7 @@ namespace PME
             std::remove_copy(feas.begin(), feas.end(),
                              std::back_inserter(test_feas), id);
 
-            if (findSafeMIS(test_feas))
+            if (findSIS(test_feas))
             {
                 assert(test_feas.size() < feas.size());
                 feas = test_feas;
@@ -134,11 +134,10 @@ namespace PME
         return proof;
     }
 
-    bool SISI::findSafeMIS(ClauseIDVec & vec)
+    bool SISI::findSIS(ClauseIDVec & vec)
     {
-        MISFinder finder(m_indSolver);
         std::vector<ClauseID> nec_vec(m_nec.begin(), m_nec.end());
-        return finder.findSafeMIS(vec, nec_vec);
+        return findSafeMIS(m_indSolver, vec, nec_vec);
     }
 
     void SISI::minimizeSupport(ClauseIDVec & vec, ClauseID cls)

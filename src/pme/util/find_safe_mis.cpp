@@ -19,22 +19,18 @@
  * IN THE SOFTWARE.
  */
 
-#include "pme/util/mis_finder.h"
+#include "pme/util/find_safe_mis.h"
 
 #include <algorithm>
 
 namespace PME
 {
-    MISFinder::MISFinder(ConsecutionChecker & solver)
-        : m_solver(solver)
-    { }
-
-    bool MISFinder::contains(const ClauseIDVec & vec, ClauseID id) const
+    bool contains(const ClauseIDVec & vec, ClauseID id)
     {
         return std::find(vec.begin(), vec.end(), id) != vec.end();
     }
 
-    bool MISFinder::containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props) const
+    bool containsAllOf(const ClauseIDVec & vec, const ClauseIDVec & props)
     {
         for (ClauseID id : props)
         {
@@ -46,19 +42,20 @@ namespace PME
         return true;
     }
 
-    bool MISFinder::isSafeInductive(const ClauseIDVec & vec, const ClauseIDVec & props)
+    bool isSafeInductive(ConsecutionChecker & solver,
+                         const ClauseIDVec & vec,
+                         const ClauseIDVec & props)
     {
-        return containsAllOf(vec, props) && m_solver.isInductive(vec);
+        return containsAllOf(vec, props) && solver.isInductive(vec);
     }
 
-    bool MISFinder::findSafeMIS(ClauseIDVec & vec, ClauseID property)
+    bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, ClauseID property)
     {
-        ClauseIDVec nec;
-        nec.push_back(property);
-        return findSafeMIS(vec, nec);
+        ClauseIDVec nec = {property};
+        return findSafeMIS(solver, vec, nec);
     }
 
-    bool MISFinder::findSafeMIS(ClauseIDVec & vec, const ClauseIDVec & nec)
+    bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, const ClauseIDVec & nec)
     {
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
@@ -69,7 +66,7 @@ namespace PME
             return false;
         }
 
-        if (isSafeInductive(vec, nec)) { return true; }
+        if (isSafeInductive(solver, vec, nec)) { return true; }
 
         // Remove all clauses that are non-inductive
         // TODO simple optimization: remove clauses that are satisfied
@@ -82,7 +79,7 @@ namespace PME
             for (size_t i = 0; i < vec.size(); )
             {
                 ClauseID id = vec.at(i);
-                if (!m_solver.solve(vec, id))
+                if (!solver.solve(vec, id))
                 {
                     if (contains(nec, id)) { return false; }
                     removed = true;

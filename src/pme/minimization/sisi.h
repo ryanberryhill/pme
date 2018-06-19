@@ -36,7 +36,7 @@ namespace PME
     {
         public:
             SISI(ConsecutionChecker & solver);
-            bool findSafeMIS(ClauseIDVec & vec);
+            bool findSIS(ClauseIDVec & vec);
             void refineNEC();
             void refineFEAS();
             ClauseIDVec bruteForceMinimize();

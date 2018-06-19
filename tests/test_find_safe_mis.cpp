@@ -21,9 +21,9 @@
 
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/consecution_checker.h"
-#include "pme/util/mis_finder.h"
+#include "pme/util/find_safe_mis.h"
 
-#define BOOST_TEST_MODULE MISFinderTest
+#define BOOST_TEST_MODULE FindSafeMISTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -36,7 +36,6 @@ struct MISFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<ConsecutionChecker> checker;
-    std::unique_ptr<MISFinder> finder;
 
     MISFixture()
     {
@@ -72,8 +71,6 @@ struct MISFixture
 
         // Add the property clause as ID 0
         checker->addClause(0, tr->propertyClause());
-
-        finder.reset(new MISFinder(*checker));
     }
 
     ~MISFixture()
@@ -110,7 +107,7 @@ BOOST_AUTO_TEST_CASE(trivial_mis)
     ClauseIDVec proof = { 0, 1, 2, 3, 4 };
     ClauseIDVec proof_copy = proof;
 
-    BOOST_CHECK(f.finder->findSafeMIS(proof_copy, 0));
+    BOOST_CHECK(findSafeMIS(*f.checker, proof_copy, 0));
     BOOST_CHECK(proof_copy == proof);
 }
 
@@ -131,7 +128,7 @@ BOOST_AUTO_TEST_CASE(no_mis)
     ClauseIDVec proof = { 0, 1, 2 };
     ClauseIDVec proof_copy = proof;
 
-    BOOST_CHECK(!f.finder->findSafeMIS(proof_copy, 0));
+    BOOST_CHECK(!findSafeMIS(*f.checker, proof_copy, 0));
     BOOST_CHECK(proof_copy == proof);
 }
 
@@ -172,14 +169,14 @@ BOOST_AUTO_TEST_CASE(nontrivial_mis)
     ClauseIDVec proof = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
     ClauseIDVec proof_copy = proof;
 
-    BOOST_CHECK(f.finder->findSafeMIS(proof_copy, 0));
+    BOOST_CHECK(findSafeMIS(*f.checker, proof_copy, 0));
     std::sort(proof_copy.begin(), proof_copy.end());
     ClauseIDVec expected = { 0, 1, 2, 3, 4, 5, 6 };
     BOOST_CHECK(proof_copy == expected);
 
     // Check that the result is indeed safe inductive
     proof = proof_copy;
-    BOOST_CHECK(f.finder->findSafeMIS(proof_copy, 0));
+    BOOST_CHECK(findSafeMIS(*f.checker, proof_copy, 0));
     BOOST_CHECK(proof_copy == proof);
 
     // Deleting 2 or 5 from the below yields a non-inductive formula
@@ -187,7 +184,7 @@ BOOST_AUTO_TEST_CASE(nontrivial_mis)
     // proof = { 0, 1, 2, 3, 4, 5, 6 }
     proof = { 0, 1, 3, 4, 5, 6 };
     proof_copy = proof;
-    BOOST_CHECK(f.finder->findSafeMIS(proof_copy, 0));
+    BOOST_CHECK(findSafeMIS(*f.checker, proof_copy, 0));
     std::sort(proof_copy.begin(), proof_copy.end());
     expected = { 0, 1, 3, 4, 6 };
     BOOST_CHECK(proof_copy == expected);
@@ -230,13 +227,13 @@ BOOST_AUTO_TEST_CASE(multiple_necessary_clauses)
     ClauseIDVec proof_copy = proof;
     ClauseIDVec expected;
 
-    BOOST_CHECK(f.finder->findSafeMIS(proof_copy, {0, 2}));
+    BOOST_CHECK(findSafeMIS(*f.checker, proof_copy, {0, 2}));
     std::sort(proof_copy.begin(), proof_copy.end());
     expected = { 0, 1, 2, 3, 4, 5, 6 };
     BOOST_CHECK(proof_copy == expected);
 
     proof_copy = proof;
-    BOOST_CHECK(f.finder->findSafeMIS(proof_copy, {0, 5}));
+    BOOST_CHECK(findSafeMIS(*f.checker, proof_copy, {0, 5}));
     std::sort(proof_copy.begin(), proof_copy.end());
     expected = { 0, 1, 2, 3, 4, 5, 6 };
     BOOST_CHECK(proof_copy == expected);
