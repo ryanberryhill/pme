@@ -19,24 +19,24 @@
  * IN THE SOFTWARE.
  */
 
-#include "src/pme/util/minimal_support_finder.h"
+#include "src/pme/util/find_minimal_support.h"
 
 #include <algorithm>
 #include <cassert>
 
 namespace PME
 {
-    MinimalSupportFinder::MinimalSupportFinder(ConsecutionChecker & solver)
-        : m_solver(solver)
-    { }
-
-    ClauseIDVec MinimalSupportFinder::findSupport(const ClauseIDVec & frame, ClauseID id)
+    ClauseIDVec findMinimalSupport(ConsecutionChecker & solver,
+                                   const ClauseIDVec & frame,
+                                   ClauseID id)
     {
-        Clause cls = m_solver.clauseOf(id);
-        return findSupport(frame, cls);
+        Clause cls = solver.clauseOf(id);
+        return findMinimalSupport(solver, frame, cls);
     }
 
-    ClauseIDVec MinimalSupportFinder::findSupport(const ClauseIDVec & frame, const Clause & cls)
+    ClauseIDVec findMinimalSupport(ConsecutionChecker & solver,
+                                   const ClauseIDVec & frame,
+                                   const Clause & cls)
     {
         ClauseIDVec frame_copy = frame;
         std::sort(frame_copy.begin(), frame_copy.end());
@@ -51,7 +51,7 @@ namespace PME
                              std::back_inserter(test_frame), id);
 
             ClauseIDVec support;
-            if (m_solver.supportSolve(frame_copy, cls, support))
+            if (solver.supportSolve(frame_copy, cls, support))
             {
                 // update frame copy to support, sort, and place the iterator
                 // at the right position (the first element > id)

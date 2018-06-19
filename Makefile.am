@@ -44,8 +44,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/maxsat_solver.cpp \
                    src/pme/util/find_safe_mis.h \
                    src/pme/util/find_safe_mis.cpp \
-                   src/pme/util/minimal_support_finder.h \
-                   src/pme/util/minimal_support_finder.cpp \
+                   src/pme/util/find_minimal_support.h \
+                   src/pme/util/find_minimal_support.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \
@@ -106,7 +106,7 @@ TESTS = test_sat_adaptor \
         test_maxsat_solver \
         test_consecution_checker \
         test_find_safe_mis \
-        test_minimal_support_finder \
+        test_find_minimal_support \
         test_logger \
         test_clause_database \
         test_collapse_set_finder
@@ -147,8 +147,8 @@ test_consecution_checker_LDADD = $(PME_TEST_LIBS)
 test_find_safe_mis_SOURCES = tests/test_find_safe_mis.cpp  
 test_find_safe_mis_LDADD = $(PME_TEST_LIBS)
 
-test_minimal_support_finder_SOURCES = tests/test_minimal_support_finder.cpp  
-test_minimal_support_finder_LDADD = $(PME_TEST_LIBS)
+test_find_minimal_support_SOURCES = tests/test_find_minimal_support.cpp  
+test_find_minimal_support_LDADD = $(PME_TEST_LIBS)
 
 test_logger_SOURCES = tests/test_logger.cpp
 test_logger_LDADD = $(PME_TEST_LIBS)

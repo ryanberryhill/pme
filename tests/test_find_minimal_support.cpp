@@ -23,7 +23,7 @@
 #include "pme/engine/transition_relation.h"
 #include "pme/util/find_minimal_support.h"
 
-#define BOOST_TEST_MODULE MinimalSupportFinderTest
+#define BOOST_TEST_MODULE FindMinimalSupportTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 

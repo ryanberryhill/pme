@@ -21,7 +21,7 @@
 
 #include "pme/minimization/sisi.h"
 #include "pme/util/find_safe_mis.h"
-#include "pme/util/minimal_support_finder.h"
+#include "pme/util/find_minimal_support.h"
 
 #include <algorithm>
 #include <cassert>
@@ -142,8 +142,7 @@ namespace PME
 
     void SISI::minimizeSupport(ClauseIDVec & vec, ClauseID cls)
     {
-        MinimalSupportFinder finder(m_indSolver);
-        ClauseIDVec minsupp = finder.findSupport(vec, cls);
+        ClauseIDVec minsupp = findMinimalSupport(m_indSolver, vec, cls);
         assert(minsupp.size() <= vec.size());
         vec = minsupp;
     }

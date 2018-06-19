@@ -27,16 +27,12 @@
 
 namespace PME
 {
-    class MinimalSupportFinder
-    {
-        public:
-            MinimalSupportFinder(ConsecutionChecker & solver);
-            ClauseIDVec findSupport(const ClauseIDVec & frame, ClauseID id);
-            ClauseIDVec findSupport(const ClauseIDVec & frame, const Clause & cls);
-
-        private:
-            ConsecutionChecker & m_solver;
-    };
+    ClauseIDVec findMinimalSupport(ConsecutionChecker & solver,
+                                   const ClauseIDVec & frame,
+                                   ClauseID id);
+    ClauseIDVec findMinimalSupport(ConsecutionChecker & solver,
+                                   const ClauseIDVec & frame,
+                                   const Clause & cls);
 }
 
 #endif
