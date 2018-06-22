@@ -61,7 +61,10 @@ namespace PME
             void freeze(id_iterator begin, id_iterator end, bool primes = false);
             ClauseVec simplify();
 
+            void reset();
+
         private:
+            SATBackend m_backend;
             std::set<GroupID> m_groups;
             std::unique_ptr<SAT::Solver> m_solver;
             std::unordered_map<ID, SAT::Variable> m_IDToSATMap;

@@ -45,11 +45,9 @@ namespace PME
     }
 
     SATAdaptor::SATAdaptor(SATBackend backend)
-        : m_solver(newSolver(backend))
+        : m_backend(backend)
     {
-       // Add the clause for ID_TRUE
-       introduceVariable(ID_TRUE);
-       addClause({ID_TRUE});
+        reset();
     }
 
     void SATAdaptor::introduceVariable(ID id)
@@ -224,6 +222,18 @@ namespace PME
         }
 
         return simplified;
+    }
+
+    void SATAdaptor::reset()
+    {
+        m_solver.reset(newSolver(m_backend));
+        m_groups.clear();
+        m_IDToSATMap.clear();
+        m_SATToIDMap.clear();
+
+        // Add the clause for ID_TRUE
+        introduceVariable(ID_TRUE);
+        addClause({ID_TRUE});
     }
 
     GroupID SATAdaptor::createGroup()

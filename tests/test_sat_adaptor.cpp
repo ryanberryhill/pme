@@ -35,20 +35,25 @@ BOOST_AUTO_TEST_CASE(constants)
     for (SATBackend backend : backends)
     {
         SATAdaptor slv(backend);
-        BOOST_CHECK(!slv.isSAT());
+        for (unsigned i = 0; i <= 1; ++i)
+        {
+            BOOST_CHECK(!slv.isSAT());
 
-        BOOST_CHECK(slv.solve());
-        BOOST_CHECK(slv.isSAT());
+            BOOST_CHECK(slv.solve());
+            BOOST_CHECK(slv.isSAT());
 
-        BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
 
-        slv.addClause({MIN_ID});
-        BOOST_CHECK(slv.solve());
-        BOOST_CHECK(slv.isSAT());
+            slv.addClause({MIN_ID});
+            BOOST_CHECK(slv.solve());
+            BOOST_CHECK(slv.isSAT());
 
-        BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(ID_TRUE), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(ID_FALSE), SAT::FALSE);
+
+            if (i == 0) { slv.reset(); }
+        }
     }
 }
 
@@ -60,23 +65,28 @@ BOOST_AUTO_TEST_CASE(one_var)
 
         ID a = MIN_ID;
 
-        // (a)
-        slv.addClause({a});
-        BOOST_CHECK(slv.solve());
-        BOOST_CHECK(slv.isSAT());
+        for (unsigned i = 0; i <= 1; ++i)
+        {
+            // (a)
+            slv.addClause({a});
+            BOOST_CHECK(slv.solve());
+            BOOST_CHECK(slv.isSAT());
 
-        // (a) & (-a)[assumption]
-        BOOST_CHECK(!slv.solve({negate(a)}));
-        BOOST_CHECK(!slv.isSAT());
+            // (a) & (-a)[assumption]
+            BOOST_CHECK(!slv.solve({negate(a)}));
+            BOOST_CHECK(!slv.isSAT());
 
-        // (a) again
-        BOOST_CHECK(slv.solve());
-        BOOST_CHECK(slv.isSAT());
+            // (a) again
+            BOOST_CHECK(slv.solve());
+            BOOST_CHECK(slv.isSAT());
 
-        // (a) & (-a)
-        slv.addClause({negate(a)});
-        BOOST_CHECK(!slv.solve());
-        BOOST_CHECK(!slv.isSAT());
+            // (a) & (-a)
+            slv.addClause({negate(a)});
+            BOOST_CHECK(!slv.solve());
+            BOOST_CHECK(!slv.isSAT());
+
+            if (i == 0) { slv.reset(); }
+        }
     }
 }
 
@@ -88,28 +98,33 @@ BOOST_AUTO_TEST_CASE(three_var)
 
         ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR;
 
-        // (a) & (b V c) & (-b V -c)
-        slv.addClause({a});
-        slv.addClause({b, c});
-        slv.addClause({negate(b), negate(c)});
+        for (unsigned i = 0; i <= 1; ++i)
+        {
+            // (a) & (b V c) & (-b V -c)
+            slv.addClause({a});
+            slv.addClause({b, c});
+            slv.addClause({negate(b), negate(c)});
 
-        BOOST_CHECK(slv.solve());
+            BOOST_CHECK(slv.solve());
 
-        BOOST_CHECK(slv.solve({b}));
-        BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
-        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::FALSE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::FALSE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::TRUE);
+            BOOST_CHECK(slv.solve({b}));
+            BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::TRUE);
 
-        BOOST_CHECK(slv.solve({negate(b)}));
-        BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::FALSE);
-        BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::TRUE);
-        BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::FALSE);
+            BOOST_CHECK(slv.solve({negate(b)}));
+            BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::FALSE);
+
+            if (i == 0) { slv.reset(); }
+        }
     }
 }
 
@@ -121,22 +136,27 @@ BOOST_AUTO_TEST_CASE(critical_assumptions)
 
         ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR, d = c + ID_INCR;
 
-        slv.addClause({a, b, c, d});
-        slv.addClause({negate(a), negate(b), negate(c), negate(d)});
-        slv.addClause({negate(c), d});
-
-        Cube assumps = { a, b, c, d };
-        Cube crits;
-        BOOST_REQUIRE(!slv.solve(assumps, &crits));
-
-        // Criticals are sufficient to prove UNSAT
-        BOOST_CHECK(!crits.empty());
-        BOOST_CHECK(!slv.solve(crits));
-
-        // Each critical should be from the assumptions
-        for (ID l : crits)
+        for (unsigned i = 0; i <= 1; ++i)
         {
-            BOOST_CHECK(std::find(assumps.begin(), assumps.end(), l) != assumps.end());
+            slv.addClause({a, b, c, d});
+            slv.addClause({negate(a), negate(b), negate(c), negate(d)});
+            slv.addClause({negate(c), d});
+
+            Cube assumps = { a, b, c, d };
+            Cube crits;
+            BOOST_REQUIRE(!slv.solve(assumps, &crits));
+
+            // Criticals are sufficient to prove UNSAT
+            BOOST_CHECK(!crits.empty());
+            BOOST_CHECK(!slv.solve(crits));
+
+            // Each critical should be from the assumptions
+            for (ID l : crits)
+            {
+                BOOST_CHECK(std::find(assumps.begin(), assumps.end(), l) != assumps.end());
+            }
+
+            if (i == 0) { slv.reset(); }
         }
     }
 }
@@ -148,34 +168,39 @@ BOOST_AUTO_TEST_CASE(simplify)
         SATAdaptor slv(backend);
         ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR, d = c + ID_INCR;
 
-        slv.addClause({a});
-        slv.addClause({a, b});
-        slv.addClause({negate(b), c});
-        slv.addClause({negate(a), d});
-
-        BOOST_CHECK(slv.solve({d}));
-        BOOST_CHECK(!slv.solve({negate(d)}));
-
-        slv.freeze(a);
-        slv.freeze(d);
-        ClauseVec simplified = slv.simplify();
-        BOOST_CHECK(!simplified.empty());
-
-        // Same satisfiability after simplify
-        BOOST_CHECK(slv.solve({d}));
-        BOOST_CHECK(!slv.solve({negate(d)}));
-
-        // And after taking the simplified clauses to a different solver
-        // Note that for non-simplifying solvers, the clauses after
-        // simplification are the same as those before
-        SATAdaptor slv2(GLUCOSE);
-        for (const Clause & cls : simplified)
+        for (unsigned i = 0; i <= 1; ++i)
         {
-            slv2.addClause(cls);
-        }
+            slv.addClause({a});
+            slv.addClause({a, b});
+            slv.addClause({negate(b), c});
+            slv.addClause({negate(a), d});
 
-        BOOST_CHECK(slv2.solve({d}));
-        BOOST_CHECK(!slv2.solve({negate(d)}));
+            BOOST_CHECK(slv.solve({d}));
+            BOOST_CHECK(!slv.solve({negate(d)}));
+
+            slv.freeze(a);
+            slv.freeze(d);
+            ClauseVec simplified = slv.simplify();
+            BOOST_CHECK(!simplified.empty());
+
+            // Same satisfiability after simplify
+            BOOST_CHECK(slv.solve({d}));
+            BOOST_CHECK(!slv.solve({negate(d)}));
+
+            // And after taking the simplified clauses to a different solver
+            // Note that for non-simplifying solvers, the clauses after
+            // simplification are the same as those before
+            SATAdaptor slv2(GLUCOSE);
+            for (const Clause & cls : simplified)
+            {
+                slv2.addClause(cls);
+            }
+
+            BOOST_CHECK(slv2.solve({d}));
+            BOOST_CHECK(!slv2.solve({negate(d)}));
+
+            if (i == 0) { slv.reset(); }
+        }
     }
 }
 
@@ -186,26 +211,31 @@ BOOST_AUTO_TEST_CASE(groups)
         SATAdaptor slv(backend);
         ID a = MIN_ID, b = a + ID_INCR;
 
-        slv.addClause({a});
+        for (unsigned i = 0; i <= 1; ++i)
+        {
+            slv.addClause({a});
 
-        BOOST_CHECK(slv.solve({a}));
-        BOOST_CHECK(!slv.solve({negate(a)}));
+            BOOST_CHECK(slv.solve({a}));
+            BOOST_CHECK(!slv.solve({negate(a)}));
 
-        GroupID gida = slv.createGroup();
-        slv.addGroupClause(gida, {negate(a)});
+            GroupID gida = slv.createGroup();
+            slv.addGroupClause(gida, {negate(a)});
 
-        BOOST_CHECK(!slv.groupSolve(gida));
-        BOOST_CHECK(slv.solve({a}));
-        BOOST_CHECK(!slv.solve({negate(a)}));
+            BOOST_CHECK(!slv.groupSolve(gida));
+            BOOST_CHECK(slv.solve({a}));
+            BOOST_CHECK(!slv.solve({negate(a)}));
 
-        slv.addClause({a, b});
-        GroupID gidb = slv.createGroup();
-        slv.addGroupClause(gidb, {negate(b)});
+            slv.addClause({a, b});
+            GroupID gidb = slv.createGroup();
+            slv.addGroupClause(gidb, {negate(b)});
 
-        BOOST_CHECK(!slv.groupSolve(gida));
-        BOOST_CHECK(slv.groupSolve(gidb));
-        BOOST_CHECK(!slv.groupSolve(gidb, {negate(a), negate(b)}));
-        BOOST_CHECK(slv.solve());
+            BOOST_CHECK(!slv.groupSolve(gida));
+            BOOST_CHECK(slv.groupSolve(gidb));
+            BOOST_CHECK(!slv.groupSolve(gidb, {negate(a), negate(b)}));
+            BOOST_CHECK(slv.solve());
+
+            if (i == 0) { slv.reset(); }
+        }
     }
 }
 
