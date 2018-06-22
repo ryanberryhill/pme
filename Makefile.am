@@ -55,7 +55,11 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/minimization/sisi.h \
                    src/pme/minimization/sisi.cpp \
                    src/pme/minimization/minimization.h \
-                   src/pme/minimization/minimization.cpp
+                   src/pme/minimization/minimization.cpp \
+				   src/pme/ic3/ic3.h \
+				   src/pme/ic3/ic3.cpp \
+				   src/pme/ic3/inductive_trace.h \
+				   src/pme/ic3/inductive_trace.cpp 
 
 libpme_a_LIBADD = $(SAT_LIBS)
 
@@ -109,7 +113,8 @@ TESTS = test_sat_adaptor \
         test_find_minimal_support \
         test_logger \
         test_clause_database \
-        test_collapse_set_finder
+        test_collapse_set_finder \
+		test_inductive_trace
 
 check_PROGRAMS = $(TESTS)
 
@@ -158,6 +163,9 @@ test_clause_database_LDADD = $(PME_TEST_LIBS)
 
 test_collapse_set_finder_SOURCES = tests/test_collapse_set_finder.cpp
 test_collapse_set_finder_LDADD = $(PME_TEST_LIBS)
+
+test_inductive_trace_SOURCES = tests/test_inductive_trace.cpp
+test_inductive_trace_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 
