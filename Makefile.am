@@ -59,7 +59,9 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/ic3/ic3.h \
 				   src/pme/ic3/ic3.cpp \
 				   src/pme/ic3/inductive_trace.h \
-				   src/pme/ic3/inductive_trace.cpp 
+				   src/pme/ic3/inductive_trace.cpp \
+				   src/pme/ic3/frame_solver.h \
+				   src/pme/ic3/frame_solver.cpp
 
 libpme_a_LIBADD = $(SAT_LIBS)
 
