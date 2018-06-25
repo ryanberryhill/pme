@@ -31,6 +31,18 @@
 
 namespace PME { namespace IC3 {
 
+    struct ConsecutionOptions {
+        unsigned level;
+        const Cube * c;
+        Cube * core;
+
+        ConsecutionOptions()
+            : level(LEVEL_INF),
+              c(nullptr),
+              core(nullptr)
+        { }
+    };
+
     class FrameSolver {
         public:
             FrameSolver(VariableManager & varman,
@@ -39,13 +51,18 @@ namespace PME { namespace IC3 {
                         GlobalState & gs = g_null_gs);
 
             void renewSAT();
-            ID levelAct(unsigned level);
+            void addLemma(LemmaID id);
+
+            bool consecution(unsigned level, const Cube & c);
+            bool consecution(ConsecutionOptions & opts);
 
         private:
             Clause activatedClauseOf(LemmaID id);
             void computeSimplifiedTR();
             void sendTR();
             void sendFrame(unsigned level);
+            void sendLemma(LemmaID id);
+            ID levelAct(unsigned level);
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
@@ -53,6 +70,7 @@ namespace PME { namespace IC3 {
             GlobalState & m_gs;
 
             SATAdaptor m_solver;
+            bool m_solverInited;
 
             std::vector<Clause> m_unrolled;
             std::vector<ID> m_activation;

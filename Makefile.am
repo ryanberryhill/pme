@@ -116,7 +116,8 @@ TESTS = test_sat_adaptor \
         test_logger \
         test_clause_database \
         test_collapse_set_finder \
-		test_inductive_trace
+		test_inductive_trace \
+		test_frame_solver
 
 check_PROGRAMS = $(TESTS)
 
@@ -168,6 +169,9 @@ test_collapse_set_finder_LDADD = $(PME_TEST_LIBS)
 
 test_inductive_trace_SOURCES = tests/test_inductive_trace.cpp
 test_inductive_trace_LDADD = $(PME_TEST_LIBS)
+
+test_frame_solver_SOURCES = tests/test_frame_solver.cpp
+test_frame_solver_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

@@ -23,6 +23,7 @@
 #include "pme/ic3/frame_solver.h"
 
 #include <sstream>
+#include <cassert>
 
 namespace PME { namespace IC3 {
 
@@ -37,7 +38,11 @@ namespace PME { namespace IC3 {
                              const TransitionRelation & tr,
                              const InductiveTrace & trace,
                              GlobalState & gs)
-        : m_vars(varman), m_tr(tr), m_trace(trace), m_gs(g_null_gs)
+        : m_vars(varman),
+          m_tr(tr),
+          m_trace(trace),
+          m_gs(g_null_gs),
+          m_solverInited(false)
     { }
 
     void FrameSolver::renewSAT()
@@ -57,6 +62,59 @@ namespace PME { namespace IC3 {
         {
             sendFrame(i);
         }
+
+        m_solverInited = true;
+    }
+
+    void FrameSolver::addLemma(LemmaID id)
+    {
+        if (m_solverInited) { sendLemma(id); }
+    }
+
+    bool FrameSolver::consecution(unsigned level, const Cube & c)
+    {
+        ConsecutionOptions opts;
+        opts.level = level;
+        opts.c = &c;
+        return consecution(opts);
+    }
+
+    bool FrameSolver::consecution(ConsecutionOptions & opts)
+    {
+        if (!m_solverInited) { renewSAT(); }
+
+        assert(m_solverInited);
+
+        const Cube & c = *opts.c;
+        unsigned level = opts.level;
+
+        assert(!c.empty());
+
+        Cube assumps;
+
+        // Assume ~act_lvl for each level >= level. Lemmas in F_inf are added
+        // without activation literals so we don't need to assume ~act_inf
+        for (size_t i = level ; i < m_trace.numFrames(); ++i)
+        {
+            ID act = levelAct(i);
+            assumps.push_back(negate(act));
+        }
+
+        // Assume !c and c' (!c will be assumed using a clause group)
+        Clause negc;
+        for (ID lit : c)
+        {
+            assert(nprimes(lit) == 0);
+            assumps.push_back(prime(lit));
+            negc.push_back(negate(lit));
+        }
+
+        GroupID gid = m_solver.createGroup();
+        m_solver.addGroupClause(gid, negc);
+
+        bool sat = m_solver.groupSolve(gid, assumps);
+
+        return !sat;
     }
 
     void FrameSolver::sendTR()
@@ -68,9 +126,14 @@ namespace PME { namespace IC3 {
     {
         for (LemmaID id : m_trace.getFrame(level))
         {
-            Clause cls = activatedClauseOf(id);
-            m_solver.addClause(cls);
+            sendLemma(id);
         }
+    }
+
+    void FrameSolver::sendLemma(LemmaID id)
+    {
+        Clause cls = activatedClauseOf(id);
+        m_solver.addClause(cls);
     }
 
     void FrameSolver::computeSimplifiedTR()
@@ -120,7 +183,7 @@ namespace PME { namespace IC3 {
     ID FrameSolver::levelAct(unsigned level)
     {
         if (level == LEVEL_INF) { return ID_FALSE; }
-        while (level <= m_activation.size())
+        while (level >= m_activation.size())
         {
             std::string name = activationName(level);
             m_activation.push_back(m_vars.getNewID(name));
