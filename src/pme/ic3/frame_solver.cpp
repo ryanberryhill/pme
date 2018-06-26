@@ -82,7 +82,6 @@ namespace PME { namespace IC3 {
     bool FrameSolver::consecution(ConsecutionOptions & opts)
     {
         if (!m_solverInited) { renewSAT(); }
-
         assert(m_solverInited);
 
         const Cube & c = *opts.c;
@@ -115,6 +114,30 @@ namespace PME { namespace IC3 {
         bool sat = m_solver.groupSolve(gid, assumps);
 
         return !sat;
+    }
+
+    bool FrameSolver::intersection(unsigned level, const Cube & c)
+    {
+        assert(!c.empty());
+        if (!m_solverInited) { renewSAT(); }
+        assert(m_solverInited);
+
+        Cube assumps;
+
+        // Assume ~act_lvl for each level >= level. Lemmas in F_inf are added
+        // without activation literals so we don't need to assume ~act_inf
+        for (size_t i = level ; i < m_trace.numFrames(); ++i)
+        {
+            ID act = levelAct(i);
+            assumps.push_back(negate(act));
+        }
+
+        assumps.insert(assumps.end(), c.begin(), c.end());
+
+        // F_k & c & Tr. Tr seems pointless but it might contain constraints
+        bool sat = m_solver.solve(assumps);
+
+        return sat;
     }
 
     void FrameSolver::sendTR()

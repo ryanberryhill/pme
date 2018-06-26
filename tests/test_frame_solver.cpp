@@ -199,3 +199,53 @@ BOOST_AUTO_TEST_CASE(consecution)
     BOOST_CHECK(!f.solver->consecution(2, negateVec(cp0)));
 }
 
+BOOST_AUTO_TEST_CASE(intersection)
+{
+    FrameSolverFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause cn0 = {negate(l0)};
+    Clause cn1 = {negate(l1)};
+    Clause cn2 = {negate(l2)};
+    Clause cn3 = {negate(l3)};
+
+    Clause cp0 = {l0};
+    Clause cp1 = {l1};
+    Clause cp2 = {l2};
+    Clause cp3 = {l3};
+
+    Cube init = {negate(l0), negate(l1), negate(l2), negate(l3)};
+
+    // Initial state 0000
+    f.addClause(cn0, 0);
+    f.addClause(cn1, 0);
+    f.addClause(cn2, 0);
+    f.addClause(cn3, 0);
+
+    BOOST_CHECK(f.solver->intersection(0, init));
+    BOOST_CHECK(f.solver->intersection(0, cn0));
+    BOOST_CHECK(f.solver->intersection(0, cn1));
+    BOOST_CHECK(f.solver->intersection(0, cn2));
+    BOOST_CHECK(f.solver->intersection(0, cn3));
+    BOOST_CHECK(!f.solver->intersection(0, cp0));
+    BOOST_CHECK(!f.solver->intersection(0, cp1));
+    BOOST_CHECK(!f.solver->intersection(0, cp2));
+    BOOST_CHECK(!f.solver->intersection(0, cp3));
+
+    f.addClause(cn0, 1);
+
+    BOOST_CHECK(f.solver->intersection(1, init));
+    BOOST_CHECK(f.solver->intersection(1, cn0));
+    BOOST_CHECK(f.solver->intersection(1, cn1));
+    BOOST_CHECK(f.solver->intersection(1, cn2));
+    BOOST_CHECK(f.solver->intersection(1, cn3));
+    BOOST_CHECK(!f.solver->intersection(1, cp0));
+    BOOST_CHECK(f.solver->intersection(1, cp1));
+    BOOST_CHECK(f.solver->intersection(1, cp2));
+    BOOST_CHECK(f.solver->intersection(1, cp3));
+}
+

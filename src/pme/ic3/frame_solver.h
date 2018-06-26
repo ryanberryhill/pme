@@ -56,6 +56,8 @@ namespace PME { namespace IC3 {
             bool consecution(unsigned level, const Cube & c);
             bool consecution(ConsecutionOptions & opts);
 
+            bool intersection(unsigned level, const Cube & c);
+
         private:
             Clause activatedClauseOf(LemmaID id);
             void computeSimplifiedTR();
