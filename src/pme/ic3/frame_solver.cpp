@@ -71,11 +71,12 @@ namespace PME { namespace IC3 {
         if (m_solverInited) { sendLemma(id); }
     }
 
-    bool FrameSolver::consecution(unsigned level, const Cube & c)
+    bool FrameSolver::consecution(unsigned level, const Cube & c, Cube * core)
     {
         ConsecutionOptions opts;
         opts.level = level;
         opts.c = &c;
+        opts.core = core;
         return consecution(opts);
     }
 
@@ -86,6 +87,7 @@ namespace PME { namespace IC3 {
 
         const Cube & c = *opts.c;
         unsigned level = opts.level;
+        Cube * core = opts.core;
 
         assert(!c.empty());
 
@@ -111,7 +113,22 @@ namespace PME { namespace IC3 {
         GroupID gid = m_solver.createGroup();
         m_solver.addGroupClause(gid, negc);
 
-        bool sat = m_solver.groupSolve(gid, assumps);
+        Cube crits;
+        Cube * solver_crits = core ? & crits : nullptr;
+        bool sat = m_solver.groupSolve(gid, assumps, solver_crits);
+
+        if (core && !sat)
+        {
+            core->clear();
+            std::set<ID> lits(c.begin(), c.end());
+            for (ID lit : crits) {
+                if (nprimes(lit) != 1) { continue; }
+                ID unprimed = unprime(lit);
+                if (lits.count(unprimed)) {
+                    core->push_back(unprimed);
+                }
+            }
+        }
 
         return !sat;
     }

@@ -249,3 +249,71 @@ BOOST_AUTO_TEST_CASE(intersection)
     BOOST_CHECK(f.solver->intersection(1, cp3));
 }
 
+BOOST_AUTO_TEST_CASE(consecution_unsat_core)
+{
+    FrameSolverFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause cp0 = {l0};
+    Clause cn1 = {negate(l1)};
+    Clause cn2 = {negate(l2)};
+    Clause cn3 = {negate(l3)};
+
+    // Initial state 0001
+    f.addClause(cp0, 0);
+    f.addClause(cn1, 0);
+    f.addClause(cn2, 0);
+    f.addClause(cn3, 0);
+
+    Cube c = {negate(l0), negate(l1), negate(l2), negate(l3)};
+    Cube core;
+    BOOST_REQUIRE(f.solver->consecution(0, c, &core));
+    BOOST_REQUIRE(!core.empty());
+
+    std::sort(c.begin(), c.end());
+    std::sort(core.begin(), core.end());
+
+    BOOST_CHECK(std::includes(c.begin(), c.end(), core.begin(), core.end()));
+    BOOST_CHECK(f.solver->consecution(0, core));
+
+    c = {l0, l1, l2, l3};
+    core.clear();
+    BOOST_REQUIRE(f.solver->consecution(0, c, &core));
+    BOOST_REQUIRE(!core.empty());
+
+    std::sort(c.begin(), c.end());
+    std::sort(core.begin(), core.end());
+
+    BOOST_CHECK(std::includes(c.begin(), c.end(), core.begin(), core.end()));
+    BOOST_CHECK(f.solver->consecution(0, core));
+
+    f.addClause(cn2, 1);
+    f.addClause(cn3, 1);
+
+    c = {negate(l0), negate(l1), negate(l2), negate(l3)};
+    core.clear();
+    BOOST_REQUIRE(f.solver->consecution(1, c, &core));
+    BOOST_REQUIRE(!core.empty());
+
+    std::sort(c.begin(), c.end());
+    std::sort(core.begin(), core.end());
+
+    BOOST_CHECK(std::includes(c.begin(), c.end(), core.begin(), core.end()));
+    BOOST_CHECK(f.solver->consecution(1, core));
+
+    c = {l0, l1, l2, l3};
+    core.clear();
+    BOOST_REQUIRE(f.solver->consecution(1, c, &core));
+    BOOST_REQUIRE(!core.empty());
+
+    std::sort(c.begin(), c.end());
+    std::sort(core.begin(), core.end());
+
+    BOOST_CHECK(std::includes(c.begin(), c.end(), core.begin(), core.end()));
+    BOOST_CHECK(f.solver->consecution(1, core));
+}
+

@@ -53,7 +53,7 @@ namespace PME { namespace IC3 {
             void renewSAT();
             void addLemma(LemmaID id);
 
-            bool consecution(unsigned level, const Cube & c);
+            bool consecution(unsigned level, const Cube & c, Cube * core = nullptr);
             bool consecution(ConsecutionOptions & opts);
 
             bool intersection(unsigned level, const Cube & c);
