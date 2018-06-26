@@ -91,15 +91,8 @@ namespace PME { namespace IC3 {
 
         assert(!c.empty());
 
-        Cube assumps;
-
-        // Assume ~act_lvl for each level >= level. Lemmas in F_inf are added
-        // without activation literals so we don't need to assume ~act_inf
-        for (size_t i = level ; i < m_trace.numFrames(); ++i)
-        {
-            ID act = levelAct(i);
-            assumps.push_back(negate(act));
-        }
+        // Assume F_k
+        Cube assumps = levelAssumps(level);
 
         // Assume !c and c' (!c will be assumed using a clause group)
         Clause negc;
@@ -119,18 +112,38 @@ namespace PME { namespace IC3 {
 
         if (core && !sat)
         {
-            core->clear();
-            std::set<ID> lits(c.begin(), c.end());
-            for (ID lit : crits) {
-                if (nprimes(lit) != 1) { continue; }
-                ID unprimed = unprime(lit);
-                if (lits.count(unprimed)) {
-                    core->push_back(unprimed);
-                }
-            }
+            *core = extractCoreOf(c, crits);
         }
 
         return !sat;
+    }
+
+    Cube FrameSolver::extractCoreOf(const Cube & c, const Cube & crits) const
+    {
+        Cube core;
+        std::set<ID> lits(c.begin(), c.end());
+        for (ID lit : crits) {
+            if (nprimes(lit) != 1) { continue; }
+            ID unprimed = unprime(lit);
+            if (lits.count(unprimed)) {
+                core.push_back(unprimed);
+            }
+        }
+
+        return core;
+    }
+
+    Cube FrameSolver::levelAssumps(unsigned level)
+    {
+        // Assume ~act_lvl for each level >= level. Lemmas in F_inf are added
+        // without activation literals so we don't need to assume ~act_inf
+        Cube assumps;
+        for (size_t i = level ; i < m_trace.numFrames(); ++i)
+        {
+            ID act = levelAct(i);
+            assumps.push_back(negate(act));
+        }
+        return assumps;
     }
 
     bool FrameSolver::intersection(unsigned level, const Cube & c)

@@ -65,6 +65,8 @@ namespace PME { namespace IC3 {
             void sendFrame(unsigned level);
             void sendLemma(LemmaID id);
             ID levelAct(unsigned level);
+            Cube extractCoreOf(const Cube & c, const Cube & crits) const;
+            Cube levelAssumps(unsigned level);
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
