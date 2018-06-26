@@ -61,7 +61,11 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/ic3/inductive_trace.h \
 				   src/pme/ic3/inductive_trace.cpp \
 				   src/pme/ic3/frame_solver.h \
-				   src/pme/ic3/frame_solver.cpp
+				   src/pme/ic3/frame_solver.cpp \
+				   src/pme/ic3/transition_relation_solver.h \
+				   src/pme/ic3/transition_relation_solver.cpp \
+				   src/pme/ic3/unsat_core_lifter.h \
+				   src/pme/ic3/unsat_core_lifter.cpp
 
 libpme_a_LIBADD = $(SAT_LIBS)
 
@@ -117,7 +121,8 @@ TESTS = test_sat_adaptor \
         test_clause_database \
         test_collapse_set_finder \
 		test_inductive_trace \
-		test_frame_solver
+		test_frame_solver \
+		test_unsat_core_lifter
 
 check_PROGRAMS = $(TESTS)
 
@@ -172,6 +177,9 @@ test_inductive_trace_LDADD = $(PME_TEST_LIBS)
 
 test_frame_solver_SOURCES = tests/test_frame_solver.cpp
 test_frame_solver_LDADD = $(PME_TEST_LIBS)
+
+test_unsat_core_lifter_SOURCES = tests/test_unsat_core_lifter.cpp
+test_unsat_core_lifter_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

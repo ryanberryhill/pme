@@ -19,12 +19,10 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef FRAME_SOLVER_H_INCLUDED
-#define FRAME_SOLVER_H_INCLUDED
+#ifndef TRANSITION_RELATION_SOLVER_H_INCLUDED
+#define TRANSITION_RELATION_SOLVER_H_INCLUDED
 
 #include "pme/ic3/ic3.h"
-#include "pme/ic3/inductive_trace.h"
-#include "pme/ic3/transition_relation_solver.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/global_state.h"
@@ -32,46 +30,30 @@
 
 namespace PME { namespace IC3 {
 
-    struct ConsecutionOptions {
-        unsigned level;
-        const Cube * c;
-        Cube * core;
+    Cube extractCore(const Cube & c, const Cube & crits);
+    Cube extractCoreWithPrimes(const Cube & c, const Cube & crits, unsigned n = 1);
 
-        ConsecutionOptions()
-            : level(LEVEL_INF),
-              c(nullptr),
-              core(nullptr)
-        { }
-    };
-
-    class FrameSolver : public TransitionRelationSolver {
+    class TransitionRelationSolver {
         public:
-            FrameSolver(VariableManager & varman,
-                        const TransitionRelation & tr,
-                        const InductiveTrace & trace,
-                        GlobalState & gs = g_null_gs);
+            TransitionRelationSolver(VariableManager & varman,
+                                     const TransitionRelation & tr,
+                                     GlobalState & gs = g_null_gs);
 
             void renewSAT();
-            void addLemma(LemmaID id);
 
-            bool consecution(unsigned level, const Cube & c, Cube * core = nullptr);
-            bool consecution(ConsecutionOptions & opts);
-
-            bool intersection(unsigned level, const Cube & c);
+        protected:
+            SATAdaptor & solver() { return m_solver; }
 
         private:
-            Clause activatedClauseOf(LemmaID id);
-            void sendFrame(unsigned level);
-            void sendLemma(LemmaID id);
-            ID levelAct(unsigned level);
-            Cube extractCoreOf(const Cube & c, const Cube & crits) const;
-            Cube levelAssumps(unsigned level);
+            void computeSimplifiedTR();
+            void sendTR();
 
             VariableManager & m_vars;
-            const InductiveTrace & m_trace;
+            const TransitionRelation & m_tr;
             GlobalState & m_gs;
-            bool m_solverInited;
-            std::vector<ID> m_activation;
+
+            SATAdaptor m_solver;
+            std::vector<Clause> m_unrolled;
     };
 
 } }

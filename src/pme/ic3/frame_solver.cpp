@@ -38,8 +38,8 @@ namespace PME { namespace IC3 {
                              const TransitionRelation & tr,
                              const InductiveTrace & trace,
                              GlobalState & gs)
-        : m_vars(varman),
-          m_tr(tr),
+        : TransitionRelationSolver(varman, tr, gs),
+          m_vars(varman),
           m_trace(trace),
           m_gs(g_null_gs),
           m_solverInited(false)
@@ -47,14 +47,7 @@ namespace PME { namespace IC3 {
 
     void FrameSolver::renewSAT()
     {
-        // We haven't yet computed the simplified transition relation
-        if (m_unrolled.empty())
-        {
-            computeSimplifiedTR();
-        }
-
-        m_solver.reset();
-        sendTR();
+        TransitionRelationSolver::renewSAT();
 
         // Add lemmas
         sendFrame(LEVEL_INF);
@@ -103,12 +96,12 @@ namespace PME { namespace IC3 {
             negc.push_back(negate(lit));
         }
 
-        GroupID gid = m_solver.createGroup();
-        m_solver.addGroupClause(gid, negc);
+        GroupID gid = solver().createGroup();
+        solver().addGroupClause(gid, negc);
 
         Cube crits;
         Cube * solver_crits = core ? & crits : nullptr;
-        bool sat = m_solver.groupSolve(gid, assumps, solver_crits);
+        bool sat = solver().groupSolve(gid, assumps, solver_crits);
 
         if (core && !sat)
         {
@@ -120,17 +113,7 @@ namespace PME { namespace IC3 {
 
     Cube FrameSolver::extractCoreOf(const Cube & c, const Cube & crits) const
     {
-        Cube core;
-        std::set<ID> lits(c.begin(), c.end());
-        for (ID lit : crits) {
-            if (nprimes(lit) != 1) { continue; }
-            ID unprimed = unprime(lit);
-            if (lits.count(unprimed)) {
-                core.push_back(unprimed);
-            }
-        }
-
-        return core;
+        return extractCoreWithPrimes(c, crits);
     }
 
     Cube FrameSolver::levelAssumps(unsigned level)
@@ -165,14 +148,9 @@ namespace PME { namespace IC3 {
         assumps.insert(assumps.end(), c.begin(), c.end());
 
         // F_k & c & Tr. Tr seems pointless but it might contain constraints
-        bool sat = m_solver.solve(assumps);
+        bool sat = solver().solve(assumps);
 
         return sat;
-    }
-
-    void FrameSolver::sendTR()
-    {
-        m_solver.addClauses(m_unrolled);
     }
 
     void FrameSolver::sendFrame(unsigned level)
@@ -186,36 +164,7 @@ namespace PME { namespace IC3 {
     void FrameSolver::sendLemma(LemmaID id)
     {
         Clause cls = activatedClauseOf(id);
-        m_solver.addClause(cls);
-    }
-
-    void FrameSolver::computeSimplifiedTR()
-    {
-        m_unrolled.clear();
-
-        // Unroll 2 so we get primed constraints
-        ClauseVec unrolled = m_tr.unroll(2);
-
-        if (m_gs.opts.simplify)
-        {
-            SATAdaptor simpSolver(MINISATSIMP);
-
-            simpSolver.addClauses(unrolled);
-
-            // Freeze latches and constraints (including primes)
-            simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
-            simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
-
-            // Freeze bad and bad'
-            simpSolver.freeze(m_tr.bad());
-            simpSolver.freeze(prime(m_tr.bad()));
-
-            m_unrolled = simpSolver.simplify();
-        }
-        else
-        {
-            m_unrolled = unrolled;
-        }
+        solver().addClause(cls);
     }
 
     Clause FrameSolver::activatedClauseOf(LemmaID id)
