@@ -136,3 +136,23 @@ BOOST_AUTO_TEST_CASE(var_of)
     BOOST_CHECK_EQUAL(var.m_ID, id);
 }
 
+BOOST_AUTO_TEST_CASE(string_of)
+{
+    VariableManager v;
+
+    ID a = v.getNewID("a", 2);
+    ID b = v.getNewID("b", 4);
+    ID c = v.getNewID("c", 6);
+    ID d = v.getNewID("d", 8);
+
+    BOOST_CHECK_EQUAL(v.stringOf(a), "a");
+    BOOST_CHECK_EQUAL(v.stringOf(b), "b");
+
+    BOOST_CHECK_EQUAL(v.stringOf({a, d}), "a d");
+    BOOST_CHECK_EQUAL(v.stringOf({a, b}, " & "), "a & b");
+    BOOST_CHECK_EQUAL(v.stringOf({a, b, c, d}, " V "), "a V b V c V d");
+    BOOST_CHECK_EQUAL(v.stringOf({a, negate(b), c, d}, " V "), "a V ~b V c V d");
+    BOOST_CHECK_EQUAL(v.stringOf({a, negate(b), prime(c), d}, " V "), "a V ~b V c' V d");
+    BOOST_CHECK_EQUAL(v.stringOf({a, negate(b), prime(c, 10), d}, " V "), "a V ~b V c(10) V d");
+}
+

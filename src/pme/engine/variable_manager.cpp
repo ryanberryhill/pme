@@ -20,6 +20,7 @@
  */
 
 #include "pme/engine/variable_manager.h"
+
 #include <sstream>
 #include <cassert>
 
@@ -128,6 +129,33 @@ namespace PME
         }
 
         return internal_vec;
+    }
+
+    std::string VariableManager::stringOf(ID id) const
+    {
+        unsigned primes = nprimes(id);
+        ID unprimed = unprime(id);
+        ID var_id = strip(unprimed);
+        bool neg = is_negated(unprimed);
+        const Variable & var = varOf(var_id);
+        std::ostringstream ss;
+        if (neg) { ss << "~"; }
+        ss << var.m_name;
+        if (primes == 1) { ss << "'"; }
+        else if (primes > 1) { ss << "(" << primes << ")"; }
+        return ss.str();
+    }
+
+    std::string VariableManager::stringOf(const std::vector<ID> vec, std::string sep) const
+    {
+        std::ostringstream ss;
+        for (size_t i = 0; i < vec.size(); ++i)
+        {
+            ID id = vec[i];
+            ss << stringOf(id);
+            if (i != vec.size() - 1) { ss << sep; }
+        }
+        return ss.str();
     }
 }
 

@@ -64,6 +64,9 @@ namespace PME
 
             const Variable & varOf(ID id) const;
 
+            std::string stringOf(ID id) const;
+            std::string stringOf(const std::vector<ID> vec, std::string sep = " ") const;
+
         private:
 
             std::string defaultName(ID id) const;
