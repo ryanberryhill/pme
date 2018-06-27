@@ -43,6 +43,8 @@ namespace PME { namespace IC3 {
 
         protected:
             SATAdaptor & solver() { return m_solver; }
+            const SATAdaptor & csolver() const { return m_solver; }
+            const TransitionRelation & tr() const { return m_tr; }
 
         private:
             void computeSimplifiedTR();
