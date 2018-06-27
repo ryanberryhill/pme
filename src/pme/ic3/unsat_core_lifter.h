@@ -59,6 +59,7 @@ namespace PME { namespace IC3 {
             void renewSAT();
             void addLemma(LemmaID id);
 
+            Cube lift(const Cube & pred, const Cube & succ, const Cube & inp, const Cube & pinp);
             Cube lift(const LiftOptions & opts);
 
         private:

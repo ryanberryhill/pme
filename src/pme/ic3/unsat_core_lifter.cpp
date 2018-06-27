@@ -62,6 +62,15 @@ namespace PME { namespace IC3 {
         solver().addClause(cls);
     }
 
+    Cube UNSATCoreLifter::lift(const Cube & pred,
+                               const Cube & succ,
+                               const Cube & inp,
+                               const Cube & pinp)
+    {
+        LiftOptions opts(pred, succ, inp, pinp);
+        return lift(opts);
+    }
+
     Cube UNSATCoreLifter::lift(const LiftOptions & opts)
     {
         const Cube & pred = opts.pred;
