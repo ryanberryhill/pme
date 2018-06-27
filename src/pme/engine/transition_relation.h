@@ -79,6 +79,8 @@ namespace PME
             id_iterator begin_constraints() const { return m_constraints.cbegin(); }
             id_iterator end_constraints() const { return m_constraints.cend(); }
 
+            void setInit(ID latch, ID val);
+
         private:
             VariableManager & m_vars;
             ID m_bad;

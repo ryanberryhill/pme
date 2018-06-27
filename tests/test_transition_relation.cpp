@@ -405,6 +405,40 @@ BOOST_AUTO_TEST_CASE(sequential_constraints)
     }
 }
 
+BOOST_AUTO_TEST_CASE(set_init_states)
+{
+    AigFixture f;
+    f.clearResets();
+    f.buildTR();
+
+    TransitionRelation & tr = *f.tr;
+
+    SATAdaptor sat;
+
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
+
+    // X010
+    tr.setInit(l0, ID_FALSE);
+    tr.setInit(l1, ID_TRUE);
+    tr.setInit(l2, ID_FALSE);
+    tr.setInit(l3, ID_NULL);
+
+    sat.addClauses(tr.initState());
+
+    BOOST_CHECK(!sat.solve({l0}));
+    BOOST_CHECK(!sat.solve({negate(l1)}));
+    BOOST_CHECK(!sat.solve({l2}));
+
+    BOOST_CHECK(sat.solve({negate(l0), l1, negate(l2), l3}));
+    BOOST_CHECK(sat.solve({negate(l0), l1, negate(l2), negate(l3)}));
+    BOOST_CHECK(sat.solve({l1, negate(l2), negate(l3)}));
+    BOOST_CHECK(!sat.solve({negate(l1), negate(l2), negate(l3)}));
+    BOOST_CHECK(!sat.solve({negate(l1), l2, negate(l3)}));
+}
+
 BOOST_AUTO_TEST_CASE(init_states)
 {
     AigFixture f0, f1;

@@ -306,5 +306,12 @@ namespace PME
         }
         return init;
     }
+
+    void TransitionRelation::setInit(ID latch, ID val)
+    {
+        assert(m_latches.count(latch) > 0);
+        assert(val == ID_TRUE || val == ID_FALSE || val == ID_NULL);
+        m_latches[latch].m_reset = val;
+    }
 }
 
