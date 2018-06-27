@@ -74,6 +74,8 @@ namespace PME
 
             id_iterator begin_latches() const { return m_latchIDs.cbegin(); }
             id_iterator end_latches() const { return m_latchIDs.cend(); }
+            id_iterator begin_inputs() const { return m_inputIDs.cbegin(); }
+            id_iterator end_inputs() const { return m_inputIDs.cend(); }
             id_iterator begin_constraints() const { return m_constraints.cbegin(); }
             id_iterator end_constraints() const { return m_constraints.cend(); }
 
@@ -83,6 +85,7 @@ namespace PME
 
             std::unordered_map<ID, Latch> m_latches;
             std::vector<ID> m_latchIDs;
+            std::vector<ID> m_inputIDs;
             std::vector<ID> m_constraints;
 
             std::vector<Clause> m_clauses;
@@ -98,6 +101,7 @@ namespace PME
             void createLatches(aiger * aig);
             void processConstraints(aiger * aig);
             void processLatches(aiger * aig);
+            void processInputs(aiger * aig);
 
             const Variable& varOf(ID id);
             const Variable& createVar(ExternalID external, std::string name);

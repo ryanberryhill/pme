@@ -86,6 +86,7 @@ namespace PME
         // make sense in the context of (safety) proof minimization
         createAndProcessAnds(aig);
         processLatches(aig);
+        processInputs(aig);
         processConstraints(aig);
         // TODO: bad states
     }
@@ -157,6 +158,17 @@ namespace PME
             assert(m_latches.find(latch_id) == m_latches.end());
             m_latches[latch_id] = Latch(latch_id, next_id, reset_id);
             m_latchIDs.push_back(latch_id);
+        }
+    }
+
+    void TransitionRelation::processInputs(aiger * aig)
+    {
+        for (size_t i = 0; i < aig->num_inputs; ++i)
+        {
+            ExternalID external = aig->inputs[i].lit;
+            assert(!aiger_sign(external));
+            ID input_id = toInternal(external);
+            m_inputIDs.push_back(input_id);
         }
     }
 

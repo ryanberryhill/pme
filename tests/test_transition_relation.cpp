@@ -489,3 +489,19 @@ BOOST_AUTO_TEST_CASE(constraints_iter)
     BOOST_CHECK_EQUAL(constraints2.count(c0), 1);
 }
 
+BOOST_AUTO_TEST_CASE(inputs_iter)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID i0 = tr.toInternal(f.i0);
+    ID i1 = tr.toInternal(f.i1);
+
+    std::set<ID> inputs(tr.begin_inputs(), tr.end_inputs());
+
+    BOOST_CHECK_EQUAL(inputs.size(), 2);
+    BOOST_CHECK_EQUAL(inputs.count(i0), 1);
+    BOOST_CHECK_EQUAL(inputs.count(i1), 1);
+}
+
