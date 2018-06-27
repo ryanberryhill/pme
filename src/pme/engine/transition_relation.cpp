@@ -44,6 +44,10 @@ namespace PME
 
     void make_equal(ClauseVec & vec, ID a, ID b)
     {
+        if (b == ID_TRUE) { vec.push_back({a}); return; }
+        if (a == ID_TRUE) { vec.push_back({b}); return; }
+        if (b == ID_FALSE) { vec.push_back({negate(a)}); return; }
+        if (a == ID_FALSE) { vec.push_back({negate(b)}); return; }
         vec.push_back({a, negate(b)});
         vec.push_back({negate(a), b});
     }
