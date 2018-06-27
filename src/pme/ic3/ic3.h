@@ -22,12 +22,34 @@
 #ifndef IC3_H_INCLUDED
 #define IC3_H_INCLUDED
 
+#include "pme/pme.h"
+#include "pme/engine/variable_manager.h"
+#include "pme/engine/transition_relation.h"
+#include "pme/engine/global_state.h"
+
 #include <set>
+#include <vector>
 
 namespace PME { namespace IC3 {
     extern const unsigned LEVEL_INF;
     typedef unsigned LemmaID;
     typedef std::set<LemmaID> Frame;
+
+    enum SafetyResult { SAFE, UNSAFE, UNKNOWN };
+
+    struct Step {
+        Cube input;
+        Cube state;
+    };
+
+    typedef std::vector<Clause> SafetyProof;
+    typedef std::vector<Step> SafetyCounterExample;
+
+    struct IC3Result {
+        SafetyResult result;
+        SafetyProof proof;
+        SafetyCounterExample cex;
+    };
 } }
 
 #endif

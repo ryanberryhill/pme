@@ -58,6 +58,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/minimization/minimization.cpp \
 				   src/pme/ic3/ic3.h \
 				   src/pme/ic3/ic3.cpp \
+				   src/pme/ic3/ic3_solver.h \
+				   src/pme/ic3/ic3_solver.cpp \
 				   src/pme/ic3/inductive_trace.h \
 				   src/pme/ic3/inductive_trace.cpp \
 				   src/pme/ic3/frame_solver.h \
@@ -122,7 +124,8 @@ TESTS = test_sat_adaptor \
         test_collapse_set_finder \
 		test_inductive_trace \
 		test_frame_solver \
-		test_unsat_core_lifter
+		test_unsat_core_lifter \
+		test_ic3_solver
 
 check_PROGRAMS = $(TESTS)
 
@@ -180,6 +183,9 @@ test_frame_solver_LDADD = $(PME_TEST_LIBS)
 
 test_unsat_core_lifter_SOURCES = tests/test_unsat_core_lifter.cpp
 test_unsat_core_lifter_LDADD = $(PME_TEST_LIBS)
+
+test_ic3_solver_SOURCES = tests/test_ic3_solver.cpp
+test_ic3_solver_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

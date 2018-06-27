@@ -426,6 +426,11 @@ BOOST_AUTO_TEST_CASE(set_init_states)
     tr.setInit(l2, ID_FALSE);
     tr.setInit(l3, ID_NULL);
 
+    BOOST_CHECK_EQUAL(tr.getInit(l0), ID_FALSE);
+    BOOST_CHECK_EQUAL(tr.getInit(l1), ID_TRUE);
+    BOOST_CHECK_EQUAL(tr.getInit(l2), ID_FALSE);
+    BOOST_CHECK_EQUAL(tr.getInit(l3), ID_NULL);
+
     sat.addClauses(tr.initState());
 
     BOOST_CHECK(!sat.solve({l0}));
@@ -474,6 +479,18 @@ BOOST_AUTO_TEST_CASE(init_states)
     BOOST_CHECK(sat1.solve({l0_1,l1_1,l2_1,l3_1}));
     BOOST_CHECK(!sat0.solve({l0_0}));
     BOOST_CHECK(sat1.solve({l0_1}));
+
+    for (auto it = tr0.begin_latches(); it != tr0.end_latches(); ++it)
+    {
+        ID latch = *it;
+        BOOST_CHECK_EQUAL(tr0.getInit(latch), ID_FALSE);
+    }
+
+    for (auto it = tr1.begin_latches(); it != tr1.end_latches(); ++it)
+    {
+        ID latch = *it;
+        BOOST_CHECK_EQUAL(tr1.getInit(latch), ID_TRUE);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(latches_iter)

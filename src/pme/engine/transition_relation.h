@@ -80,6 +80,7 @@ namespace PME
             id_iterator end_constraints() const { return m_constraints.cend(); }
 
             void setInit(ID latch, ID val);
+            ID getInit(ID latch) const;
 
         private:
             VariableManager & m_vars;

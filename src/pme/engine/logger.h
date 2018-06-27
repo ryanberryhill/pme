@@ -68,6 +68,7 @@ namespace PME
         LOG_CAMSIS,
         LOG_SISI,
         LOG_BFMIN,
+        LOG_IC3,
         LOG_INVALID,
         NUM_LOG_CHANNELS = LOG_INVALID
     };

@@ -313,5 +313,13 @@ namespace PME
         assert(val == ID_TRUE || val == ID_FALSE || val == ID_NULL);
         m_latches[latch].m_reset = val;
     }
+
+    ID TransitionRelation::getInit(ID latch) const
+    {
+        assert(!is_negated(latch));
+        assert(nprimes(latch) == 0);
+        assert(m_latches.count(latch) > 0);
+        return m_latches.at(latch).m_reset;
+    }
 }
 

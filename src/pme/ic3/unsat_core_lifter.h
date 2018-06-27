@@ -65,9 +65,7 @@ namespace PME { namespace IC3 {
         private:
             void sendLemma(LemmaID id);
 
-            VariableManager & m_vars;
             const InductiveTrace & m_trace;
-            GlobalState & m_gs;
             bool m_solverInited;
     };
 

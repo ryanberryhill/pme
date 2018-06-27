@@ -82,9 +82,7 @@ namespace PME { namespace IC3 {
             Cube extractPrimedInputs() const;
             Cube extract(std::vector<ID> vars, unsigned nprimes = 0) const;
 
-            VariableManager & m_vars;
             const InductiveTrace & m_trace;
-            GlobalState & m_gs;
             bool m_solverInited;
             std::vector<ID> m_activation;
     };

@@ -124,7 +124,7 @@ namespace PME { namespace IC3 {
         m_frames.removeLemmaFromFrame(lemma.id, lemma.level);
     }
 
-    const Cube & InductiveTrace::cubeOf(LemmaID id)
+    const Cube & InductiveTrace::cubeOf(LemmaID id) const
     {
         return getLemma(id).cube;
     }

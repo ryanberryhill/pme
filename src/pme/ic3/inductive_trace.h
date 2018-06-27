@@ -61,17 +61,21 @@ namespace PME { namespace IC3 {
     class InductiveTrace
     {
         public:
-            LemmaID addLemma(const Cube & cube, unsigned level);
-            bool lemmaExists(const Cube & cube) const;
             const LemmaData & getLemma(const Cube & cube) const;
             const LemmaData & getLemma(LemmaID id) const;
-            LemmaID IDOf(const Cube & cube) const;
             Frame getFullFrame(unsigned level) const;
             const Frame & getFrame(unsigned level) const;
             size_t numFrames() const;
+
+            const Cube & cubeOf(LemmaID id) const;
+            LemmaID IDOf(const Cube & cube) const;
+
+            bool lemmaExists(const Cube & cube) const;
+
+            LemmaID addLemma(const Cube & cube, unsigned level);
             void removeLemma(LemmaID id);
-            const Cube & cubeOf(LemmaID id);
             void pushLemma(LemmaID id, unsigned level);
+
             void clearUnusedFrames();
 
         private:

@@ -39,9 +39,7 @@ namespace PME { namespace IC3 {
                              const InductiveTrace & trace,
                              GlobalState & gs)
         : TransitionRelationSolver(varman, tr, gs),
-          m_vars(varman),
           m_trace(trace),
-          m_gs(g_null_gs),
           m_solverInited(false)
     { }
 
@@ -261,7 +259,7 @@ namespace PME { namespace IC3 {
         while (level >= m_activation.size())
         {
             std::string name = activationName(level);
-            m_activation.push_back(m_vars.getNewID(name));
+            m_activation.push_back(vars().getNewID(name));
         }
 
         return m_activation.at(level);

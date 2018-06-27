@@ -31,9 +31,7 @@ namespace PME { namespace IC3 {
                                      const InductiveTrace & trace,
                                      GlobalState & gs)
         : TransitionRelationSolver(varman, tr, gs),
-          m_vars(varman),
           m_trace(trace),
-          m_gs(g_null_gs),
           m_solverInited(false)
     { }
 
