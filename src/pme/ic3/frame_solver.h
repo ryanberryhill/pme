@@ -36,16 +36,24 @@ namespace PME { namespace IC3 {
         unsigned level;
         const Cube * c;
         Cube * core;
+        Cube * pred;
+        Cube * inp;
+        Cube * pinp;
 
         ConsecutionOptions()
             : level(LEVEL_INF),
               c(nullptr),
-              core(nullptr)
+              core(nullptr),
+              pred(nullptr),
+              inp(nullptr),
+              pinp(nullptr)
         { }
     };
 
     class FrameSolver : public TransitionRelationSolver {
         public:
+            // pred, inp, pinp, core
+            typedef std::tuple<bool, Cube, Cube, Cube, Cube> ConsecutionResult;
             FrameSolver(VariableManager & varman,
                         const TransitionRelation & tr,
                         const InductiveTrace & trace,
@@ -54,7 +62,10 @@ namespace PME { namespace IC3 {
             void renewSAT();
             void addLemma(LemmaID id);
 
-            bool consecution(unsigned level, const Cube & c, Cube * core = nullptr);
+            ConsecutionResult consecutionFull(unsigned level, const Cube & c);
+            bool consecutionCore(unsigned level, const Cube & c, Cube & core);
+            bool consecutionPred(unsigned level, const Cube & c, Cube & pred);
+            bool consecution(unsigned level, const Cube & c);
             bool consecution(ConsecutionOptions & opts);
 
             bool intersection(unsigned level, const Cube & c);
@@ -66,6 +77,10 @@ namespace PME { namespace IC3 {
             ID levelAct(unsigned level);
             Cube extractCoreOf(const Cube & c, const Cube & crits) const;
             Cube levelAssumps(unsigned level);
+            Cube extractPredecessor() const;
+            Cube extractInputs() const;
+            Cube extractPrimedInputs() const;
+            Cube extract(std::vector<ID> vars, unsigned nprimes = 0) const;
 
             VariableManager & m_vars;
             const InductiveTrace & m_trace;

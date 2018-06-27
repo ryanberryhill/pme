@@ -64,12 +64,46 @@ namespace PME { namespace IC3 {
         if (m_solverInited) { sendLemma(id); }
     }
 
-    bool FrameSolver::consecution(unsigned level, const Cube & c, Cube * core)
+    FrameSolver::ConsecutionResult
+    FrameSolver::consecutionFull(unsigned level, const Cube & c)
+    {
+        Cube pred, inp, pinp, core;
+        ConsecutionOptions opts;
+        opts.level = level;
+        opts.c = &c;
+        opts.pred = &pred;
+        opts.inp = &inp;
+        opts.pinp = &pinp;
+        opts.core = &core;
+
+        bool cons = consecution(opts);
+
+        return std::make_tuple(cons, pred, inp, pinp, core);
+    }
+
+    bool FrameSolver::consecutionCore(unsigned level, const Cube & c, Cube & core)
     {
         ConsecutionOptions opts;
         opts.level = level;
         opts.c = &c;
-        opts.core = core;
+        opts.core = &core;
+        return consecution(opts);
+    }
+
+    bool FrameSolver::consecutionPred(unsigned level, const Cube & c, Cube & pred)
+    {
+        ConsecutionOptions opts;
+        opts.level = level;
+        opts.c = &c;
+        opts.pred = &pred;
+        return consecution(opts);
+    }
+
+    bool FrameSolver::consecution(unsigned level, const Cube & c)
+    {
+        ConsecutionOptions opts;
+        opts.level = level;
+        opts.c = &c;
         return consecution(opts);
     }
 
@@ -81,6 +115,9 @@ namespace PME { namespace IC3 {
         const Cube & c = *opts.c;
         unsigned level = opts.level;
         Cube * core = opts.core;
+        Cube * pred = opts.pred;
+        Cube * inp = opts.inp;
+        Cube * pinp = opts.pinp;
 
         assert(!c.empty());
 
@@ -103,10 +140,11 @@ namespace PME { namespace IC3 {
         Cube * solver_crits = core ? & crits : nullptr;
         bool sat = solver().groupSolve(gid, assumps, solver_crits);
 
-        if (core && !sat)
-        {
-            *core = extractCoreOf(c, crits);
-        }
+        // Extract core or predecessor and inputs if requested
+        if (core && !sat) { *core = extractCoreOf(c, crits); }
+        if (pred && sat)  { *pred = extractPredecessor(); }
+        if (inp && sat)   { *inp = extractInputs(); }
+        if (pinp && sat)  { *pinp = extractPrimedInputs(); }
 
         return !sat;
     }
@@ -114,6 +152,41 @@ namespace PME { namespace IC3 {
     Cube FrameSolver::extractCoreOf(const Cube & c, const Cube & crits) const
     {
         return extractCoreWithPrimes(c, crits);
+    }
+
+    Cube FrameSolver::extractPredecessor() const
+    {
+        std::vector<ID> latches(tr().begin_latches(), tr().end_latches());
+        return extract(latches);
+    }
+
+    Cube FrameSolver::extractInputs() const
+    {
+        std::vector<ID> inputs(tr().begin_inputs(), tr().end_inputs());
+        return extract(inputs);
+    }
+
+    Cube FrameSolver::extractPrimedInputs() const
+    {
+        std::vector<ID> inputs(tr().begin_inputs(), tr().end_inputs());
+        return extract(inputs, 1);
+    }
+
+    Cube FrameSolver::extract(std::vector<ID> vars, unsigned nprimes) const
+    {
+        assert(csolver().isSAT());
+        Cube extracted;
+        for (ID id : vars)
+        {
+            ID lit = prime(id, nprimes);
+            ModelValue asgn = csolver().getAssignmentToVar(lit);
+            assert(asgn != SAT::UNDEF);
+            ID asgn_id = (asgn == SAT::TRUE ? lit : negate(lit));
+            asgn_id = unprime(asgn_id);
+            extracted.push_back(asgn_id);
+        }
+
+        return extracted;
     }
 
     Cube FrameSolver::levelAssumps(unsigned level)

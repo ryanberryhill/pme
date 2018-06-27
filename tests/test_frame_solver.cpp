@@ -236,6 +236,7 @@ BOOST_AUTO_TEST_CASE(intersection)
     BOOST_CHECK(!f.solver->intersection(0, cp2));
     BOOST_CHECK(!f.solver->intersection(0, cp3));
 
+    // State xxx0
     f.addClause(cn0, 1);
 
     BOOST_CHECK(f.solver->intersection(1, init));
@@ -247,6 +248,58 @@ BOOST_AUTO_TEST_CASE(intersection)
     BOOST_CHECK(f.solver->intersection(1, cp1));
     BOOST_CHECK(f.solver->intersection(1, cp2));
     BOOST_CHECK(f.solver->intersection(1, cp3));
+    BOOST_CHECK(f.solver->intersection(1, {l3, l2, l1}));
+    BOOST_CHECK(!f.solver->intersection(1, {l3, l2, l1, l0}));
+
+    // State xx00
+    f.addClause(cn1, 1);
+
+    BOOST_CHECK(f.solver->intersection(1, init));
+    BOOST_CHECK(f.solver->intersection(1, cn0));
+    BOOST_CHECK(f.solver->intersection(1, cn1));
+    BOOST_CHECK(f.solver->intersection(1, cn2));
+    BOOST_CHECK(f.solver->intersection(1, cn3));
+    BOOST_CHECK(!f.solver->intersection(1, cp0));
+    BOOST_CHECK(!f.solver->intersection(1, cp1));
+    BOOST_CHECK(f.solver->intersection(1, cp2));
+    BOOST_CHECK(f.solver->intersection(1, cp3));
+    BOOST_CHECK(f.solver->intersection(1, {l3, l2}));
+    BOOST_CHECK(f.solver->intersection(1, {l3, l2, negate(l1)}));
+    BOOST_CHECK(f.solver->intersection(1, {l3, l2, negate(l1), negate(l0)}));
+    BOOST_CHECK(!f.solver->intersection(1, {l3, l2, l1}));
+    BOOST_CHECK(!f.solver->intersection(1, {l3, l2, l1, negate(l0)}));
+    BOOST_CHECK(!f.solver->intersection(1, {l3, l2, l1, l0}));
+}
+
+BOOST_AUTO_TEST_CASE(consecution_predecessor)
+{
+    FrameSolverFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause cp0 = {l0};
+    Clause cn1 = {negate(l1)};
+    Clause cn2 = {negate(l2)};
+    Clause cn3 = {negate(l3)};
+
+    // Initial state 0001
+    f.addClause(cp0, 0);
+    f.addClause(cn1, 0);
+    f.addClause(cn2, 0);
+    f.addClause(cn3, 0);
+
+    Cube c = {negate(l0), l1, negate(l2), negate(l3)};
+    Cube pred;
+    BOOST_REQUIRE(!f.solver->consecutionPred(0, c, pred));
+    BOOST_REQUIRE(!pred.empty());
+
+    Cube expected = {l0, negate(l1), negate(l2), negate(l3)};
+    std::sort(expected.begin(), expected.end());
+    std::sort(pred.begin(), pred.end());
+    BOOST_CHECK(pred == expected);
 }
 
 BOOST_AUTO_TEST_CASE(consecution_unsat_core)
@@ -271,7 +324,7 @@ BOOST_AUTO_TEST_CASE(consecution_unsat_core)
 
     Cube c = {negate(l0), negate(l1), negate(l2), negate(l3)};
     Cube core;
-    BOOST_REQUIRE(f.solver->consecution(0, c, &core));
+    BOOST_REQUIRE(f.solver->consecutionCore(0, c, core));
     BOOST_REQUIRE(!core.empty());
 
     std::sort(c.begin(), c.end());
@@ -282,7 +335,7 @@ BOOST_AUTO_TEST_CASE(consecution_unsat_core)
 
     c = {l0, l1, l2, l3};
     core.clear();
-    BOOST_REQUIRE(f.solver->consecution(0, c, &core));
+    BOOST_REQUIRE(f.solver->consecutionCore(0, c, core));
     BOOST_REQUIRE(!core.empty());
 
     std::sort(c.begin(), c.end());
@@ -296,7 +349,7 @@ BOOST_AUTO_TEST_CASE(consecution_unsat_core)
 
     c = {negate(l0), negate(l1), negate(l2), negate(l3)};
     core.clear();
-    BOOST_REQUIRE(f.solver->consecution(1, c, &core));
+    BOOST_REQUIRE(f.solver->consecutionCore(1, c, core));
     BOOST_REQUIRE(!core.empty());
 
     std::sort(c.begin(), c.end());
@@ -307,7 +360,7 @@ BOOST_AUTO_TEST_CASE(consecution_unsat_core)
 
     c = {l0, l1, l2, l3};
     core.clear();
-    BOOST_REQUIRE(f.solver->consecution(1, c, &core));
+    BOOST_REQUIRE(f.solver->consecutionCore(1, c, core));
     BOOST_REQUIRE(!core.empty());
 
     std::sort(c.begin(), c.end());
