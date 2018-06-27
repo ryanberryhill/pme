@@ -37,6 +37,7 @@ namespace PME { namespace IC3 {
             void removeLemmaFromFrame(LemmaID id, unsigned level);
             const Frame & getFrame(unsigned level) const;
             size_t numFrames() const;
+            void shrink(unsigned frames);
         private:
             bool frameExists(unsigned level) const;
             Frame & getMutableFrame(unsigned level);
@@ -69,6 +70,10 @@ namespace PME { namespace IC3 {
             const Frame & getFrame(unsigned level) const;
             size_t numFrames() const;
             void removeLemma(LemmaID id);
+            const Cube & cubeOf(LemmaID id);
+            void pushLemma(LemmaID id, unsigned level);
+            void clearUnusedFrames();
+
         private:
             LemmaData & getMutableLemma(const Cube & cube);
             LemmaData & getMutableLemma(LemmaID id);

@@ -83,6 +83,45 @@ BOOST_AUTO_TEST_CASE(insert_lemmas)
     BOOST_CHECK(expected_finf == actual_finf);
 }
 
+BOOST_AUTO_TEST_CASE(push_lemmas)
+{
+    IDFixture id;
+    InductiveTrace trace;
+
+    trace.addLemma({id.a}, 0);
+    trace.addLemma({id.b}, 0);
+    trace.addLemma({id.c}, 0);
+    trace.addLemma({id.d}, 0);
+    LemmaID c5 = trace.addLemma({id.b, id.c}, 1);
+    LemmaID c6 = trace.addLemma({id.a, id.c}, 2);
+    LemmaID c7 = trace.addLemma({id.a, id.b}, 1);
+
+    trace.pushLemma(c5, 2);
+    Frame expected = {c5, c6};
+    Frame actual = trace.getFrame(2);
+    BOOST_CHECK(actual == expected);
+
+    expected = {c7};
+    actual = trace.getFrame(1);
+    BOOST_CHECK(actual == expected);
+
+    trace.pushLemma(c7, LEVEL_INF);
+
+    BOOST_CHECK(trace.getFrame(1).empty());
+    expected = {c7};
+    actual = trace.getFrame(LEVEL_INF);
+    BOOST_CHECK(actual == expected);
+
+    BOOST_CHECK_EQUAL(trace.numFrames(), 3);
+    trace.clearUnusedFrames();
+    BOOST_CHECK_EQUAL(trace.numFrames(), 3);
+
+    trace.pushLemma(c5, LEVEL_INF);
+    trace.pushLemma(c6, LEVEL_INF);
+    trace.clearUnusedFrames();
+    BOOST_CHECK_EQUAL(trace.numFrames(), 1);
+}
+
 BOOST_AUTO_TEST_CASE(duplicate_lemmas)
 {
     IDFixture id;

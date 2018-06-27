@@ -124,6 +124,38 @@ namespace PME { namespace IC3 {
         m_frames.removeLemmaFromFrame(lemma.id, lemma.level);
     }
 
+    const Cube & InductiveTrace::cubeOf(LemmaID id)
+    {
+        return getLemma(id).cube;
+    }
+
+    void InductiveTrace::pushLemma(LemmaID id, unsigned level)
+    {
+        LemmaData & lemma = getMutableLemma(id);
+        assert(lemma.level <= level);
+        m_frames.removeLemmaFromFrame(lemma.id, lemma.level);
+        m_frames.addLemmaToFrame(lemma.id, level);
+        lemma.level = level;
+    }
+
+    void InductiveTrace::clearUnusedFrames()
+    {
+        unsigned k = numFrames();
+        for (unsigned i = numFrames() - 1; i > 0; --i)
+        {
+            const Frame & frame = getFrame(i);
+            if (frame.empty())
+            {
+                k = i;
+            }
+            else
+            {
+                break;
+            }
+        }
+        m_frames.shrink(k);
+    }
+
     void Frames::addLemmaToFrame(const LemmaID id, unsigned level)
     {
         Frame & fi = getMutableFrame(level);
@@ -170,6 +202,12 @@ namespace PME { namespace IC3 {
         assert(level != LEVEL_INF);
         assert(m_frames.size() <= level);
         m_frames.resize(level + 1);
+    }
+
+    void Frames::shrink(unsigned frames)
+    {
+        assert(frames <= m_frames.size());
+        m_frames.resize(frames);
     }
 } }
 
