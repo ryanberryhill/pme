@@ -279,7 +279,7 @@ int main(int argc, char ** argv)
     if (msg != NULL)
     {
         fprintf(stderr, "%s: %s\n", aig_path, msg);
-        aiger_reset(aig);
+        aiger_reset(aig); aig = NULL;
         return EXIT_FAILURE;
     }
 
@@ -291,6 +291,7 @@ int main(int argc, char ** argv)
         if (proof_file == NULL)
         {
             perror("Failed to open proof");
+            aiger_reset(aig); aig = NULL;
             return EXIT_FAILURE;
         }
 
@@ -320,11 +321,13 @@ int main(int argc, char ** argv)
         if (safe < 0)
         {
             fprintf(stderr, "Error running IC3\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
         else if (safe == 0)
         {
             printf("The instance is unsafe, terminating\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_SUCCESS;
         }
 
@@ -347,12 +350,14 @@ int main(int argc, char ** argv)
         if (proof_ok < 0)
         {
             fprintf(stderr, "Error checking proof\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
 
         printf("The proof is %sa safe inductive invariant\n", proof_ok ? "" : "not ");
         if (!proof_ok)
         {
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
     }
@@ -364,6 +369,7 @@ int main(int argc, char ** argv)
         if (bfmin_ok < 0)
         {
             fprintf(stderr, "Error running brute force minimization\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
 
@@ -379,6 +385,7 @@ int main(int argc, char ** argv)
         {
             printf("The proof (size %lu) is non-minimal. "
                    "A proof with %lu clauses was found.\n", proof_size, min_size);
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
         else
@@ -396,6 +403,7 @@ int main(int argc, char ** argv)
         if (bfmin_ok < 0)
         {
             fprintf(stderr, "Error running brute force minimization\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
 
@@ -413,6 +421,7 @@ int main(int argc, char ** argv)
         if (sisi_ok < 0)
         {
             fprintf(stderr, "Error running SISI\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
 
@@ -430,6 +439,7 @@ int main(int argc, char ** argv)
         if (marco_ok < 0)
         {
             fprintf(stderr, "Error running MARCO\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
 
@@ -447,6 +457,7 @@ int main(int argc, char ** argv)
         if (camsis_ok < 0)
         {
             fprintf(stderr, "Error running CAMSIS\n");
+            cpme_free(pme); pme = NULL;
             return EXIT_FAILURE;
         }
 
