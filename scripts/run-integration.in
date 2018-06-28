@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]] ; do
 done
 set -- "${POSITIONAL[@]}" #
 
-function integration() {
+function minimize_integration() {
     name=$1 ; shift
     all_msis_arg=$1
     all_msis=0
@@ -36,7 +36,7 @@ function integration() {
         shift
     fi
     errors=0
-    for aig_file in examples/*.aig; do
+    for aig_file in examples/proofs/*.aig; do
         prefix=${aig_file%.*}
         aig_name=${prefix##*/}
         aig_tmpdir=$tmpdir/$name/$aig_name
@@ -56,7 +56,7 @@ function integration() {
 
             $VALGRIND \
             $PME $@ \
-            --save-proofs $pme_tmpdir/integration $aig_file $pme_file \
+            --save-proofs $pme_tmpdir/minimize_integration $aig_file $pme_file \
             > $logfile 2>&1
 
             if (($? != 0)) ; then
@@ -66,21 +66,21 @@ function integration() {
 
             minimized_dir=$pme_file.minimized
             golden_missing=0
-            integration_missing=0
+            minimize_integration_missing=0
             if [ -d $minimized_dir ] ; then
                 echo Checking golden result for $pme_file versus $minimized_dir
 
                 # Always check that the proof we found is in the golden result
-                for integration_file in $pme_tmpdir/*.pme ; do
-                    $CANONICALIZE $integration_file
-                    integration_sha=$(sha1sum $integration_file | cut -f1 -d' ')
+                for minimize_integration_file in $pme_tmpdir/*.pme ; do
+                    $CANONICALIZE $minimize_integration_file
+                    minimize_integration_sha=$(sha1sum $minimize_integration_file | cut -f1 -d' ')
                     find $minimized_dir -type f -name "*.pme" \
                         -exec sha1sum {} + \
-                        | grep "^$integration_sha" > /dev/null
+                        | grep "^$minimize_integration_sha" > /dev/null
                     if [ $? -ne 0 ] ; then
-                        echo $integration_file is not in the golden result
+                        echo $minimize_integration_file is not in the golden result
                         errors=$((errors+1))
-                        integration_missing=$((integration_missing+1))
+                        minimize_integration_missing=$((minimize_integration_missing+1))
                     fi
                 done
 
@@ -93,15 +93,15 @@ function integration() {
                             -exec sha1sum {} + \
                             | grep "^$golden_sha" > /dev/null
                         if [ $? -ne 0 ] ; then
-                            echo $golden_file is not in the integration test result
+                            echo $golden_file is not in the minimize_integration test result
                             errors=$((errors+1))
                             golden_missing=$((golden_missing+1))
                         fi
                     done
                 fi
 
-                if ((golden_missing > 0)) || ((integration_missing > 0)) ; then
-                    echo "Golden result is missing $integration_missing proofs"
+                if ((golden_missing > 0)) || ((minimize_integration_missing > 0)) ; then
+                    echo "Golden result is missing $minimize_integration_missing proofs"
                     echo "Test result is missing $golden_missing proofs"
                 else
                     echo "Golden result matches"
@@ -158,11 +158,68 @@ function integration() {
     fi
 }
 
+function ic3_integration() {
+    name=$1 ; shift
+    errors=0
+    ic3_tmpdir=$tmpdir/$name
+    mkdir $ic3_tmpdir
+    for aig_file in examples/safe/*.aig examples/unsafe/*.aig ; do
+        prefix=${aig_file%.*}
+        aig_name=${prefix##*/}
+        logfile=$ic3_tmpdir/$aig_name.log
+        echo $aig_file $aig_name
+        expected_safe=0
+        case "$aig_file" in
+            */unsafe/*) expected_safe=0 ;;
+            */safe/*)   expected_safe=1 ;;
+            *) echo "Don't know how to handle $aig_file" ; errors=$((errors+1)) ; continue ;;
+        esac
+
+        $VALGRIND $PME $@ --check $aig_file > $logfile 2>&1
+
+        if (($? != 0)) ; then
+            echo "Error running PME (IC3) for $pme_file: see $logfile for details"
+            errors=$((errors+1))
+            continue
+        fi
+
+        if [[ "$expected_safe" == "1" ]] ; then
+            grep -q "The proof has " $logfile
+            if [ $? -eq 0 ] ; then
+                grep -q "The proof is a safe inductive invariant" $logfile
+                if [ $? -eq 1 ] ; then
+                    echo "The proof for $aig_file did not validate, see $logfile"
+                    errors=$((errors+1))
+                    continue
+                fi
+            else
+                echo "Expected $aig_file to be safe but it was not, see $logfile"
+                errors=$((errors+1))
+                continue
+            fi
+        else
+            grep -q "The instance is unsafe, terminating" $logfile
+            # If the string is missing, something went wrong
+            if [ $? -eq 1 ] ; then
+                echo "Expected $aig_file to be unsafe but it was not: see $logfile"
+                errors=$((errors+1))
+                continue
+            fi
+        fi
+    done
+
+    if ((errors > 0)) ; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 function run_test() {
     name=$1 ; shift
     args=$@
     echo -n "Running test $name: "
-    integration $name $args > $tmpdir/$name.log
+    minimize_integration $name $args > $tmpdir/$name.log
 
     if [ $? -eq 0 ] ; then
         echo passed
@@ -183,10 +240,27 @@ function run_all_msis_test() {
     run_test $name --all $@
 }
 
+function run_ic3_test() {
+    name=$1 ; shift
+    args=$@
+
+    echo -n "Running test $name: "
+    ic3_integration $name $args > $tmpdir/$name.log
+
+    if [ $? -eq 0 ] ; then
+        echo passed
+        tests_passed=$((tests_passed+1))
+    else
+        echo failed
+        tests_failed=$((tests_failed+1))
+    fi
+}
+
 run_msis_test BRUTEFORCE --bfmin
 run_msis_test SISI --sisi
 run_all_msis_test MARCO --marco
 run_all_msis_test CAMSIS --camsis
+run_ic3_test IC3 --ic3
 
 echo PASS: $tests_passed
 echo FAIL: $tests_failed
