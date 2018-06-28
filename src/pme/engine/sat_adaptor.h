@@ -53,6 +53,8 @@ namespace PME
             bool isSAT() const;
             ModelValue getAssignment(ID lit) const;
             ModelValue getAssignmentToVar(ID var) const;
+            ModelValue safeGetAssignment(ID lit) const;
+            ModelValue safeGetAssignmentToVar(ID var) const;
 
             GroupID createGroup();
             void addGroupClause(GroupID group, const Clause & cls);
@@ -73,6 +75,7 @@ namespace PME
             void introduceVariable(ID var);
             SAT::Variable SATVarOf(ID id) const;
             ID IDOf(SAT::Variable var) const;
+            bool hasSAT(ID id) const;
             SAT::Literal toSAT(ID id) const;
             std::vector<SAT::Literal> toSAT(const std::vector<ID> & idvec);
             ID fromSAT(SAT::Literal lit) const;

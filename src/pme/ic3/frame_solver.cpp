@@ -155,7 +155,9 @@ namespace PME { namespace IC3 {
     Cube FrameSolver::extractPredecessor() const
     {
         std::vector<ID> latches(tr().begin_latches(), tr().end_latches());
-        return extract(latches);
+        Cube result = extract(latches);
+        assert(!result.empty());
+        return result;
     }
 
     Cube FrameSolver::extractInputs() const
@@ -177,11 +179,13 @@ namespace PME { namespace IC3 {
         for (ID id : vars)
         {
             ID lit = prime(id, nprimes);
-            ModelValue asgn = csolver().getAssignmentToVar(lit);
-            assert(asgn != SAT::UNDEF);
-            ID asgn_id = (asgn == SAT::TRUE ? lit : negate(lit));
-            asgn_id = unprime(asgn_id);
-            extracted.push_back(asgn_id);
+            ModelValue asgn = csolver().safeGetAssignmentToVar(lit);
+            if (asgn != SAT::UNDEF)
+            {
+                ID asgn_id = (asgn == SAT::TRUE ? lit : negate(lit));
+                asgn_id = unprime(asgn_id);
+                extracted.push_back(asgn_id);
+            }
         }
 
         return extracted;

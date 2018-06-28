@@ -78,6 +78,12 @@ namespace PME
         }
     }
 
+    bool SATAdaptor::hasSAT(ID id) const
+    {
+        ID stripped = strip(id);
+        return m_IDToSATMap.count(stripped) > 0;
+    }
+
     SAT::Literal SATAdaptor::toSAT(ID id) const
     {
         bool neg = is_negated(id);
@@ -182,11 +188,25 @@ namespace PME
         return m_solver->isSAT();
     }
 
-    ModelValue SATAdaptor::getAssignment(ID lit) const
+    ModelValue SATAdaptor::safeGetAssignment(ID lit) const
     {
         assert(isSAT());
+        if (!hasSAT(lit)) { return SAT::UNDEF; }
         SAT::Literal satlit = toSAT(lit);
         return m_solver->getAssignment(satlit);
+    }
+
+    ModelValue SATAdaptor::safeGetAssignmentToVar(ID var) const
+    {
+        assert(!is_negated(var));
+        return safeGetAssignment(var);
+    }
+
+    ModelValue SATAdaptor::getAssignment(ID lit) const
+    {
+        ModelValue asgn = safeGetAssignment(lit);
+        assert(asgn != SAT::UNDEF);
+        return asgn;
     }
 
     ModelValue SATAdaptor::getAssignmentToVar(ID var) const

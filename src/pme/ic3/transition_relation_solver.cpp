@@ -50,7 +50,7 @@ namespace PME { namespace IC3 {
                              GlobalState & gs)
         : m_vars(varman),
           m_tr(tr),
-          m_gs(g_null_gs)
+          m_gs(gs)
     { }
 
     void TransitionRelationSolver::renewSAT()
@@ -83,8 +83,9 @@ namespace PME { namespace IC3 {
 
             simpSolver.addClauses(unrolled);
 
-            // Freeze latches and constraints (including primes)
+            // Freeze latches, inputs, and constraints (including primes)
             simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
+            simpSolver.freeze(m_tr.begin_inputs(), m_tr.end_inputs(), true);
             simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
 
             // Freeze bad and bad'

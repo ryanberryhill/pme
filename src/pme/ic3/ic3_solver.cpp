@@ -102,6 +102,7 @@ namespace PME { namespace IC3 {
         size_t k = 1;
         while (!isSafe(target))
         {
+            log(2) << "Level " << k << std::endl;
             bool blocked = recursiveBlock(target, k);
             if (blocked)
             {
@@ -163,8 +164,13 @@ namespace PME { namespace IC3 {
             if (blocked)
             {
                 assert(g >= level);
+                log(3) << g << ": " << clauseStringOf(s) << std::endl;
                 addLemma(s, g);
-                // TODO IC3-style and Quip-style re-enqueue
+                // TODO Quip-style re-enqueue
+                if (g < target_level)
+                {
+                    q.push(newObligation(obl->cti, g + 1));
+                }
             }
             else
             {
@@ -280,17 +286,22 @@ namespace PME { namespace IC3 {
 
         Cube t = orig;
 
+        log(4) << "s = " << stringOf(s) << std::endl;
         auto s_it = s.begin();
         auto t_it = t.begin();
 
         while (t_it != t.end())
         {
+            assert(s_it == s.end() || *t_it <= *s_it);
             // Advance to a point where they disagree
             while (*s_it == *t_it && s_it != s.end() && t_it != t.end())
             {
                 s_it++;
                 t_it++;
             }
+
+            // The loop above may have made t_it = t.end()
+            if (t_it == t.end()) { break; }
 
             // See if it can be dropped from t
             ID lit = *t_it;
@@ -301,6 +312,17 @@ namespace PME { namespace IC3 {
                 // Upate t and point t_it to the next element
                 t = t_copy;
                 t_it = std::upper_bound(t.begin(), t.end(), lit);
+            }
+            else
+            {
+                // it cannot be dropped, try the next one
+                t_it++;
+            }
+
+            // Update s_it to point to the next thing that will match t_it
+            if (s_it != s.end() && t_it != t.end() && *s_it < *t_it)
+            {
+                s_it = std::upper_bound(s.begin(), s.end(), lit);
             }
         }
 
