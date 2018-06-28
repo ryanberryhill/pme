@@ -39,12 +39,16 @@ namespace PME
     class Engine
     {
         public:
-            Engine(aiger * aig, const ExternalClauseVec & proof);
-            Engine(aiger * aig,
-                   const ExternalClauseVec & proof,
-                   unsigned property);
+            Engine(aiger * aig);
+
+            void setProof(const ExternalClauseVec & proof);
+
             bool checkProof();
             void minimize(PMEMinimizationAlgorithm algorithm);
+            bool runIC3();
+
+            ClauseVec getOriginalProof() const;
+            ExternalClauseVec getOriginalProofExternal() const;
 
             size_t getNumProofs() const;
             ClauseVec getProof(size_t i) const;

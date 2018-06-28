@@ -44,6 +44,7 @@ void cpme_log_to_stdout(void * pme);
 void cpme_set_verbosity(void * pme, int v);
 
 void * cpme_alloc_proof();
+void * cpme_copy_proof(void * pme);
 void cpme_add_clause(void * proof, const unsigned * cls, size_t n);
 void cpme_free_proof(void * proof);
 
@@ -53,12 +54,15 @@ unsigned cpme_proof_lit(void * proof, size_t cls, size_t n);
 
 size_t cpme_num_proofs(void * pme);
 void * cpme_get_proof(void * pme, size_t i);
+void cpme_set_proof(void * pme, void * proof);
 
 int cpme_check_proof(void * pme);
 int cpme_run_marco(void * pme);
 int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
+
+int cpme_run_ic3(void * pme);
 
 #ifdef __cplusplus
 }

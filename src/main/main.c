@@ -167,7 +167,7 @@ void save_proofs(void * pme, char * name)
 
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
-int g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_checkmin = 0;
+int g_ic3 = 0, g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_checkmin = 0;
 int g_saveproofs = 0;
 
 int main(int argc, char ** argv)
@@ -180,6 +180,7 @@ int main(int argc, char ** argv)
     int option_index = 0;
 
     static struct option long_opts[] = {
+            {"ic3",             no_argument,        &g_ic3,        1 },
             {"check",           no_argument,        &g_check,      1 },
             {"check-minimal",   no_argument,        &g_checkmin,   1 },
             {"save-proofs",     required_argument,  &g_saveproofs, 1 },
@@ -223,10 +224,16 @@ int main(int argc, char ** argv)
     }
 
     // Parse positional argument(s)
-    if (argc > optind + 1)
+    if (argc == optind + 2)
     {
+        // Given an AIG and a proof
         aig_path = argv[optind];
         proof_path = argv[optind + 1];
+    }
+    else if (argc == optind + 1 && g_ic3)
+    {
+        // Given an AIG and --ic3
+        aig_path = argv[optind];
     }
     else
     {
@@ -236,7 +243,10 @@ int main(int argc, char ** argv)
 
     printf("pme version %s\n", cpme_version());
     printf("Input AIG: %s\n", aig_path);
-    printf("Input proof: %s\n", proof_path);
+    if (proof_path)
+    {
+        printf("Input proof: %s\n", proof_path);
+    }
 
     // Check if the AIG file is readable
     if (access(aig_path, R_OK) == -1)
@@ -246,7 +256,7 @@ int main(int argc, char ** argv)
     }
 
     // Check if the proof file is readable
-    if (access(proof_path, R_OK) == -1)
+    if (proof_path && access(proof_path, R_OK) == -1)
     {
         perror("Cannot open proof for reading");
         return EXIT_FAILURE;
@@ -274,34 +284,63 @@ int main(int argc, char ** argv)
     }
 
     // Open the proof file
-    FILE * proof_file = (FILE *) fopen(proof_path, "r");
-    if (proof_file == NULL)
+    void * proof = NULL;
+    if (proof_path)
     {
-        perror("Failed to open proof");
-        return EXIT_FAILURE;
+        FILE * proof_file = (FILE *) fopen(proof_path, "r");
+        if (proof_file == NULL)
+        {
+            perror("Failed to open proof");
+            return EXIT_FAILURE;
+        }
+
+        // Create the proof
+        proof = cpme_alloc_proof();
+        assert(proof);
+        parse_proof(proof, proof_file);
+        fclose(proof_file);
     }
-
-    // Create the proof
-    void * proof = cpme_alloc_proof();
-    assert(proof);
-    parse_proof(proof, proof_file);
-    fclose(proof_file);
-
-    size_t proof_size = cpme_proof_num_clauses(proof);
-    printf("The proof has %lu clauses\n", proof_size);
 
     // Initialize the PME library
     void * pme = cpme_init(aig, proof);
     assert(pme);
 
-    // Clean up the AIG and proof
+    // Clean up the AIG
     aiger_reset(aig);
-    cpme_free_proof(proof);
-    aig = NULL; proof = NULL;
+    aig = NULL;
 
     // Do things in the PME library
     cpme_log_to_stdout(pme);
     cpme_set_verbosity(pme, verbosity);
+
+    // Run IC3
+    if (g_ic3)
+    {
+        int safe = cpme_run_ic3(pme);
+        if (safe < 0)
+        {
+            fprintf(stderr, "Error running IC3\n");
+            return EXIT_FAILURE;
+        }
+        else if (safe == 0)
+        {
+            printf("The instance is unsafe, terminating\n");
+            return EXIT_SUCCESS;
+        }
+
+        // Copy the proof and tell PME to use it for minimization
+        assert(!proof);
+        proof = cpme_copy_proof(pme);
+        cpme_set_proof(pme, proof);
+    }
+
+    size_t proof_size = cpme_proof_num_clauses(proof);
+    printf("The proof has %lu clauses\n", proof_size);
+
+    // Clean up the proof
+    cpme_free_proof(proof);
+    proof = NULL;
+
     if (g_check)
     {
         int proof_ok = cpme_check_proof(pme);

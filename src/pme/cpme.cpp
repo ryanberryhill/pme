@@ -33,12 +33,18 @@ const char * cpme_version()
 
 void * cpme_init(aiger * aig, void * proof)
 {
-    PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
-    if (!p) { return NULL; }
+    PME::ExternalClauseVec * p = nullptr;
+
+    if (proof)
+    {
+        p = static_cast<PME::ExternalClauseVec *>(proof);
+        if (!p) { return NULL; }
+    }
 
     try
     {
-        auto engine = new PME::Engine(aig, *p);
+        auto engine = new PME::Engine(aig);
+        if (p) { engine->setProof(*p); }
         return engine;
     }
     catch(...)
@@ -57,6 +63,26 @@ void * cpme_alloc_proof()
     {
         return NULL;
     }
+}
+
+void * cpme_copy_proof(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+
+    PME::ExternalClauseVec * copy = NULL;
+    try
+    {
+        copy = new PME::ExternalClauseVec;
+    }
+    catch (...)
+    {
+        return NULL;
+    }
+
+    *copy = eng->getOriginalProofExternal();
+
+    return copy;
 }
 
 void cpme_log_to_stdout(void * pme)
@@ -204,6 +230,22 @@ int cpme_run_bfmin(void * pme)
     }
 }
 
+int cpme_run_ic3(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        bool safe = eng->runIC3();
+        return safe;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 size_t cpme_num_proofs(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);
@@ -222,6 +264,17 @@ void * cpme_get_proof(void * pme, size_t i)
     *proof = eng->getProofExternal(i);
 
     return proof;
+}
+
+void cpme_set_proof(void * pme, void * proof)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+
+    PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
+    assert(p);
+
+    eng->setProof(*p);
 }
 
 size_t cpme_proof_num_clauses(void * proof)

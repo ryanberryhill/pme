@@ -26,6 +26,8 @@
 #include "pme/minimization/camsis.h"
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
+#include "pme/ic3/ic3.h"
+#include "pme/ic3/ic3_solver.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -36,16 +38,11 @@ extern "C" {
 
 namespace PME
 {
-    Engine::Engine(aiger * aig, const ExternalClauseVec & proof)
+    Engine::Engine(aiger * aig)
         : m_tr(m_vars, aig)
-    {
-        m_proof = m_tr.makeInternal(proof);
-    }
+    { }
 
-    Engine::Engine(aiger * aig,
-                   const ExternalClauseVec & proof,
-                   unsigned property)
-        : m_tr(m_vars, aig, property)
+    void Engine::setProof(const ExternalClauseVec & proof)
     {
         m_proof = m_tr.makeInternal(proof);
     }
@@ -83,6 +80,31 @@ namespace PME
 
         assert(m_minimizer);
         m_minimizer->minimize();
+    }
+
+    bool Engine::runIC3()
+    {
+        IC3::IC3Solver solver(m_vars, m_tr, m_gs);
+        IC3::IC3Result result = solver.prove();
+
+        if (result.result == IC3::SAFE)
+        {
+            m_proof = result.proof;
+            removeProperty(m_proof);
+        }
+
+        return result.result == IC3::SAFE;
+    }
+
+    ClauseVec Engine::getOriginalProof() const
+    {
+        return m_proof;
+    }
+
+    ExternalClauseVec Engine::getOriginalProofExternal() const
+    {
+        ClauseVec proof = getOriginalProof();
+        return m_tr.makeExternal(proof);
     }
 
     size_t Engine::getNumProofs() const
