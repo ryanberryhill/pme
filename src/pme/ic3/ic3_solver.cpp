@@ -56,7 +56,8 @@ namespace PME { namespace IC3 {
           m_tr(tr),
           m_gs(gs),
           m_cons(varman, tr, m_trace, gs),
-          m_lift(varman, tr, m_trace, gs)
+          m_lift(varman, tr, m_trace, gs),
+          m_simpleInit(true)
     {
        initialize();
     }
@@ -72,7 +73,9 @@ namespace PME { namespace IC3 {
             {
                 assert(init == ID_TRUE || init == ID_FALSE);
                 bool neg = init == ID_FALSE;
-                ID lit = neg ? negate(latch) : latch;
+                // The cube for the lemma is negation of the clause, so
+                // negate when neg is false to get the cube
+                ID lit = neg ? latch : negate(latch);
                 m_trace.addLemma({lit}, 0);
             }
         }
@@ -164,7 +167,7 @@ namespace PME { namespace IC3 {
             if (blocked)
             {
                 assert(g >= level);
-                log(3) << g << ": " << clauseStringOf(s) << std::endl;
+                log(4) << g << ": " << clauseStringOf(s) << std::endl;
                 addLemma(s, g);
                 // TODO Quip-style re-enqueue
                 if (g < target_level)
@@ -275,14 +278,53 @@ namespace PME { namespace IC3 {
         }
     }
 
+    Cube IC3Solver::reinitiateSimple(const Cube & s, const Cube & orig)
+    {
+        // In the simple case, just add back in a literal from the
+        // orig \intersect (init - s)
+        Cube init;
+        const Frame & f0 = m_trace.getFrame(0);
+        for (ID id : f0)
+        {
+            Cube i = m_trace.cubeOf(id);
+            assert(i.size() == 1);
+            init.push_back(i.at(0));
+        }
+
+        std::sort(init.begin(), init.end());
+
+        auto i_it = init.begin();
+        auto o_it = orig.begin();
+
+        while (*i_it != *o_it)
+        {
+            assert(i_it != init.end());
+            assert(o_it != orig.end());
+            if (*i_it < *o_it) { i_it++; }
+            else { o_it++; }
+        }
+
+        assert(*i_it == *o_it);
+        ID lit = *i_it;
+        assert(std::find(s.begin(), s.end(), lit) == s.end());
+
+        Cube s_copy = s;
+        s_copy.push_back(lit);
+        assert(initiation(s_copy));
+        return s_copy;
+    }
+
     Cube IC3Solver::reinitiate(const Cube & s, const Cube & orig)
     {
-        // TODO: when initial state is just a cube, add a literal in
-        // init \intersect (orig - s) to s
         assert(s.size() < orig.size());
         assert(std::is_sorted(s.begin(), s.end()));
         assert(std::is_sorted(orig.begin(), orig.end()));
         assert(initiation(orig));
+
+        if (m_simpleInit)
+        {
+            return reinitiateSimple(s, orig);
+        }
 
         Cube t = orig;
 

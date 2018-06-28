@@ -110,6 +110,7 @@ namespace PME { namespace IC3 {
 
             void generalize(Cube & s, unsigned level);
             Cube reinitiate(const Cube & s, const Cube & orig);
+            Cube reinitiateSimple(const Cube & s, const Cube & orig);
             bool initiation(const Cube & s);
 
             bool isSafe(const Cube & target);
@@ -139,6 +140,8 @@ namespace PME { namespace IC3 {
 
             FrameSolver m_cons;
             UNSATCoreLifter m_lift;
+
+            bool m_simpleInit;
     };
 } }
 
