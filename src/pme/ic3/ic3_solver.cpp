@@ -311,6 +311,7 @@ namespace PME { namespace IC3 {
         Cube s_copy = s;
         s_copy.push_back(lit);
         assert(initiation(s_copy));
+        std::sort(s_copy.begin(), s_copy.end());
         return s_copy;
     }
 
