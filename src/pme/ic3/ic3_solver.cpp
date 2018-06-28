@@ -117,8 +117,20 @@ namespace PME { namespace IC3 {
             }
         }
 
+        recordProof(result);
         result.result = SAFE;
         return result;
+    }
+
+    void IC3Solver::recordProof(IC3Result & result) const
+    {
+        const Frame & proof = m_trace.getFrame(LEVEL_INF);
+        for (LemmaID lemma : proof)
+        {
+            const Cube & cube = m_trace.cubeOf(lemma);
+            Clause cls = negateVec(cube);
+            result.proof.push_back(cls);
+        }
     }
 
     bool IC3Solver::recursiveBlock(const Cube & target, unsigned target_level)

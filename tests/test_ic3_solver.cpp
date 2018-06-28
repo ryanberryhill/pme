@@ -21,6 +21,7 @@
 
 #include "pme/id.h"
 #include "pme/ic3/ic3_solver.h"
+#include "pme/util/proof_checker.h"
 
 #define BOOST_TEST_MODULE IC3Test
 #define BOOST_TEST_DYN_LINK
@@ -112,6 +113,9 @@ BOOST_AUTO_TEST_CASE(safe)
 
     IC3Result result = f.solver->prove();
     BOOST_CHECK(result.result == SAFE);
+
+    ProofChecker pc(*f.tr, result.proof, f.gs);
+    BOOST_CHECK(pc.checkProof());
 }
 
 BOOST_AUTO_TEST_CASE(unsafe)

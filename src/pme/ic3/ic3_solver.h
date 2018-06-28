@@ -121,6 +121,8 @@ namespace PME { namespace IC3 {
 
             void initialize();
 
+            void recordProof(IC3Result & result) const;
+
             std::ostream & log(int verbosity) const;
 
             std::string stringOf(LemmaID id) const;
