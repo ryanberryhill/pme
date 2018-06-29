@@ -178,7 +178,7 @@ function ic3_integration() {
         $VALGRIND $PME $@ --check $aig_file > $logfile 2>&1
 
         if (($? != 0)) ; then
-            echo "Error running PME (IC3) for $pme_file: see $logfile for details"
+            echo "Error running PME (IC3) for $aig_file: see $logfile for details"
             errors=$((errors+1))
             continue
         fi
