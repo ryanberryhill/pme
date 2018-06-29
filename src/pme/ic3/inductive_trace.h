@@ -70,6 +70,8 @@ namespace PME { namespace IC3 {
             const Cube & cubeOf(LemmaID id) const;
             LemmaID IDOf(const Cube & cube) const;
 
+            unsigned levelOf(LemmaID id) const;
+            unsigned levelOf(const Cube & cube) const;
             bool lemmaExists(const Cube & cube) const;
 
             LemmaID addLemma(const Cube & cube, unsigned level);

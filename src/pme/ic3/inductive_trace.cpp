@@ -61,6 +61,18 @@ namespace PME { namespace IC3 {
         }
     }
 
+    unsigned InductiveTrace::levelOf(LemmaID id) const
+    {
+        const LemmaData & lemma = getLemma(id);
+        return lemma.level;
+    }
+
+    unsigned InductiveTrace::levelOf(const Cube & cube) const
+    {
+        assert(lemmaExists(cube));
+        return levelOf(IDOf(cube));
+    }
+
     bool InductiveTrace::lemmaExists(const Cube & cube) const
     {
         Cube cube_sorted = sortCube(cube);

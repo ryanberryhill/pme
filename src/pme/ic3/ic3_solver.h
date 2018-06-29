@@ -109,8 +109,10 @@ namespace PME { namespace IC3 {
             void pushLemmas();
 
             void generalize(Cube & s, unsigned level);
+            void generalizeIteration(Cube & s, unsigned level);
+
+            void initiate(Cube & s, const Cube & orig);
             Cube reinitiate(const Cube & s, const Cube & orig);
-            Cube reinitiateSimple(const Cube & s, const Cube & orig);
             bool initiation(const Cube & s);
 
             bool isSafe(const Cube & target);
@@ -130,6 +132,8 @@ namespace PME { namespace IC3 {
             std::string stringOf(const Cube & c) const;
             std::string clauseStringOf(LemmaID id) const;
             std::string clauseStringOf(const Cube & c) const;
+
+            const PMEOptions & opts() const { return m_gs.opts; }
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
