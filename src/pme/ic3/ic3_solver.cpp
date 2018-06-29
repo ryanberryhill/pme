@@ -360,7 +360,7 @@ namespace PME { namespace IC3 {
         {
             assert(s_it == s.end() || *t_it <= *s_it);
             // Advance to a point where they disagree
-            while (*s_it == *t_it && s_it != s.end() && t_it != t.end())
+            while (s_it != s.end() && t_it != t.end() && *s_it == *t_it)
             {
                 s_it++;
                 t_it++;
