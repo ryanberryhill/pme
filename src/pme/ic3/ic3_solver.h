@@ -106,6 +106,8 @@ namespace PME { namespace IC3 {
 
             bool recursiveBlock(const Cube & target, unsigned target_level);
             BlockResult block(const Cube & target, unsigned level);
+            bool syntacticBlock(const Cube & target, unsigned level) const;
+            bool frameBlocks(const Cube & target, unsigned level) const;
             void pushLemmas();
 
             void generalize(Cube & s, unsigned level);
@@ -144,8 +146,6 @@ namespace PME { namespace IC3 {
 
             FrameSolver m_cons;
             UNSATCoreLifter m_lift;
-
-            bool m_simpleInit;
     };
 } }
 

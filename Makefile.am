@@ -125,7 +125,8 @@ TESTS = test_sat_adaptor \
 		test_inductive_trace \
 		test_frame_solver \
 		test_unsat_core_lifter \
-		test_ic3_solver
+		test_ic3_solver \
+		test_basics
 
 check_PROGRAMS = $(TESTS)
 
@@ -186,6 +187,9 @@ test_unsat_core_lifter_LDADD = $(PME_TEST_LIBS)
 
 test_ic3_solver_SOURCES = tests/test_ic3_solver.cpp
 test_ic3_solver_LDADD = $(PME_TEST_LIBS)
+
+test_basics_SOURCES = tests/test_basics.cpp
+test_basics_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

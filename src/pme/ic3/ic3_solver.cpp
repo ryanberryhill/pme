@@ -27,6 +27,14 @@
 
 namespace PME { namespace IC3 {
 
+    std::string levelString(unsigned level)
+    {
+        std::ostringstream ss;
+        if (level == LEVEL_INF) { ss << "inf"; }
+        else { ss << level; }
+        return ss.str();
+    }
+
     Cube subtractLit(const Cube & s, Cube::const_iterator it)
     {
         Cube s_copy;
@@ -56,8 +64,7 @@ namespace PME { namespace IC3 {
           m_tr(tr),
           m_gs(gs),
           m_cons(varman, tr, m_trace, gs),
-          m_lift(varman, tr, m_trace, gs),
-          m_simpleInit(true)
+          m_lift(varman, tr, m_trace, gs)
     {
        initialize();
     }
@@ -156,6 +163,7 @@ namespace PME { namespace IC3 {
 
             Cube s = obl->cti;
             unsigned level = obl->level;
+            assert(std::is_sorted(s.begin(), s.end()));
             assert(level < LEVEL_INF);
 
             if (level == 0)
@@ -163,6 +171,8 @@ namespace PME { namespace IC3 {
                 // TODO counter-example preparations
                 return false;
             }
+
+            if (syntacticBlock(s, level)) { continue; }
 
             Cube t;
             unsigned g;
@@ -172,7 +182,6 @@ namespace PME { namespace IC3 {
             if (blocked)
             {
                 assert(g >= level);
-                log(4) << g << ": " << clauseStringOf(t) << std::endl;
                 addLemma(t, g);
                 // TODO Quip-style re-enqueue
                 if (g < target_level)
@@ -182,6 +191,7 @@ namespace PME { namespace IC3 {
             }
             else
             {
+                std::sort(t.begin(), t.end());
                 q.push(newObligation(t, level - 1));
                 q.push(obl);
             }
@@ -214,12 +224,35 @@ namespace PME { namespace IC3 {
         }
     }
 
+    bool IC3Solver::frameBlocks(const Cube & target, unsigned level) const
+    {
+        const Frame & fk = m_trace.getFrame(level);
+        for (LemmaID id : fk)
+        {
+            const Cube & cube = m_trace.cubeOf(id);
+            if (subsumes(cube, target)) { return true; }
+        }
+
+        return false;
+    }
+
+    bool IC3Solver::syntacticBlock(const Cube & target, unsigned level) const
+    {
+        for (unsigned k = level; k < m_trace.numFrames(); ++k)
+        {
+            if (frameBlocks(target, k)) { return true; }
+        }
+
+        if (frameBlocks(target, LEVEL_INF)) { return true; }
+
+        return false;
+    }
+
     BlockResult IC3Solver::block(const Cube & target, unsigned level)
     {
         assert(level < LEVEL_INF);
         if (level == 0) { return BlockResult(false); }
 
-        // TODO syntactic checks
         Cube s = target;
         Cube t, inp, pinp;
         bool blocked = false;
@@ -408,6 +441,7 @@ namespace PME { namespace IC3 {
         // TODO consider updating lifting solver
         m_trace.pushLemma(id, level);
         m_cons.addLemma(id);
+        log(4) << "To " << levelString(level) << ": " << clauseStringOf(id) << std::endl;
     }
 
     void IC3Solver::pushFrameToInf(unsigned level)
@@ -433,6 +467,7 @@ namespace PME { namespace IC3 {
         // TODO consider updating lifting solver
         LemmaID id = m_trace.addLemma(c, level);
         m_cons.addLemma(id);
+        log(4) << "At " << levelString(level) << ": " << clauseStringOf(id) << std::endl;
         return id;
     }
 

@@ -96,6 +96,7 @@ namespace PME
     typedef ClauseVec::const_iterator clause_iterator;
 
     std::ostream & operator<<(std::ostream &, const ClauseIDVec &);
+    bool subsumes(const Cube & a, const Cube & b);
 }
 
 namespace std {

@@ -22,6 +22,9 @@
 #include "config.h"
 #include "pme/pme.h"
 
+#include <algorithm>
+#include <cassert>
+
 namespace PME
 {
     const static std::string pme_version_string = PACKAGE_VERSION;
@@ -41,5 +44,35 @@ namespace PME
         os << "]";
         return os;
     }
+
+    bool subsumes(const Cube & a, const Cube & b)
+    {
+        assert(std::is_sorted(a.begin(), a.end()));
+        assert(std::is_sorted(b.begin(), b.end()));
+
+        if (a.size() > b.size()) { return false; }
+
+        auto a_it = a.begin();
+        auto b_it = b.begin();
+
+        while (a_it != a.end())
+        {
+            // Advance the index in b until it is no longer < the one in a
+            while (b_it != b.end() && *a_it != *b_it)
+            {
+                b_it++;
+            }
+
+            // If the updated b index does not match the value from a,
+            // return false (a contains something not in b)
+            // Otherwise the value from a is found, advance the index of a
+            if (b_it == b.end()) { return false; }
+            else if (*a_it != *b_it) { return false; }
+            else { a_it++; }
+        }
+
+        return true;
+    }
+
 }
 
