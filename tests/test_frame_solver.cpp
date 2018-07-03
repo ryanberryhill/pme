@@ -370,3 +370,50 @@ BOOST_AUTO_TEST_CASE(consecution_unsat_core)
     BOOST_CHECK(f.solver->consecution(1, core));
 }
 
+BOOST_AUTO_TEST_CASE(intersection_state)
+{
+    FrameSolverFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Clause cn0 = {negate(l0)};
+    Clause cn1 = {negate(l1)};
+    Clause cn2 = {negate(l2)};
+    Clause cn3 = {negate(l3)};
+
+    Clause cp0 = {l0};
+    Clause cp1 = {l1};
+    Clause cp2 = {l2};
+    Clause cp3 = {l3};
+
+    // State xxx1
+    f.addClause(cp0, 0);
+
+    bool intersect;
+    Cube state, inputs;
+
+    std::tie(intersect, state, inputs) = f.solver->intersectionFull(0, cn0);
+    BOOST_CHECK(!intersect);
+    std::tie(intersect, state, inputs) = f.solver->intersectionFull(0, {negate(l0), l1, l2});
+    BOOST_CHECK(!intersect);
+    std::tie(intersect, state, inputs) = f.solver->intersectionFull(0, {negate(l0), l1, l2, negate(l3)});
+    BOOST_CHECK(!intersect);
+
+    Cube expected = {l0, l1, l2, l3};
+    std::tie(intersect, state, inputs) = f.solver->intersectionFull(0, {l0, l1, l2, l3});
+    BOOST_CHECK(intersect);
+    std::sort(expected.begin(), expected.end());
+    std::sort(state.begin(), state.end());
+    BOOST_CHECK(expected == state);
+    BOOST_CHECK(inputs.empty());
+
+    std::tie(intersect, state, inputs) = f.solver->intersectionFull(0, {l0, l1});
+    BOOST_CHECK(intersect);
+    BOOST_CHECK(std::find(state.begin(), state.end(), l0) != state.end());
+    BOOST_CHECK(std::find(state.begin(), state.end(), l1) != state.end());
+    BOOST_CHECK(inputs.empty());
+}
+

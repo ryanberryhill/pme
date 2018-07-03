@@ -27,6 +27,20 @@
 
 namespace PME { namespace IC3 {
 
+    bool ObligationComparator::operator()(const ProofObligation * lhs,
+                                          const ProofObligation * rhs) const
+    {
+        if (lhs->level != rhs->level) { return lhs->level > rhs->level; }
+
+        size_t lhs_size = lhs->cti.size(), rhs_size = rhs->cti.size();
+        if (lhs_size != rhs_size) { return lhs_size > rhs_size; }
+
+        if (lhs->may_degree != rhs->may_degree) { return lhs->may_degree > rhs->may_degree; }
+
+        // At this point choose arbitrarily
+        return lhs->cti > rhs->cti;
+    }
+
     std::string levelString(unsigned level)
     {
         std::ostringstream ss;
@@ -45,14 +59,29 @@ namespace PME { namespace IC3 {
         return s_copy;
     }
 
-    ProofObligation::ProofObligation(const Cube & cti, unsigned level, unsigned may_degree)
-        : level(level), cti(cti), may_degree(may_degree)
+    ProofObligation::ProofObligation(const Cube & cti,
+                                     unsigned level,
+                                     ProofObligation * parent,
+                                     const Cube & concrete_state,
+                                     const Cube & inputs,
+                                     unsigned may_degree)
+        : level(level),
+          cti(cti),
+          concrete_state(concrete_state),
+          inputs(inputs),
+          may_degree(may_degree),
+          parent(parent)
     {
         assert(level < LEVEL_INF);
     }
 
     ProofObligation::ProofObligation(const ProofObligation & other)
-        : level(other.level), cti(other.cti), may_degree(other.may_degree)
+        : level(other.level),
+          cti(other.cti),
+          concrete_state(other.concrete_state),
+          inputs(other.inputs),
+          may_degree(other.may_degree),
+          parent(other.parent)
     {
         assert(level < LEVEL_INF);
     }
@@ -103,9 +132,13 @@ namespace PME { namespace IC3 {
     {
         IC3Result result;
 
-        if (isInitial(target)) {
-            // TODO counterexample
+        bool blocked;
+        SafetyCounterExample cex;
+        std::tie(blocked, cex) = checkInitial(target);
+        if (!blocked) {
+            log(2) << "Trivial counter-example" << std::endl;
             result.result = UNSAFE;
+            result.cex = cex;
             return result;
         }
 
@@ -113,7 +146,7 @@ namespace PME { namespace IC3 {
         while (!isSafe(target))
         {
             log(2) << "Level " << k << std::endl;
-            bool blocked = recursiveBlock(target, k);
+            std::tie(blocked, cex) = recursiveBlock(target, k);
             if (blocked)
             {
                 clearObligationPool();
@@ -127,8 +160,9 @@ namespace PME { namespace IC3 {
             }
             else
             {
-                // TODO Return counter-example
                 result.result = UNSAFE;
+                result.cex = cex;
+                log(2) << "Counter-example of length " << cex.size() << std::endl;
                 return result;
             }
         }
@@ -149,7 +183,28 @@ namespace PME { namespace IC3 {
         }
     }
 
-    bool IC3Solver::recursiveBlock(const Cube & target, unsigned target_level)
+    SafetyCounterExample IC3Solver::buildCex(const ProofObligation * obl) const
+    {
+        SafetyCounterExample cex;
+        const ProofObligation * current = obl;
+
+        // An obligations inputs are the ones needed to reach the parent
+        // obligation's concrete state. conc & inputs & Tr & parent->conc
+        // should be SAT. The ~Bad obligation doesn't have a parent, so it
+        // shouldn't have inputs by this definition. However, outputs can
+        // be a function of inputs (they are Mealy outputs), so it may have
+        // inputs that came from the primed inputs of F_k & Tr & ~Bad.
+        while (current != nullptr)
+        {
+            cex.push_back(Step(current->inputs, current->concrete_state));
+
+            current = current->parent;
+        }
+
+        return cex;
+    }
+
+    IC3Solver::RecBlockResult IC3Solver::recursiveBlock(const Cube & target, unsigned target_level)
     {
         ObligationQueue q;
 
@@ -157,8 +212,8 @@ namespace PME { namespace IC3 {
 
         while (!q.empty())
         {
-            const ProofObligation * obl = q.top(); q.pop();
-            // TODO make it Quip instead of IC3
+            ProofObligation * obl = popObligation(q);
+            // TODO handle may proofs
             assert(obl->may_degree == 0);
 
             Cube s = obl->cti;
@@ -168,35 +223,38 @@ namespace PME { namespace IC3 {
 
             if (level == 0)
             {
-                // TODO counter-example preparations
-                return false;
+                SafetyCounterExample cex = buildCex(obl);
+                return std::make_pair(false, cex);
             }
 
             if (syntacticBlock(s, level)) { continue; }
 
-            Cube t;
+            Cube t, conc, inp, pinp;
             unsigned g;
             bool blocked;
-            std::tie(blocked, t, g) = block(s, level);
+            std::tie(blocked, g, t, conc, inp, pinp) = block(s, level);
 
             if (blocked)
             {
                 assert(g >= level);
                 addLemma(t, g);
-                // TODO Quip-style re-enqueue
+                // TODO Quip-style may-proof re-enqueue
                 if (g < target_level)
                 {
-                    q.push(newObligation(obl->cti, g + 1));
+                    obl->level = g + 1;
+                    q.push(obl);
                 }
             }
             else
             {
                 std::sort(t.begin(), t.end());
-                q.push(newObligation(t, level - 1));
+                q.push(newObligation(t, level - 1, obl, conc, inp));
+                if (obl->inputs.empty()) { obl->inputs = pinp; }
                 q.push(obl);
             }
         }
-        return true;
+
+        return std::make_pair(true, SafetyCounterExample());
     }
 
     void IC3Solver::pushLemmas()
@@ -262,14 +320,14 @@ namespace PME { namespace IC3 {
         {
             generalize(s, level);
             // TODO push s forward
-            return BlockResult(true, s, level);
+            return BlockResult(true, level, s);
         }
         else
         {
             assert(!t.empty());
-            t = m_lift.lift(t, s, inp, pinp);
-            assert(!t.empty());
-            return BlockResult(false, t, 0);
+            Cube lifted = m_lift.lift(t, s, inp, pinp);
+            assert(!lifted.empty());
+            return BlockResult(false, 0, lifted, t, inp, pinp);
         }
     }
 
@@ -418,17 +476,49 @@ namespace PME { namespace IC3 {
         return false;
     }
 
-    bool IC3Solver::isInitial(const Cube & target)
+    IC3Solver::RecBlockResult IC3Solver::checkInitial(const Cube & target)
     {
-        return m_cons.intersection(0, target);
+        bool is_initial;
+        Cube init_state, inputs;
+        SafetyCounterExample cex;
+        std::tie(is_initial, init_state, inputs) = m_cons.intersectionFull(0, target);
+
+        if (is_initial) { cex.push_back(Step(inputs, init_state)); }
+
+        return std::make_pair(!is_initial, cex);
+    }
+
+    ProofObligation * IC3Solver::newObligation(const Cube & cti,
+                                               unsigned level)
+    {
+        Cube empty;
+        m_obls.push_front(ProofObligation(cti, level, nullptr, empty, empty, 0));
+        return &m_obls.front();
     }
 
     ProofObligation * IC3Solver::newObligation(const Cube & cti,
                                                unsigned level,
+                                               ProofObligation * parent,
+                                               const Cube & concrete_state,
+                                               const Cube & inputs,
                                                unsigned may_degree)
     {
-        m_obls.push_front(ProofObligation(cti, level, may_degree));
+        m_obls.push_front(ProofObligation(cti, level, parent,
+                                          concrete_state, inputs,
+                                          may_degree));
         return &m_obls.front();
+    }
+
+    ProofObligation * IC3Solver::popObligation(ObligationQueue & q)
+    {
+        // priority_queue provides no way to pop off a non-const element.
+        // However, we'd like to be able to pop the obligation, modify it
+        // (change the level) and re-enqueue it without making another
+        // allocation. The const_cast below should be totally safe since we
+        // immediately pop the element.
+        ProofObligation * obl = const_cast<ProofObligation *>(q.top());
+        q.pop();
+        return obl;
     }
 
     void IC3Solver::clearObligationPool()

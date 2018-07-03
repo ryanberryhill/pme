@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(safe)
     BOOST_CHECK(pc.checkProof());
 }
 
-BOOST_AUTO_TEST_CASE(unsafe)
+BOOST_AUTO_TEST_CASE(trivual_unsafe)
 {
     IC3Fixture f;
 
@@ -136,6 +136,57 @@ BOOST_AUTO_TEST_CASE(unsafe)
 
     IC3Result result = f.solver->prove();
     BOOST_CHECK(result.result == UNSAFE);
+
+    // Check the counter-example
+    SafetyCounterExample cex = result.cex;
+    BOOST_CHECK(cex.size() == 1);
+
+    Cube actual, expected;
+    expected = {l0, negate(l1), negate(l2), l3};
+    actual = cex[0].state;
+    std::sort(expected.begin(), expected.end());
+    std::sort(actual.begin(), actual.end());
+    BOOST_CHECK(expected == actual);
 }
 
+BOOST_AUTO_TEST_CASE(unsafe)
+{
+    IC3Fixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.setInit(l0, ID_FALSE);
+    f.setInit(l1, ID_TRUE);
+    f.setInit(l2, ID_TRUE);
+    f.setInit(l3, ID_FALSE);
+
+    f.prepareSolver();
+
+    IC3Result result = f.solver->prove();
+    BOOST_CHECK(result.result == UNSAFE);
+
+    std::vector<Cube> expected_states;
+    expected_states.push_back({negate(l0), l1, l2, negate(l3)});
+    expected_states.push_back({negate(l0), negate(l1), l2, l3});
+    // Last state is the property violation and is empty
+    expected_states.push_back({});
+
+    // Check the counter-example
+    SafetyCounterExample cex = result.cex;
+    BOOST_CHECK(cex.size() == expected_states.size());
+
+    for (size_t i = 0; i < expected_states.size(); ++i)
+    {
+        Cube actual, expected;
+        expected = expected_states[i];
+        actual = cex[i].state;
+        BOOST_CHECK(cex[i].inputs.empty());
+        std::sort(expected.begin(), expected.end());
+        std::sort(actual.begin(), actual.end());
+        BOOST_CHECK(expected == actual);
+    }
+}
 

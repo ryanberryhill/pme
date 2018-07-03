@@ -206,6 +206,13 @@ namespace PME { namespace IC3 {
 
     bool FrameSolver::intersection(unsigned level, const Cube & c)
     {
+        bool intersects;
+        std::tie(intersects, std::ignore, std::ignore) = intersectionFull(level, c);
+        return intersects;
+    }
+
+    FrameSolver::IntersectionResult FrameSolver::intersectionFull(unsigned level, const Cube & c)
+    {
         assert(!c.empty());
         if (!m_solverInited) { renewSAT(); }
         assert(m_solverInited);
@@ -225,7 +232,11 @@ namespace PME { namespace IC3 {
         // F_k & c & Tr. Tr seems pointless but it might contain constraints
         bool sat = solver().solve(assumps);
 
-        return sat;
+        Cube state, inputs;
+        if (sat) { state = extractPredecessor(); }
+        if (sat) { inputs = extractInputs(); }
+
+        return std::make_tuple(sat, state, inputs);
     }
 
     void FrameSolver::sendFrame(unsigned level)

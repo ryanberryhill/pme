@@ -38,8 +38,10 @@ namespace PME { namespace IC3 {
     enum SafetyResult { SAFE, UNSAFE, UNKNOWN };
 
     struct Step {
-        Cube input;
+        Cube inputs;
         Cube state;
+        Step(const Cube & inputs, const Cube & state) : inputs(inputs), state(state)
+        { }
     };
 
     typedef std::vector<Clause> SafetyProof;

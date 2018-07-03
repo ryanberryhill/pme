@@ -52,8 +52,10 @@ namespace PME { namespace IC3 {
 
     class FrameSolver : public TransitionRelationSolver {
         public:
-            // pred, inp, pinp, core
+            // rel-ind?, pred, inp, pinp, core
             typedef std::tuple<bool, Cube, Cube, Cube, Cube> ConsecutionResult;
+            // intersects?, state, input
+            typedef std::tuple<bool, Cube, Cube> IntersectionResult;
             FrameSolver(VariableManager & varman,
                         const TransitionRelation & tr,
                         const InductiveTrace & trace,
@@ -69,6 +71,7 @@ namespace PME { namespace IC3 {
             bool consecution(ConsecutionOptions & opts);
 
             bool intersection(unsigned level, const Cube & c);
+            IntersectionResult intersectionFull(unsigned level, const Cube & c);
 
         private:
             Clause activatedClauseOf(LemmaID id);

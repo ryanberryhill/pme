@@ -41,37 +41,51 @@ namespace PME { namespace IC3 {
     struct ProofObligation {
         unsigned level;
         Cube cti;
+        Cube concrete_state, inputs;
         unsigned may_degree;
+        ProofObligation * parent;
 
-        ProofObligation(const Cube & cti, unsigned level, unsigned may_degree = 0);
+        ProofObligation(const Cube & cti,
+                        unsigned level,
+                        ProofObligation * parent,
+                        const Cube & concrete_state,
+                        const Cube & inputs,
+                        unsigned may_degree);
         ProofObligation(const ProofObligation & other);
 
         bool isMust() const { return may_degree == 0; }
     };
 
     struct ObligationComparator {
-        bool operator()(const ProofObligation * lhs, const ProofObligation * rhs) const
-        {
-            if (lhs->level != rhs->level) { return lhs->level > rhs->level; }
-
-            size_t lhs_size = lhs->cti.size(), rhs_size = rhs->cti.size();
-            if (lhs_size != rhs_size) { return lhs_size > rhs_size; }
-
-            if (lhs->may_degree != rhs->may_degree) { return lhs->may_degree > rhs->may_degree; }
-
-            // At this point choose arbitrarily
-            return lhs->cti > rhs->cti;
-        }
+        bool operator()(const ProofObligation * lhs, const ProofObligation * rhs) const;
     };
 
     struct BlockResult {
-        typedef std::tuple<bool &, Cube &, unsigned &> BlockResultTuple;
+        typedef std::tuple<bool &, unsigned &, Cube &, Cube &, Cube &, Cube &> BlockResultTuple;
         bool blocked;
-        Cube cti;
+        Cube cti, concrete_state, inputs, primed_inputs;
         unsigned level;
 
-        BlockResult(bool blocked, Cube cti, unsigned level)
-            : blocked(blocked), cti(cti), level(level)
+        BlockResult(bool blocked,
+                    unsigned level,
+                    Cube & cti,
+                    Cube & concrete_state,
+                    Cube & inputs,
+                    Cube & primed_inputs)
+            : blocked(blocked),
+              cti(cti),
+              concrete_state(concrete_state),
+              inputs(inputs),
+              primed_inputs(primed_inputs),
+              level(level)
+        { }
+
+        BlockResult(bool blocked,
+                    unsigned level,
+                    Cube & cti)
+            : blocked(blocked),
+              cti(cti),
+              level(level)
         { }
 
         BlockResult(bool blocked)
@@ -81,7 +95,10 @@ namespace PME { namespace IC3 {
         BlockResult() : BlockResult(false)
         { }
 
-        operator BlockResultTuple() { return BlockResultTuple(blocked, cti, level); }
+        operator BlockResultTuple()
+        {
+            return BlockResultTuple(blocked, level, cti, concrete_state, inputs, primed_inputs);
+        }
     };
 
     class IC3Solver {
@@ -95,16 +112,23 @@ namespace PME { namespace IC3 {
 
         private:
             typedef std::forward_list<ProofObligation> ObligationPool;
+            typedef std::pair<bool, SafetyCounterExample> RecBlockResult;
             typedef std::priority_queue<const ProofObligation *,
                                         std::vector<const ProofObligation *>,
                                         ObligationComparator> ObligationQueue;
 
             ProofObligation * newObligation(const Cube & cti,
+                                            unsigned level);
+            ProofObligation * newObligation(const Cube & cti,
                                             unsigned level,
+                                            ProofObligation * parent,
+                                            const Cube & concrete_state,
+                                            const Cube & inputs,
                                             unsigned may_degree = 0);
+            ProofObligation * popObligation(ObligationQueue & q);
             void clearObligationPool();
 
-            bool recursiveBlock(const Cube & target, unsigned target_level);
+            RecBlockResult recursiveBlock(const Cube & target, unsigned target_level);
             BlockResult block(const Cube & target, unsigned level);
             bool syntacticBlock(const Cube & target, unsigned level) const;
             bool frameBlocks(const Cube & target, unsigned level) const;
@@ -118,7 +142,7 @@ namespace PME { namespace IC3 {
             bool initiation(const Cube & s);
 
             bool isSafe(const Cube & target);
-            bool isInitial(const Cube & target);
+            RecBlockResult checkInitial(const Cube & target);
 
             void pushLemma(LemmaID id, unsigned level);
             void pushFrameToInf(unsigned level);
@@ -127,6 +151,7 @@ namespace PME { namespace IC3 {
             void initialize();
 
             void recordProof(IC3Result & result) const;
+            SafetyCounterExample buildCex(const ProofObligation * obl) const;
 
             std::ostream & log(int verbosity) const;
 
