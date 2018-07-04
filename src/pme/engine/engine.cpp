@@ -45,6 +45,7 @@ namespace PME
     void Engine::setProof(const ExternalClauseVec & proof)
     {
         m_proof = m_tr.makeInternal(proof);
+        removeProperty(m_proof);
     }
 
     bool Engine::checkProof()
@@ -92,8 +93,34 @@ namespace PME
             m_proof = result.proof;
             removeProperty(m_proof);
         }
+        else
+        {
+            assert(result.result == IC3::UNSAFE);
+            m_cex = result.cex;
+        }
 
         return result.result == IC3::SAFE;
+    }
+
+    IC3::SafetyCounterExample Engine::getCounterExample() const
+    {
+        return m_cex;
+    }
+
+    ExternalCounterExample Engine::getExternalCounterExample() const
+    {
+        using namespace PME::IC3;
+        ExternalCounterExample cex;
+
+        for (const Step & step : m_cex)
+        {
+            ExternalStep ext_step;
+            ext_step.inputs = m_tr.makeExternal(step.inputs);
+            ext_step.state = m_tr.makeExternal(step.state);
+            cex.push_back(ext_step);
+        }
+
+        return cex;
     }
 
     ClauseVec Engine::getOriginalProof() const

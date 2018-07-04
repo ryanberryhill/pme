@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 const char * cpme_version()
 {
@@ -85,6 +86,122 @@ void * cpme_copy_proof(void * pme)
     return copy;
 }
 
+void * cpme_copy_cex(void * pme)
+{
+    using namespace PME;
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+
+    ExternalCounterExample * copy = NULL;
+    try
+    {
+        copy = new ExternalCounterExample;
+    }
+    catch (...)
+    {
+        return NULL;
+    }
+
+    *copy = eng->getExternalCounterExample();
+
+    return copy;
+}
+
+size_t cpme_cex_num_steps(void * cex)
+{
+    using namespace PME;
+    ExternalCounterExample * c = static_cast<ExternalCounterExample *>(cex);
+    assert(c);
+
+    return c->size();
+}
+
+size_t cpme_cex_step_input_size(void * cex, size_t i)
+{
+    using namespace PME;
+    ExternalCounterExample * c = static_cast<ExternalCounterExample *>(cex);
+    assert(c);
+
+    size_t n = 0;
+    try
+    {
+        n = c->at(i).inputs.size();
+    }
+    catch (...)
+    {
+        assert(false);
+    }
+
+    return n;
+}
+
+size_t cpme_cex_step_state_size(void * cex, size_t i)
+{
+    using namespace PME;
+    ExternalCounterExample * c = static_cast<ExternalCounterExample *>(cex);
+    assert(c);
+
+    size_t n = 0;
+    try
+    {
+        n = c->at(i).state.size();
+    }
+    catch (...)
+    {
+        assert(false);
+    }
+
+    return n;
+}
+
+// Result returned in dst is guaranteed to be sorted
+void cpme_cex_get_inputs(void * cex, size_t i, unsigned * dst)
+{
+    using namespace PME;
+    ExternalCounterExample * c = static_cast<ExternalCounterExample *>(cex);
+    assert(c);
+
+    const ExternalCube & inputs = c->at(i).inputs;
+    assert(std::is_sorted(inputs.begin(), inputs.end()));
+
+    for (size_t j = 0; j < inputs.size(); ++j)
+    {
+        dst[j] = inputs.at(j);
+    }
+}
+
+// Result returned in dst is guaranteed to be sorted
+void cpme_cex_get_state(void * cex, size_t i, unsigned * dst)
+{
+    using namespace PME;
+    ExternalCounterExample * c = static_cast<ExternalCounterExample *>(cex);
+    assert(c);
+
+    const ExternalCube & state = c->at(i).state;
+    assert(std::is_sorted(state.begin(), state.end()));
+
+    for (size_t j = 0; j < state.size(); ++j)
+    {
+        dst[j] = state.at(j);
+    }
+}
+
+void cpme_free_cex(void * cex)
+{
+    using namespace PME;
+    ExternalCounterExample * c = static_cast<ExternalCounterExample *>(cex);
+    assert(c);
+
+    try
+    {
+        delete c;
+    }
+    catch (...)
+    {
+        assert(false);
+    }
+}
+
 void cpme_log_to_stdout(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);
@@ -129,11 +246,10 @@ void cpme_free_proof(void * proof)
     {
         delete p;
     }
-    catch(...)
+    catch (...)
     {
         assert(false);
     }
-
 }
 
 void cpme_free(void * pme)

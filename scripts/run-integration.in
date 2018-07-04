@@ -3,6 +3,8 @@
 
 PME=./pme
 CANONICALIZE=scripts/pme-canonicalize
+# TODO: don't assume this is available
+AIGSIM=aigsim
 tmpdir=$(mktemp -d)
 
 VALGRIND=
@@ -177,6 +179,7 @@ function ic3_integration() {
 
         $VALGRIND $PME $@ --check $aig_file > $logfile 2>&1
 
+        # With --check it will return EXIT_FAILURE if the proof isn't valid
         if (($? != 0)) ; then
             echo "Error running PME (IC3) for $aig_file: see $logfile for details"
             errors=$((errors+1))
@@ -184,24 +187,23 @@ function ic3_integration() {
         fi
 
         if [[ "$expected_safe" == "1" ]] ; then
-            grep -q "The proof has " $logfile
-            if [ $? -eq 0 ] ; then
-                grep -q "The proof is a safe inductive invariant" $logfile
-                if [ $? -eq 1 ] ; then
-                    echo "The proof for $aig_file did not validate, see $logfile"
-                    errors=$((errors+1))
-                    continue
-                fi
-            else
+            grep -q "^0$" $logfile
+            if (( $? != 0 )) ; then
                 echo "Expected $aig_file to be safe but it was not, see $logfile"
                 errors=$((errors+1))
                 continue
             fi
         else
-            grep -q "The instance is unsafe, terminating" $logfile
-            # If the string is missing, something went wrong
-            if [ $? -eq 1 ] ; then
+            grep -q "^1$" $logfile
+            if (( $? != 0 )) ; then
                 echo "Expected $aig_file to be unsafe but it was not: see $logfile"
+                errors=$((errors+1))
+                continue
+            fi
+
+            $AIGSIM -c $aig_file $logfile > /dev/null 2>&1
+            if (( $? != 0 )) ; then
+                echo "Counter-example was faulty: see $logfile"
                 errors=$((errors+1))
                 continue
             fi

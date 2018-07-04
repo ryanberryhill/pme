@@ -188,7 +188,7 @@ namespace PME { namespace IC3 {
         SafetyCounterExample cex;
         const ProofObligation * current = obl;
 
-        // An obligations inputs are the ones needed to reach the parent
+        // An obligation's inputs are the ones needed to reach the parent
         // obligation's concrete state. conc & inputs & Tr & parent->conc
         // should be SAT. The ~Bad obligation doesn't have a parent, so it
         // shouldn't have inputs by this definition. However, outputs can
@@ -196,7 +196,12 @@ namespace PME { namespace IC3 {
         // inputs that came from the primed inputs of F_k & Tr & ~Bad.
         while (current != nullptr)
         {
-            cex.push_back(Step(current->inputs, current->concrete_state));
+            Cube inputs = current->inputs;
+            Cube state = current->concrete_state;
+            std::sort(inputs.begin(), inputs.end());
+            std::sort(state.begin(), state.end());
+
+            cex.push_back(Step(inputs, state));
 
             current = current->parent;
         }

@@ -48,6 +48,14 @@ void * cpme_copy_proof(void * pme);
 void cpme_add_clause(void * proof, const unsigned * cls, size_t n);
 void cpme_free_proof(void * proof);
 
+void * cpme_copy_cex(void * pme);
+size_t cpme_cex_num_steps(void * cex);
+size_t cpme_cex_step_input_size(void * cex, size_t i);
+size_t cpme_cex_step_state_size(void * cex, size_t i);
+void cpme_cex_get_inputs(void * cex, size_t i, unsigned * dst);
+void cpme_cex_get_state(void * cex, size_t i, unsigned * dst);
+void cpme_free_cex(void * cex);
+
 size_t cpme_proof_num_clauses(void * proof);
 size_t cpme_proof_clause_size(void * proof, size_t n);
 unsigned cpme_proof_lit(void * proof, size_t cls, size_t n);
@@ -87,6 +95,14 @@ namespace PME
     typedef std::vector<ID> Clause;
     typedef std::vector<ID> Cube;
     typedef std::vector<Clause> ClauseVec;
+
+    typedef std::vector<unsigned> ExternalCube;
+
+    struct ExternalStep {
+        ExternalCube inputs;
+        ExternalCube state;
+    };
+    typedef std::vector<ExternalStep> ExternalCounterExample;
 
     typedef std::vector<ClauseID> ClauseIDVec;
 

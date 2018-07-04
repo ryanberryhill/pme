@@ -31,6 +31,10 @@
 #include "pme/pme.h"
 #include "aiger/aiger.h"
 
+int g_verbosity = 0;
+
+#define print(v, ...) if (g_verbosity >= v) { printf(__VA_ARGS__); }
+
 void print_usage(char ** argv)
 {
     const char * name = argv[0];
@@ -107,12 +111,12 @@ void report_run(void * pme, const char * name)
 
     if (num_proofs > 0)
     {
-        printf("Found %lu minimal proof(s) of size %lu-%lu with %s\n",
-                num_proofs, smallest, largest, name);
+        print(1, "Found %lu minimal proof(s) of size %lu-%lu with %s\n",
+                  num_proofs, smallest, largest, name);
     }
     else
     {
-        printf("Found no proofs with %s\n", name);
+        print(1, "Found no proofs with %s\n", name);
     }
 }
 
@@ -165,6 +169,84 @@ void save_proofs(void * pme, char * name)
     }
 }
 
+void print_cex_step(unsigned * cex_vec, unsigned cex_size, aiger_symbol * syms, unsigned num_syms)
+{
+    for (size_t j = 0, k = 0; j < num_syms; ++j)
+    {
+        assert(k <= j);
+        unsigned aig_var = syms[j].lit;
+        assert(!aiger_sign(aig_var));
+        unsigned cex_lit = 0;
+        char neg = 0;
+        unsigned cex_var = 0;
+
+        if (k < cex_size)
+        {
+            cex_lit = cex_vec[k];
+            neg = aiger_sign(cex_lit);
+            cex_var = aiger_strip(cex_lit);
+        }
+
+        assert(cex_var >= aig_var || cex_var == 0);
+
+        if (cex_var == aig_var)
+        {
+            printf("%c", neg ? '0' : '1');
+            k++;
+        }
+        else
+        {
+            printf("x");
+        }
+    }
+    printf("\n");
+}
+
+void print_cex(void * pme, aiger * aig)
+{
+    // We're assuming the inputs are sorted in the original AIG, which is true
+    // if it's reencoded.
+    assert(aiger_is_reencoded(aig));
+    void * cex = cpme_copy_cex(pme);
+    assert(cex);
+
+    size_t n = cpme_cex_num_steps(cex);
+
+    print(1, "Found a counter-example of length %lu\n", n);
+    printf("1\n");
+    printf("c witness\n");
+    // TODO: handle cases other than single output properties
+    printf("b0\n");
+
+    // Print initial state
+    assert(n > 0);
+    size_t init_state_size = cpme_cex_step_state_size(cex, 0);
+    unsigned * init_state = calloc(init_state_size, sizeof(unsigned));
+    cpme_cex_get_state(cex, 0, init_state);
+
+    print_cex_step(init_state, init_state_size, aig->latches, aig->num_latches);
+
+    free(init_state); init_state = NULL;
+
+    // Print inputs
+    for (size_t i = 0; i < n; ++i)
+    {
+        size_t step_input_size = cpme_cex_step_input_size(cex, i);
+        unsigned * cex_inputs = calloc(step_input_size, sizeof(unsigned));
+        cpme_cex_get_inputs(cex, i, cex_inputs);
+
+        print_cex_step(cex_inputs, step_input_size, aig->inputs, aig->num_inputs);
+
+        free(cex_inputs); cex_inputs = NULL;
+    }
+
+    printf(".\n");
+    printf("c end witness\n");
+
+    cpme_free_cex(cex);
+    cex = NULL;
+}
+
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
 int g_ic3 = 0, g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_checkmin = 0;
@@ -175,9 +257,11 @@ int main(int argc, char ** argv)
     const char * opts = "hv";
     char * aig_path = NULL;
     char * proof_path = NULL;
-    int verbosity = 0;
+    void * proof = NULL;
+    void * pme = NULL;
     int option = 0;
     int option_index = 0;
+    char failure = 0;
 
     static struct option long_opts[] = {
             {"ic3",             no_argument,        &g_ic3,        1 },
@@ -212,7 +296,7 @@ int main(int argc, char ** argv)
                 }
                 break;
             case 'v':
-                verbosity++;
+                g_verbosity++;
                 break;
             case 'h':
                 print_usage(argv);
@@ -241,11 +325,11 @@ int main(int argc, char ** argv)
         return EXIT_FAILURE;
     }
 
-    printf("pme version %s\n", cpme_version());
-    printf("Input AIG: %s\n", aig_path);
+    print(2, "pme version %s\n", cpme_version());
+    print(2, "Input AIG: %s\n", aig_path);
     if (proof_path)
     {
-        printf("Input proof: %s\n", proof_path);
+        print(2, "Input proof: %s\n", proof_path);
     }
 
     // Check if the AIG file is readable
@@ -279,20 +363,17 @@ int main(int argc, char ** argv)
     if (msg != NULL)
     {
         fprintf(stderr, "%s: %s\n", aig_path, msg);
-        aiger_reset(aig); aig = NULL;
-        return EXIT_FAILURE;
+        failure = 1; goto cleanup;
     }
 
     // Open the proof file
-    void * proof = NULL;
     if (proof_path)
     {
         FILE * proof_file = (FILE *) fopen(proof_path, "r");
         if (proof_file == NULL)
         {
             perror("Failed to open proof");
-            aiger_reset(aig); aig = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
         // Create the proof
@@ -303,16 +384,12 @@ int main(int argc, char ** argv)
     }
 
     // Initialize the PME library
-    void * pme = cpme_init(aig, proof);
+    pme = cpme_init(aig, proof);
     assert(pme);
-
-    // Clean up the AIG
-    aiger_reset(aig);
-    aig = NULL;
 
     // Do things in the PME library
     cpme_log_to_stdout(pme);
-    cpme_set_verbosity(pme, verbosity);
+    cpme_set_verbosity(pme, g_verbosity);
 
     // Run IC3
     if (g_ic3)
@@ -321,28 +398,26 @@ int main(int argc, char ** argv)
         if (safe < 0)
         {
             fprintf(stderr, "Error running IC3\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
         else if (safe == 0)
         {
-            printf("The instance is unsafe, terminating\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_SUCCESS;
+            print_cex(pme, aig);
+            goto cleanup;
         }
 
-        // Copy the proof and tell PME to use it for minimization
+        print(0, "0\n");
+
+        // Copy the proof
         assert(!proof);
         proof = cpme_copy_proof(pme);
-        cpme_set_proof(pme, proof);
+        // No need to call set_proof, run_ic3 will set the proof itself
+        //cpme_set_proof(pme, proof);
     }
 
     size_t proof_size = cpme_proof_num_clauses(proof);
-    printf("The proof has %lu clauses\n", proof_size);
+    print(1, "The proof has %lu clauses\n", proof_size);
 
-    // Clean up the proof
-    cpme_free_proof(proof);
-    proof = NULL;
 
     if (g_check)
     {
@@ -350,15 +425,13 @@ int main(int argc, char ** argv)
         if (proof_ok < 0)
         {
             fprintf(stderr, "Error checking proof\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
-        printf("The proof is %sa safe inductive invariant\n", proof_ok ? "" : "not ");
+        print(1, "The proof is %sa safe inductive invariant\n", proof_ok ? "" : "not ");
         if (!proof_ok)
         {
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
     }
 
@@ -369,8 +442,7 @@ int main(int argc, char ** argv)
         if (bfmin_ok < 0)
         {
             fprintf(stderr, "Error running brute force minimization\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
         size_t num_proofs = cpme_num_proofs(pme);
@@ -379,22 +451,20 @@ int main(int argc, char ** argv)
         void * min_proof = cpme_get_proof(pme, 0);
         size_t min_size = cpme_proof_num_clauses(min_proof);
 
+        cpme_free_proof(min_proof);
         assert(min_size <= proof_size);
 
         if (min_size < proof_size)
         {
-            printf("The proof (size %lu) is non-minimal. "
+            print(1, "The proof (size %lu) is non-minimal. "
                    "A proof with %lu clauses was found.\n", proof_size, min_size);
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
         else
         {
-            printf("The proof (size %lu) is minimal.\n", proof_size);
-            return EXIT_SUCCESS;
+            print(1, "The proof (size %lu) is minimal.\n", proof_size);
+            goto cleanup;
         }
-
-        cpme_free_proof(min_proof);
     }
 
     if (g_bfmin)
@@ -403,8 +473,7 @@ int main(int argc, char ** argv)
         if (bfmin_ok < 0)
         {
             fprintf(stderr, "Error running brute force minimization\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
         report_run(pme, "BFMIN");
@@ -421,8 +490,7 @@ int main(int argc, char ** argv)
         if (sisi_ok < 0)
         {
             fprintf(stderr, "Error running SISI\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
         report_run(pme, "SISI");
@@ -439,8 +507,7 @@ int main(int argc, char ** argv)
         if (marco_ok < 0)
         {
             fprintf(stderr, "Error running MARCO\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
         report_run(pme, "MARCO");
@@ -457,8 +524,7 @@ int main(int argc, char ** argv)
         if (camsis_ok < 0)
         {
             fprintf(stderr, "Error running CAMSIS\n");
-            cpme_free(pme); pme = NULL;
-            return EXIT_FAILURE;
+            failure = 1; goto cleanup;
         }
 
         report_run(pme, "CAMSIS");
@@ -469,10 +535,14 @@ int main(int argc, char ** argv)
         }
     }
 
+cleanup:
+    // Clean up the proof
+    if (proof) { cpme_free_proof(proof); proof = NULL; }
+    // Clean up the AIG
+    if (aig) { aiger_reset(aig); aig = NULL; }
     // Clean up the PME library
-    cpme_free(pme);
-    pme = NULL;
+    if (pme) { cpme_free(pme); pme = NULL; }
 
-    return EXIT_SUCCESS;
+    return failure ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 

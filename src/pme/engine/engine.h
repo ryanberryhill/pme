@@ -23,6 +23,7 @@
 #define ENGINE_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/ic3/ic3.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
@@ -57,6 +58,9 @@ namespace PME
             ExternalClauseVec getProofExternal(size_t i) const;
             ExternalClauseVec getMinimumProofExternal() const;
 
+            IC3::SafetyCounterExample getCounterExample() const;
+            ExternalCounterExample getExternalCounterExample() const;
+
             void setLogStream(std::ostream & stream);
             void setVerbosity(int v);
             void setChannelVerbosity(LogChannelID channel, int v);
@@ -65,6 +69,7 @@ namespace PME
             VariableManager m_vars;
             TransitionRelation m_tr;
             ClauseVec m_proof;
+            IC3::SafetyCounterExample m_cex;
             std::unique_ptr<ProofMinimizer> m_minimizer;
             GlobalState m_gs;
 
