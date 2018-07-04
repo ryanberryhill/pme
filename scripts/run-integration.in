@@ -3,8 +3,7 @@
 
 PME=./pme
 CANONICALIZE=scripts/pme-canonicalize
-# TODO: don't assume this is available
-AIGSIM=aigsim
+AIGSIM=$(which aigsim)
 tmpdir=$(mktemp -d)
 
 VALGRIND=
@@ -198,6 +197,11 @@ function ic3_integration() {
             if (( $? != 0 )) ; then
                 echo "Expected $aig_file to be unsafe but it was not: see $logfile"
                 errors=$((errors+1))
+                continue
+            fi
+
+            if [ ! -x $AIGSIM ] ; then
+                echo "Skipping counter-example validation because aigsim was not found"
                 continue
             fi
 
