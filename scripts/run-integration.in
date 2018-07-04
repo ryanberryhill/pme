@@ -8,7 +8,7 @@ AIGSIM=aigsim
 tmpdir=$(mktemp -d)
 
 VALGRIND=
-VALGRIND_COMMAND="valgrind --tool=memcheck --leak-check=full --error-exitcode=1 --suppressions=glucose.supp"
+VALGRIND_COMMAND="valgrind -q --tool=memcheck --leak-check=full --error-exitcode=1 --suppressions=glucose.supp"
 tests_passed=0
 tests_failed=0
 
