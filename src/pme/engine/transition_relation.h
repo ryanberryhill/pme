@@ -35,19 +35,19 @@ namespace PME
     struct Latch
     {
         Latch(ID id, ID next, ID reset)
-            : m_ID(id),
-              m_next(next),
-              m_reset(reset)
+            : id(id),
+              next(next),
+              reset(reset)
         { }
 
-        Latch() : m_ID(ID_NULL), m_next(ID_NULL), m_reset(ID_NULL)
+        Latch() : id(ID_NULL), next(ID_NULL), reset(ID_NULL)
         { }
 
-        bool isNull() const { return m_ID == ID_NULL; }
+        bool isNull() const { return id == ID_NULL; }
 
-        ID m_ID;
-        ID m_next;
-        ID m_reset;
+        ID id;
+        ID next;
+        ID reset;
     };
 
     class TransitionRelation

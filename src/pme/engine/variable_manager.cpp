@@ -94,7 +94,7 @@ namespace PME
         {
             throw std::invalid_argument("Internal ID not found");
         }
-        ExternalID external_id = it->second.m_externalID;
+        ExternalID external_id = it->second.externalID;
         assert(!aiger_sign(external_id));
 
         return neg ? aiger_not(external_id) : external_id;
@@ -140,7 +140,7 @@ namespace PME
         const Variable & var = varOf(var_id);
         std::ostringstream ss;
         if (neg) { ss << "~"; }
-        ss << var.m_name;
+        ss << var.name;
         if (primes == 1) { ss << "'"; }
         else if (primes > 1) { ss << "(" << primes << ")"; }
         return ss.str();

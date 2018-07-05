@@ -31,19 +31,19 @@ namespace PME
     struct Variable
     {
         Variable(ID id, ExternalID external_id, std::string name)
-            : m_ID(id),
-              m_externalID(external_id),
-              m_name(name)
+            : id(id),
+              externalID(external_id),
+              name(name)
         { }
 
-        Variable() : m_ID(ID_NULL), m_externalID(0), m_name("")
+        Variable() : id(ID_NULL), externalID(0), name("")
         { }
 
-        bool isNull() const { return m_ID == ID_NULL; }
+        bool isNull() const { return id == ID_NULL; }
 
-        ID m_ID;
-        ExternalID m_externalID;
-        std::string m_name;
+        ID id;
+        ExternalID externalID;
+        std::string name;
     };
 
     class VariableManager

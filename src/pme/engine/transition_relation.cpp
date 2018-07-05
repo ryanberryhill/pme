@@ -156,7 +156,7 @@ namespace PME
             bool neg = aiger_sign(next);
 
             const Variable& varp = getOrCreateVar(next_var);
-            ID next_id = neg ? negate(varp.m_ID) : varp.m_ID;
+            ID next_id = neg ? negate(varp.id) : varp.id;
             ID latch_id = toInternal(external);
 
             assert(m_latches.find(latch_id) == m_latches.end());
@@ -273,7 +273,7 @@ namespace PME
             {
                 ID latchp = prime(p.first, i);
                 const Latch & latch = p.second;
-                ID next = prime(latch.m_next, i - 1);
+                ID next = prime(latch.next, i - 1);
 
                 // Add clauses enforcing latch' = next
                 make_equal(unrolled, next, latchp);
@@ -295,10 +295,10 @@ namespace PME
         for (const auto & p : m_latches)
         {
             const Latch & latch = p.second;
-            if (latch.m_reset != ID_NULL)
+            if (latch.reset != ID_NULL)
             {
-                ID lit = latch.m_ID;
-                ID reset = latch.m_reset;
+                ID lit = latch.id;
+                ID reset = latch.reset;
                 assert(reset == ID_TRUE || reset == ID_FALSE);
 
                 make_equal(init, lit, reset);
@@ -311,7 +311,7 @@ namespace PME
     {
         assert(m_latches.count(latch) > 0);
         assert(val == ID_TRUE || val == ID_FALSE || val == ID_NULL);
-        m_latches[latch].m_reset = val;
+        m_latches[latch].reset = val;
     }
 
     ID TransitionRelation::getInit(ID latch) const
@@ -319,7 +319,7 @@ namespace PME
         assert(!is_negated(latch));
         assert(nprimes(latch) == 0);
         assert(m_latches.count(latch) > 0);
-        return m_latches.at(latch).m_reset;
+        return m_latches.at(latch).reset;
     }
 }
 

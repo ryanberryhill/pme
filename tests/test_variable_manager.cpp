@@ -131,9 +131,9 @@ BOOST_AUTO_TEST_CASE(var_of)
 
     const Variable var = v.varOf(id);
 
-    BOOST_CHECK_EQUAL(var.m_name, "variable");
-    BOOST_CHECK_EQUAL(var.m_externalID, 2);
-    BOOST_CHECK_EQUAL(var.m_ID, id);
+    BOOST_CHECK_EQUAL(var.name, "variable");
+    BOOST_CHECK_EQUAL(var.externalID, 2);
+    BOOST_CHECK_EQUAL(var.id, id);
 }
 
 BOOST_AUTO_TEST_CASE(string_of)
