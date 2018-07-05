@@ -22,6 +22,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/engine/engine.cpp \
                    src/pme/engine/transition_relation.h \
                    src/pme/engine/transition_relation.cpp \
+                   src/pme/engine/debug_transition_relation.h \
+                   src/pme/engine/debug_transition_relation.cpp \
                    src/pme/engine/sat_adaptor.h \
                    src/pme/engine/sat_adaptor.cpp \
                    src/pme/engine/variable_manager.h \
@@ -111,6 +113,7 @@ parseproof_SOURCES = src/parseproof/main.cpp \
 TESTS = test_sat_adaptor \
         test_sat \
         test_transition_relation \
+        test_debug_transition_relation \
         test_variable_manager \
         test_cardinality_constraint \
         test_proof_checker \
@@ -145,6 +148,9 @@ test_sat_LDADD = $(SAT_LIBS) \
 
 test_transition_relation_SOURCES = tests/test_transition_relation.cpp
 test_transition_relation_LDADD = $(PME_TEST_LIBS) 
+
+test_debug_transition_relation_SOURCES = tests/test_debug_transition_relation.cpp
+test_debug_transition_relation_LDADD = $(PME_TEST_LIBS) 
 
 test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
 test_cardinality_constraint_LDADD = $(PME_TEST_LIBS) 

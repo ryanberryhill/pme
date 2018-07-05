@@ -50,9 +50,19 @@ namespace PME
         ID reset;
     };
 
+    struct AndGate
+    {
+        AndGate(ID lhs, ID rhs0, ID rhs1)
+            : lhs(lhs), rhs0(rhs0), rhs1(rhs1)
+        { }
+
+        ID lhs, rhs0, rhs1;
+    };
+
     class TransitionRelation
     {
         public:
+            typedef std::vector<AndGate>::const_iterator gate_iterator;
             TransitionRelation(VariableManager & varman, aiger * aig);
             TransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
 
@@ -66,7 +76,6 @@ namespace PME
 
             ClauseVec unroll(unsigned n = 1) const;
             ClauseVec unrollWithInit(unsigned n = 1) const;
-            ClauseVec initState() const;
 
             ID property() const { return negate(m_bad); }
             ID bad() const { return m_bad; }
@@ -82,6 +91,8 @@ namespace PME
             void setInit(ID latch, ID val);
             ID getInit(ID latch) const;
 
+            virtual ClauseVec initState() const;
+
         private:
             VariableManager & m_vars;
             ID m_bad;
@@ -91,12 +102,10 @@ namespace PME
             std::vector<ID> m_inputIDs;
             std::vector<ID> m_constraints;
 
-            std::vector<Clause> m_clauses;
-
-            ID getNewID();
+            std::vector<AndGate> m_gates;
 
             void buildModel(aiger * aig);
-            void createAndProcessAnds(aiger * aig);
+            void processAnds(aiger * aig);
             void createInputs(aiger * aig);
             void createSymbols(aiger_symbol *syms,
                                size_t n,
@@ -106,9 +115,27 @@ namespace PME
             void processLatches(aiger * aig);
             void processInputs(aiger * aig);
 
+        protected:
+            gate_iterator begin_gates() { return m_gates.begin(); }
+            gate_iterator end_gates() { return m_gates.end(); }
+
+            ID getNewID();
+
+            VariableManager & vars() { return m_vars; }
+
             const Variable& varOf(ID id);
             const Variable& createVar(ExternalID external, std::string name);
+            const Variable& createInternalVar(std::string name);
             const Variable& getOrCreateVar(ExternalID external);
+
+            void createLatch(ID id, ID next, ID reset);
+
+            virtual ClauseVec toCNF() const;
+            virtual ClauseVec toCNF(const AndGate & gate) const;
+            virtual void addTimeFrame(unsigned n,
+                                      const ClauseVec & tr,
+                                      ClauseVec & unrolled) const;
+            virtual void constrainTimeFrame(unsigned n, ClauseVec & unrolled) const;
     };
 }
 

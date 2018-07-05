@@ -88,14 +88,14 @@ namespace PME
         createSymbols(aig->latches, aig->num_latches, "l");
         // Could also consider doing justice and fairness but it doesn't
         // make sense in the context of (safety) proof minimization
-        createAndProcessAnds(aig);
+        processAnds(aig);
         processLatches(aig);
         processInputs(aig);
         processConstraints(aig);
         // TODO: bad states
     }
 
-    void TransitionRelation::createAndProcessAnds(aiger * aig)
+    void TransitionRelation::processAnds(aiger * aig)
     {
         for (size_t i = 0; i < aig->num_ands; ++i)
         {
@@ -111,9 +111,7 @@ namespace PME
             ID r0 = toInternal(rhs0);
             ID r1 = toInternal(rhs1);
 
-            m_clauses.push_back({negate(l), r0});
-            m_clauses.push_back({negate(l), r1});
-            m_clauses.push_back({l, negate(r0), negate(r1)});
+            m_gates.push_back(AndGate(l, r0, r1));
         }
     }
 
@@ -146,9 +144,9 @@ namespace PME
         {
             ExternalID external = aig->latches[i].lit;
             assert(!aiger_sign(external));
-            unsigned next = aig->latches[i].next;
-            unsigned next_var = aiger_strip(next);
-            unsigned reset = aig->latches[i].reset;
+            ExternalID next = aig->latches[i].next;
+            ExternalID next_var = aiger_strip(next);
+            ExternalID reset = aig->latches[i].reset;
             ID reset_id = (reset == 0) ? (ID_FALSE) :
                           (reset == 1) ? (ID_TRUE)  :
                                          (ID_NULL);
@@ -159,9 +157,7 @@ namespace PME
             ID next_id = neg ? negate(varp.id) : varp.id;
             ID latch_id = toInternal(external);
 
-            assert(m_latches.find(latch_id) == m_latches.end());
-            m_latches[latch_id] = Latch(latch_id, next_id, reset_id);
-            m_latchIDs.push_back(latch_id);
+            createLatch(latch_id, next_id, reset_id);
         }
     }
 
@@ -176,6 +172,13 @@ namespace PME
         }
     }
 
+    void TransitionRelation::createLatch(ID id, ID next, ID reset)
+    {
+        assert(m_latches.find(id) == m_latches.end());
+        m_latches[id] = Latch(id, next, reset);
+        m_latchIDs.push_back(id);
+    }
+
     const Variable& TransitionRelation::varOf(ID id)
     {
         return m_vars.varOf(id);
@@ -187,6 +190,11 @@ namespace PME
         assert(!aiger_sign(external));
         ID id = m_vars.getNewID(name, external);
         return varOf(id);
+    }
+
+    const Variable& TransitionRelation::createInternalVar(std::string name)
+    {
+        return createVar(0, name);
     }
 
     const Variable& TransitionRelation::getOrCreateVar(ExternalID external)
@@ -259,31 +267,68 @@ namespace PME
         return unrolled;
     }
 
+    ClauseVec TransitionRelation::toCNF() const
+    {
+        ClauseVec clauses;
+
+        for (const AndGate & gate : m_gates)
+        {
+            ClauseVec c = toCNF(gate);
+            clauses.insert(clauses.end(), c.begin(), c.end());
+        }
+
+        return clauses;
+    }
+
+    ClauseVec TransitionRelation::toCNF(const AndGate & gate) const
+    {
+        ClauseVec clauses;
+        clauses.push_back({negate(gate.lhs), gate.rhs0});
+        clauses.push_back({negate(gate.lhs), gate.rhs1});
+        clauses.push_back({gate.lhs, negate(gate.rhs0), negate(gate.rhs1)});
+        return clauses;
+    }
+
+    void TransitionRelation::addTimeFrame(unsigned n,
+                                          const ClauseVec & tr,
+                                          ClauseVec & unrolled) const
+    {
+        ClauseVec frame = primeClauses(tr, n);
+        unrolled.insert(unrolled.end(), frame.begin(), frame.end());
+
+        // Connect latch next-states
+        for (const auto & p : m_latches)
+        {
+            ID latchp = prime(p.first, n + 1);
+            const Latch & latch = p.second;
+            ID next = prime(latch.next, n);
+
+            // Add clauses enforcing latch' = next
+            make_equal(unrolled, next, latchp);
+        }
+    }
+
+    void TransitionRelation::constrainTimeFrame(unsigned n, ClauseVec & unrolled) const
+    {
+        for (ID lit : m_constraints)
+        {
+            unrolled.push_back({prime(lit, n)});
+        }
+    }
+
     ClauseVec TransitionRelation::unroll(unsigned n) const
     {
+        ClauseVec clauses;
         ClauseVec unrolled;
 
-        // Add latch' = next for each latch and constraints
-        for (unsigned i = 1; i <= n; ++i)
+        // Do the Tseitin transformation
+        clauses = toCNF();
+
+        // Add time frames
+        for (unsigned i = 0; i < n; ++i)
         {
-            ClauseVec next = primeClauses(m_clauses, i - 1);
-            unrolled.insert(unrolled.end(), next.begin(), next.end());
-            // Connect latch next-states
-            for (const auto & p : m_latches)
-            {
-                ID latchp = prime(p.first, i);
-                const Latch & latch = p.second;
-                ID next = prime(latch.next, i - 1);
-
-                // Add clauses enforcing latch' = next
-                make_equal(unrolled, next, latchp);
-            }
-
-            // Add constraints
-            for (ID lit : m_constraints)
-            {
-                unrolled.push_back({prime(lit, i - 1)});
-            }
+            addTimeFrame(i, clauses, unrolled);
+            constrainTimeFrame(i, unrolled);
         }
 
         return unrolled;
