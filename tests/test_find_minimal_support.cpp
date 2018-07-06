@@ -63,7 +63,7 @@ struct MinimalSupportFixture
         o0 = l3;
 
         tr.reset(new TransitionRelation(vars, aig));
-        checker.reset(new ConsecutionChecker(vars, *tr));
+        checker.reset(new ConsecutionChecker(vars, *tr, g_null_gs));
     }
 
     ~MinimalSupportFixture()

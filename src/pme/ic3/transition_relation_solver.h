@@ -37,7 +37,7 @@ namespace PME { namespace IC3 {
         public:
             TransitionRelationSolver(VariableManager & varman,
                                      const TransitionRelation & tr,
-                                     GlobalState & gs = g_null_gs);
+                                     GlobalState & gs);
 
             void renewSAT();
 

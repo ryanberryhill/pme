@@ -105,7 +105,7 @@ namespace PME { namespace IC3 {
         public:
             IC3Solver(VariableManager & varman,
                       const TransitionRelation & tr,
-                      GlobalState & gs = g_null_gs);
+                      GlobalState & gs);
 
             IC3Result prove();
             IC3Result prove(const Cube & target);

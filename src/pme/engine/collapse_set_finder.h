@@ -37,7 +37,7 @@ namespace PME
         public:
             CollapseSetFinder(VariableManager & varman,
                               const TransitionRelation & tr,
-                              GlobalState & gs = g_null_gs);
+                              GlobalState & gs);
             void initSolver();
             void addClause(ClauseID id, const Clause & cls);
             bool findAndBlock(ClauseID id, CollapseSet & collapse);

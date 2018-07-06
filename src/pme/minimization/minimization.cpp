@@ -38,8 +38,9 @@ namespace PME
 
     DummyMinimizer::DummyMinimizer(VariableManager & vars,
                                    const TransitionRelation & tr,
-                                   const ClauseVec & proof)
-        : ProofMinimizer(vars, tr, proof)
+                                   const ClauseVec & proof,
+                                   GlobalState & gs)
+        : ProofMinimizer(vars, tr, proof, gs)
     { }
 
     ProofMinimizer::ProofMinimizer(VariableManager & vars,

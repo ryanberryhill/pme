@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(constraints)
     // Proof = (~l2)
     proof.push_back({negate(l2)});
 
-    ProofChecker ind0(*f.tr, proof);
+    ProofChecker ind0(*f.tr, proof, g_null_gs);
 
     BOOST_CHECK(ind0.checkInduction());
     BOOST_CHECK(ind0.checkInitiation());

@@ -33,7 +33,7 @@ namespace PME
             BruteForceMinimizer(VariableManager & vars,
                                const TransitionRelation & tr,
                                const ClauseVec & proof,
-                               GlobalState & gs = g_null_gs);
+                               GlobalState & gs);
             void minimize() override;
 
         protected:

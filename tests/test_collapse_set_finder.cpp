@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(simple_find)
     Clause c3 = {negate(l3)};
 
     ClauseVec proof = {c0, c1, c2, c3};
-    ProofChecker pc(*f.tr, proof);
+    ProofChecker pc(*f.tr, proof, g_null_gs);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(simple_find_and_block)
     Clause c3 = {negate(l3)};
 
     ClauseVec proof = {c0, c1, c2, c3};
-    ProofChecker pc(*f.tr, proof);
+    ProofChecker pc(*f.tr, proof, g_null_gs);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(multiple_collapse_sets)
 
     ClauseVec proof = {c0, c1, c2, c3};
 
-    ProofChecker pc(*f.tr, proof);
+    ProofChecker pc(*f.tr, proof, g_null_gs);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(repeated_collapse_sets)
 
     ClauseVec proof = {c0, c1, c2, c3};
 
-    ProofChecker pc(*f.tr, proof);
+    ProofChecker pc(*f.tr, proof, g_null_gs);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);

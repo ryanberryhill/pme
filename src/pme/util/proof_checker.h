@@ -33,7 +33,7 @@ namespace PME
         public:
             ProofChecker(const TransitionRelation & tr,
                          const ClauseVec & proof,
-                         GlobalState & gs = g_null_gs);
+                         GlobalState & gs);
             bool checkInduction();
             bool checkInitiation();
             bool checkSafety();

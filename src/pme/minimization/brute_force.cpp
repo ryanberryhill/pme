@@ -28,7 +28,7 @@ namespace PME
                                             const ClauseVec & proof,
                                             GlobalState & gs)
         : ProofMinimizer(vars, tr, proof, gs),
-          m_indSolver(vars, tr),
+          m_indSolver(vars, tr, gs),
           m_sisi(m_indSolver)
     {
         initSolver();

@@ -37,7 +37,7 @@ namespace PME
             ProofMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
                            const ClauseVec & proof,
-                           GlobalState & gs = g_null_gs);
+                           GlobalState & gs);
             virtual ~ProofMinimizer() { }
 
             virtual void minimize() = 0;
@@ -82,7 +82,8 @@ namespace PME
         public:
             DummyMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
-                           const ClauseVec & proof);
+                           const ClauseVec & proof,
+                           GlobalState & gs);
             void minimize() override;
     };
 }

@@ -33,7 +33,7 @@ namespace PME
                                    GlobalState & gs)
         : ProofMinimizer(vars, tr, proof, gs),
           m_seedSolver(vars),
-          m_indSolver(vars, tr)
+          m_indSolver(vars, tr, gs)
     {
         initSolvers();
     }

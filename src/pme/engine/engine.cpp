@@ -50,7 +50,7 @@ namespace PME
 
     bool Engine::checkProof()
     {
-        ProofChecker ind(m_tr, m_proof);
+        ProofChecker ind(m_tr, m_proof, m_gs);
         return ind.checkProof();
     }
 

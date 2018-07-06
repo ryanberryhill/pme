@@ -39,7 +39,7 @@ namespace PME
             MARCOMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
                            const ClauseVec & proof,
-                           GlobalState & gs = g_null_gs);
+                           GlobalState & gs);
             void minimize() override;
         protected:
             std::ostream & log(int verbosity) const override;
