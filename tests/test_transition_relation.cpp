@@ -556,3 +556,96 @@ BOOST_AUTO_TEST_CASE(inputs_iter)
     BOOST_CHECK_EQUAL(inputs.count(i1), 1);
 }
 
+BOOST_AUTO_TEST_CASE(copy_constructor)
+{
+    AigFixture f;
+    f.buildTR();
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    // Set init state to X010
+    f.tr->setInit(l0, ID_FALSE);
+    f.tr->setInit(l1, ID_TRUE);
+    f.tr->setInit(l2, ID_FALSE);
+    f.tr->setInit(l3, ID_NULL);
+
+    // Copy
+    TransitionRelation tr(*f.tr);
+
+    // Latch IDs
+    BOOST_CHECK_EQUAL(tr.toInternal(f.l0), l0);
+    BOOST_CHECK_EQUAL(tr.toInternal(f.l1), l1);
+    BOOST_CHECK_EQUAL(tr.toInternal(f.l2), l2);
+    BOOST_CHECK_EQUAL(tr.toInternal(f.l3), l3);
+
+    // Latches
+    std::set<ID> latches(tr.begin_latches(), tr.end_latches());
+
+    BOOST_CHECK_EQUAL(latches.size(), 4);
+    BOOST_CHECK_EQUAL(latches.count(l0), 1);
+    BOOST_CHECK_EQUAL(latches.count(l1), 1);
+    BOOST_CHECK_EQUAL(latches.count(l2), 1);
+    BOOST_CHECK_EQUAL(latches.count(l3), 1);
+
+    // Inputs
+    ID i0 = tr.toInternal(f.i0);
+    ID i1 = tr.toInternal(f.i1);
+
+    std::set<ID> inputs(tr.begin_inputs(), tr.end_inputs());
+
+    BOOST_CHECK_EQUAL(inputs.size(), 2);
+    BOOST_CHECK_EQUAL(inputs.count(i0), 1);
+    BOOST_CHECK_EQUAL(inputs.count(i1), 1);
+
+    // Constraints
+    std::set<ID> constraints(tr.begin_constraints(), tr.end_constraints());
+    BOOST_CHECK_EQUAL(constraints.size(), 0);
+
+    // Initial states
+    SATAdaptor sat;
+
+    BOOST_CHECK_EQUAL(tr.getInit(l0), ID_FALSE);
+    BOOST_CHECK_EQUAL(tr.getInit(l1), ID_TRUE);
+    BOOST_CHECK_EQUAL(tr.getInit(l2), ID_FALSE);
+    BOOST_CHECK_EQUAL(tr.getInit(l3), ID_NULL);
+
+    sat.addClauses(tr.initState());
+
+    BOOST_CHECK(!sat.solve({l0}));
+    BOOST_CHECK(!sat.solve({negate(l1)}));
+    BOOST_CHECK(!sat.solve({l2}));
+
+    BOOST_CHECK(sat.solve({negate(l0), l1, negate(l2), l3}));
+    BOOST_CHECK(sat.solve({negate(l0), l1, negate(l2), negate(l3)}));
+    BOOST_CHECK(sat.solve({l1, negate(l2), negate(l3)}));
+    BOOST_CHECK(!sat.solve({negate(l1), negate(l2), negate(l3)}));
+    BOOST_CHECK(!sat.solve({negate(l1), l2, negate(l3)}));
+
+    // Unrolling
+    tr.setInit(l0, ID_FALSE);
+    tr.setInit(l1, ID_FALSE);
+    tr.setInit(l2, ID_FALSE);
+    tr.setInit(l3, ID_FALSE);
+
+    SATAdaptor sat1;
+    sat1.addClauses(tr.unrollWithInit(1));
+
+    // TR with zero init state should be SAT
+    BOOST_CHECK(sat1.solve());
+
+    // Latches should be zero
+    BOOST_CHECK_EQUAL(sat1.getAssignment(l0), SAT::FALSE);
+    BOOST_CHECK_EQUAL(sat1.getAssignment(l1), SAT::FALSE);
+    BOOST_CHECK_EQUAL(sat1.getAssignment(l2), SAT::FALSE);
+    BOOST_CHECK_EQUAL(sat1.getAssignment(l3), SAT::FALSE);
+
+    // Output is l3
+    // l3 = 0 should be SAT
+    ID o0 = tr.toInternal(f.o0);
+    BOOST_CHECK(!sat1.solve({o0}));
+    BOOST_CHECK(sat1.solve({negate(o0)}));
+}
+

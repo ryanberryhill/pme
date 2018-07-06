@@ -51,6 +51,14 @@ namespace PME {
         enhanceModel();
     }
 
+    DebugTransitionRelation::DebugTransitionRelation(const TransitionRelation & tr)
+        : TransitionRelation(tr),
+          m_cardinalityConstraint(vars()),
+          m_cardinality(0)
+    {
+        enhanceModel();
+    }
+
     void DebugTransitionRelation::enhanceModel()
     {
         for (auto it = begin_gates(); it != end_gates(); ++it)

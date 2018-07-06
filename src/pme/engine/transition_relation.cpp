@@ -72,6 +72,16 @@ namespace PME
         m_bad = toInternal(property);
     }
 
+    TransitionRelation::TransitionRelation(const TransitionRelation & other)
+        : m_vars(other.m_vars),
+          m_bad(other.m_bad),
+          m_latches(other.m_latches),
+          m_latchIDs(other.m_latchIDs),
+          m_inputIDs(other.m_inputIDs),
+          m_constraints(other.m_constraints),
+          m_gates(other.m_gates)
+    { }
+
     ID TransitionRelation::toInternal(ExternalID external) const
     {
         return m_vars.toInternal(external);

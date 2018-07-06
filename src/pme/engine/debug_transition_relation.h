@@ -34,6 +34,7 @@ namespace PME {
         public:
             DebugTransitionRelation(VariableManager & varman, aiger * aig);
             DebugTransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
+            DebugTransitionRelation(const TransitionRelation & tr);
 
             id_iterator begin_debug_latches() { return m_debugLatchIDs.begin(); }
             id_iterator end_debug_latches() { return m_debugLatchIDs.end(); }

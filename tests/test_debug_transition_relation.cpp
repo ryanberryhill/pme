@@ -77,6 +77,7 @@ struct AigFixture
     aiger * aig;
     ExternalID i0, l0, l1, l2, l3, a0, a1, a2, o0;
     VariableManager vars;
+    std::unique_ptr<TransitionRelation> ndtr;
     std::unique_ptr<DebugTransitionRelation> tr;
 
     AigFixture()
@@ -137,7 +138,8 @@ struct AigFixture
 
     void buildTR()
     {
-        tr.reset(new DebugTransitionRelation(vars, aig));
+        ndtr.reset(new TransitionRelation(vars, aig));
+        tr.reset(new DebugTransitionRelation(*ndtr));
     }
 };
 
