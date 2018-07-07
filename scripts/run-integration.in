@@ -270,7 +270,7 @@ function run_ic3_test() {
     fi
 }
 
-if ((ic3_only = 0)) ; then
+if ((ic3_only == 0)) ; then
     run_msis_test BRUTEFORCE --bfmin
     run_msis_test SISI --sisi
     run_all_msis_test MARCO --marco
