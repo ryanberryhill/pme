@@ -8,8 +8,11 @@ tmpdir=$(mktemp -d)
 
 VALGRIND=
 VALGRIND_COMMAND="valgrind -q --tool=memcheck --leak-check=full --error-exitcode=1 --suppressions=glucose.supp"
+
+
 tests_passed=0
 tests_failed=0
+ic3_only=0
 
 POSITIONAL=()
 while [[ $# -gt 0 ]] ; do
@@ -18,6 +21,10 @@ while [[ $# -gt 0 ]] ; do
     case $key in
         --valgrind)
         VALGRIND=$VALGRIND_COMMAND
+        shift
+        ;;
+        --ic3)
+        ic3_only=1
         shift
         ;;
         *)    # unknown option
@@ -263,10 +270,12 @@ function run_ic3_test() {
     fi
 }
 
-run_msis_test BRUTEFORCE --bfmin
-run_msis_test SISI --sisi
-run_all_msis_test MARCO --marco
-run_all_msis_test CAMSIS --camsis
+if ((ic3_only = 0)) ; then
+    run_msis_test BRUTEFORCE --bfmin
+    run_msis_test SISI --sisi
+    run_all_msis_test MARCO --marco
+    run_all_msis_test CAMSIS --camsis
+fi
 run_ic3_test IC3 --ic3
 
 echo PASS: $tests_passed
