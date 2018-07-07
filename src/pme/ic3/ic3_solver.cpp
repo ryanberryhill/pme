@@ -159,8 +159,6 @@ namespace PME { namespace IC3 {
 
     void IC3Solver::initialStatesRestricted()
     {
-        // TODO: incrementality
-        m_trace.clear();
         initialize();
     }
 

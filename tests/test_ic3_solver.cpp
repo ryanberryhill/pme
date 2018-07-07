@@ -214,52 +214,97 @@ BOOST_AUTO_TEST_CASE(complex_init_state_incrementality)
 {
     IC3Fixture f;
 
-    ID l0 = f.tr->toInternal(f.l0);
-    ID l1 = f.tr->toInternal(f.l1);
-    ID l2 = f.tr->toInternal(f.l2);
-    ID l3 = f.tr->toInternal(f.l3);
-
-    f.debug_tr->setInit(l0, ID_TRUE);
-    f.debug_tr->setInit(l1, ID_FALSE);
-    f.debug_tr->setInit(l2, ID_FALSE);
-    f.debug_tr->setInit(l3, ID_FALSE);
-    f.debug_tr->setCardinality(1);
-
-    f.prepareSolver(*f.debug_tr);
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
 
     std::set<ID> debug_latches(f.debug_tr->begin_debug_latches(),
                                f.debug_tr->end_debug_latches());
     BOOST_REQUIRE(!debug_latches.empty());
 
-    // Each of the and gates is a solution. Find and block them all.
-    for (unsigned i = 0; i < debug_latches.size(); ++i)
-    {
-        IC3Result result = f.solver->prove();
-        BOOST_REQUIRE_EQUAL(result.result, UNSAFE);
-        // Find which debug latch was active, block, reset
-        const SafetyCounterExample & cex = result.cex;
-        BOOST_REQUIRE(cex.size() > 0);
-        const Cube & init = cex.at(0).state;
+    // All zero initial state, 0 cardinality = SAFE
+    f.debug_tr->setCardinality(0);
 
-        ID soln_latch = ID_NULL;
-        for (ID latch : init)
+    f.prepareSolver(*f.debug_tr);
+    IC3Result result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, SAFE);
+
+    // a2 is a solution of cardinality 1
+    f.debug_tr->setCardinality(1);
+    f.solver->initialStatesExpanded();
+
+    result = f.solver->prove();
+    BOOST_REQUIRE_EQUAL(result.result, UNSAFE);
+    // Find which debug latch was active, block, reset
+    SafetyCounterExample cex = result.cex;
+    BOOST_REQUIRE(cex.size() > 0);
+    Cube init = cex.at(0).state;
+
+    ID soln_latch = ID_NULL;
+    for (ID latch : init)
+    {
+        if (debug_latches.count(strip(latch)) > 0)
         {
-            if (debug_latches.count(strip(latch)) > 0)
+            if (!is_negated(latch))
             {
-                if (!is_negated(latch))
-                {
-                    BOOST_REQUIRE_EQUAL(soln_latch, ID_NULL);
-                    soln_latch = latch;
-                }
+                BOOST_REQUIRE_EQUAL(soln_latch, ID_NULL);
+                soln_latch = latch;
             }
         }
-
-        BOOST_REQUIRE(soln_latch != ID_NULL);
-        f.solver->restrictInitialStates({negate(soln_latch)});
-        f.solver->initialStatesRestricted();
     }
 
-    IC3Result result = f.solver->prove();
+    BOOST_REQUIRE(soln_latch != ID_NULL);
+    ID soln_gate = f.debug_tr->gateForDebugLatch(soln_latch);
+    BOOST_CHECK_EQUAL(soln_gate, a2);
+
+    f.solver->restrictInitialStates({negate(soln_latch)});
+    f.solver->initialStatesRestricted();
+
+    // Should be safe after blocking a2
+    result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, SAFE);
+
+    // a1 and a0 are a solution of cardinality 2
+    f.debug_tr->setCardinality(2);
+    f.solver->initialStatesExpanded();
+
+    result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    cex = result.cex;
+    BOOST_REQUIRE(cex.size() > 0);
+    init = cex.at(0).state;
+
+    std::set<ID> soln_latches;
+    for (ID latch : init)
+    {
+        if (debug_latches.count(strip(latch)) > 0)
+        {
+            if (!is_negated(latch))
+            {
+                ID soln_gate = f.debug_tr->gateForDebugLatch(latch);
+                BOOST_CHECK(soln_gate == a1 || soln_gate == a0);
+                soln_latches.insert(latch);
+            }
+        }
+    }
+
+    BOOST_CHECK_EQUAL(soln_latches.size(), 2);
+
+    Clause block(soln_latches.begin(), soln_latches.end());
+    block = negateVec(block);
+
+    f.solver->restrictInitialStates(block);
+    f.solver->initialStatesRestricted();
+
+    // Now it should be safe at any cardinality
+    result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, SAFE);
+
+    f.debug_tr->setCardinality(3);
+    f.solver->initialStatesExpanded();
+
+    result = f.solver->prove();
     BOOST_CHECK_EQUAL(result.result, SAFE);
 }
 
