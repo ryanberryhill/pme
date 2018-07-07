@@ -556,6 +556,24 @@ BOOST_AUTO_TEST_CASE(inputs_iter)
     BOOST_CHECK_EQUAL(inputs.count(i1), 1);
 }
 
+BOOST_AUTO_TEST_CASE(gates_iter)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID a0 = tr.toInternal(f.a0);
+
+    std::vector<ID> gate_ids(tr.begin_gate_ids(), tr.end_gate_ids());
+    std::vector<AndGate> gates(tr.begin_gates(), tr.end_gates());
+
+    BOOST_CHECK_EQUAL(gate_ids.size(), 1);
+    BOOST_CHECK_EQUAL(gates.size(), 1);
+
+    BOOST_CHECK_EQUAL(gate_ids.at(0), a0);
+    BOOST_CHECK_EQUAL(gates.at(0).lhs, a0);
+}
+
 BOOST_AUTO_TEST_CASE(copy_constructor)
 {
     AigFixture f;
@@ -603,6 +621,18 @@ BOOST_AUTO_TEST_CASE(copy_constructor)
     // Constraints
     std::set<ID> constraints(tr.begin_constraints(), tr.end_constraints());
     BOOST_CHECK_EQUAL(constraints.size(), 0);
+
+    // Gates and gate IDs
+    ID a0 = tr.toInternal(f.a0);
+
+    std::vector<ID> gate_ids(tr.begin_gate_ids(), tr.end_gate_ids());
+    std::vector<AndGate> gates(tr.begin_gates(), tr.end_gates());
+
+    BOOST_CHECK_EQUAL(gate_ids.size(), 1);
+    BOOST_CHECK_EQUAL(gates.size(), 1);
+
+    BOOST_CHECK_EQUAL(gate_ids.at(0), a0);
+    BOOST_CHECK_EQUAL(gates.at(0).lhs, a0);
 
     // Initial states
     SATAdaptor sat;

@@ -27,6 +27,7 @@ extern "C" {
 
 #include <sstream>
 #include <cassert>
+#include <algorithm>
 
 namespace PME
 {
@@ -78,6 +79,7 @@ namespace PME
           m_latches(other.m_latches),
           m_latchIDs(other.m_latchIDs),
           m_inputIDs(other.m_inputIDs),
+          m_gateIDs(other.m_gateIDs),
           m_constraints(other.m_constraints),
           m_gates(other.m_gates)
     { }
@@ -107,6 +109,9 @@ namespace PME
 
     void TransitionRelation::processAnds(aiger * aig)
     {
+        m_gates.reserve(aig->num_ands);
+        m_gateIDs.reserve(aig->num_ands);
+
         for (size_t i = 0; i < aig->num_ands; ++i)
         {
             unsigned lhs = aig->ands[i].lhs;
@@ -122,6 +127,7 @@ namespace PME
             ID r1 = toInternal(rhs1);
 
             m_gates.push_back(AndGate(l, r0, r1));
+            m_gateIDs.push_back(l);
         }
     }
 
@@ -144,7 +150,7 @@ namespace PME
             ExternalID external = aiger_strip(syms[i].lit);
             const char * sym = syms[i].name;
             std::string name = create_name(sym, default_name(name_prefix, i));
-            createVar(external, name);
+            getOrCreateVar(external, name);
         }
     }
 
@@ -178,8 +184,14 @@ namespace PME
             ExternalID external = aig->inputs[i].lit;
             assert(!aiger_sign(external));
             ID input_id = toInternal(external);
-            m_inputIDs.push_back(input_id);
+            createInput(input_id);
         }
+    }
+
+    void TransitionRelation::createInput(ID id)
+    {
+        assert(std::find(m_inputIDs.begin(), m_inputIDs.end(), id) == m_inputIDs.end());
+        m_inputIDs.push_back(id);
     }
 
     void TransitionRelation::createLatch(ID id, ID next, ID reset)
@@ -207,7 +219,7 @@ namespace PME
         return createVar(0, name);
     }
 
-    const Variable& TransitionRelation::getOrCreateVar(ExternalID external)
+    const Variable& TransitionRelation::getOrCreateVar(ExternalID external, std::string name)
     {
         if (m_vars.isKnownExternal(external))
         {
@@ -216,7 +228,7 @@ namespace PME
         }
         else
         {
-            std::string name = default_name("aig", external);
+            if (name.empty()) { name = default_name("aig", external); }
             return createVar(external, name);
         }
     }

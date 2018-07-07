@@ -83,6 +83,71 @@ BOOST_AUTO_TEST_CASE(insert_lemmas)
     BOOST_CHECK(expected_finf == actual_finf);
 }
 
+BOOST_AUTO_TEST_CASE(remove_lemmas)
+{
+    IDFixture id;
+    InductiveTrace trace;
+
+    LemmaID c1 = trace.addLemma({id.a}, 0);
+    LemmaID c2 = trace.addLemma({id.b}, 0);
+    LemmaID c3 = trace.addLemma({id.c}, 0);
+    LemmaID c4 = trace.addLemma({id.d}, 0);
+    LemmaID c5 = trace.addLemma({id.b, id.c}, 1);
+    LemmaID c6 = trace.addLemma({id.a, id.b, id.c, id.d}, LEVEL_INF);
+
+    trace.removeLemma(c2);
+
+    Frame expected_f0 = {c1, c3, c4};
+    Frame expected_f1 = {c5};
+    Frame expected_finf = {c6};
+
+    Frame actual_f0 = trace.getFrame(0);
+    Frame actual_f1 = trace.getFrame(1);
+    Frame actual_finf = trace.getFrame(LEVEL_INF);
+
+    BOOST_CHECK(expected_f0 == actual_f0);
+    BOOST_CHECK(expected_f1 == actual_f1);
+    BOOST_CHECK(expected_finf == actual_finf);
+}
+
+BOOST_AUTO_TEST_CASE(remove_and_readd_lemmas)
+{
+    IDFixture id;
+    InductiveTrace trace;
+
+    Cube c = {id.b};
+
+    LemmaID c1 = trace.addLemma({id.a}, 0);
+    LemmaID c2 = trace.addLemma(c, 1);
+    LemmaID c3 = trace.addLemma({id.c}, 1);
+    LemmaID c4 = trace.addLemma({id.d}, 1);
+    LemmaID c5 = trace.addLemma({id.b, id.c}, 1);
+
+    trace.removeLemma(c2);
+
+    Frame expected_f1 = {c3, c4, c5};
+    Frame actual_f1 = trace.getFrame(1);
+    BOOST_CHECK(expected_f1 == actual_f1);
+
+    trace.addLemma(c, 0);
+
+    Frame expected_f0 = {c1, c2};
+    Frame actual_f0 = trace.getFrame(0);
+    BOOST_CHECK(expected_f0 == actual_f0);
+
+    trace.removeLemma(c2);
+
+    expected_f0 = {c1};
+    actual_f0 = trace.getFrame(0);
+    BOOST_CHECK(expected_f0 == actual_f0);
+
+    trace.addLemma(c, 2);
+
+    Frame expected_f2 = {c2};
+    Frame actual_f2 = trace.getFrame(2);
+    BOOST_CHECK(expected_f2 == actual_f2);
+}
+
 BOOST_AUTO_TEST_CASE(push_lemmas)
 {
     IDFixture id;
@@ -164,3 +229,35 @@ BOOST_AUTO_TEST_CASE(duplicate_lemmas)
     BOOST_CHECK(trace.getFrame(LEVEL_INF) == expected);
 }
 
+BOOST_AUTO_TEST_CASE(lemma_iterators)
+{
+    IDFixture id;
+    InductiveTrace trace;
+
+    LemmaID c1 = trace.addLemma({id.a}, 0);
+    LemmaID c2 = trace.addLemma({id.b}, 0);
+    LemmaID c3 = trace.addLemma({id.c}, 0);
+    LemmaID c4 = trace.addLemma({id.d}, 0);
+    LemmaID c5 = trace.addLemma({id.b, id.c}, 1);
+    LemmaID c6 = trace.addLemma({id.a, id.b, id.c, id.d}, LEVEL_INF);
+
+    std::set<LemmaID> lemma_ids;
+    lemma_ids.insert(c1);
+    lemma_ids.insert(c2);
+    lemma_ids.insert(c3);
+    lemma_ids.insert(c4);
+    lemma_ids.insert(c5);
+    lemma_ids.insert(c6);
+
+    // Even deleted lemmas should show up
+    trace.removeLemma(c3);
+
+    for (auto it = trace.begin_lemmas(); it != trace.end_lemmas(); ++it)
+    {
+        const LemmaData & lemma = *it;
+        BOOST_CHECK(lemma_ids.count(lemma.id) > 0);
+        lemma_ids.erase(lemma.id);
+    }
+
+    BOOST_CHECK(lemma_ids.empty());
+}

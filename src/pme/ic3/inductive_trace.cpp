@@ -40,9 +40,17 @@ namespace PME { namespace IC3 {
         if (lemmaExists(cube_sorted))
         {
             LemmaData & lemma = getMutableLemma(cube_sorted);
-            assert(lemma.level <= level);
 
-            m_frames.removeLemmaFromFrame(lemma.id, lemma.level);
+            if (lemma.deleted)
+            {
+                lemma.deleted = false;
+            }
+            else
+            {
+                assert(lemma.level <= level);
+                m_frames.removeLemmaFromFrame(lemma.id, lemma.level);
+            }
+
             m_frames.addLemmaToFrame(lemma.id, level);
             lemma.level = level;
 
@@ -78,6 +86,17 @@ namespace PME { namespace IC3 {
         Cube cube_sorted = sortCube(cube);
 
         return m_cube_to_lemma_id.count(cube) > 0;
+    }
+
+    bool InductiveTrace::lemmaIsActive(const Cube & cube) const
+    {
+        Cube cube_sorted = sortCube(cube);
+
+        if (!lemmaExists(cube)) { return false; }
+
+        const LemmaData & lemma = getLemma(cube);
+
+        return !lemma.deleted;
     }
 
     LemmaID InductiveTrace::IDOf(const Cube & cube) const
@@ -168,6 +187,14 @@ namespace PME { namespace IC3 {
         m_frames.shrink(k);
     }
 
+    void InductiveTrace::clear()
+    {
+        m_frames.clear();
+        m_lemmas.clear();
+        m_cube_to_lemma_id.clear();
+    }
+
+
     void Frames::addLemmaToFrame(const LemmaID id, unsigned level)
     {
         Frame & fi = getMutableFrame(level);
@@ -220,6 +247,12 @@ namespace PME { namespace IC3 {
     {
         assert(frames <= m_frames.size());
         m_frames.resize(frames);
+    }
+
+    void Frames::clear()
+    {
+        m_frames.clear();
+        m_frame_inf.clear();
     }
 } }
 

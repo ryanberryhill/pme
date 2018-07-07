@@ -36,16 +36,25 @@ namespace PME {
             DebugTransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
             DebugTransitionRelation(const TransitionRelation & tr);
 
-            id_iterator begin_debug_latches() { return m_debugLatchIDs.begin(); }
-            id_iterator end_debug_latches() { return m_debugLatchIDs.end(); }
+            id_iterator begin_debug_latches() const { return m_debugLatchIDs.cbegin(); }
+            id_iterator end_debug_latches() const { return m_debugLatchIDs.cend(); }
+            id_iterator begin_debug_inputs() const { return m_debugPPIs.cbegin(); }
+            id_iterator end_debug_inputs() const { return m_debugPPIs.cend(); }
 
             virtual ClauseVec initState() const override;
 
             void setCardinality(unsigned n);
 
+            ID debugLatchForGate(ID id) const;
+            ID debugPPIForGate(ID id) const;
+            ID gateForDebugLatch(ID id) const;
+
         private:
             std::vector<ID> m_debugLatchIDs;
+            std::vector<ID> m_debugPPIs;
             std::unordered_map<ID, ID> m_IDToDebugLatch;
+            std::unordered_map<ID, ID> m_debugLatchToID;
+            std::unordered_map<ID, ID> m_IDToDebugPPI;
 
             CardinalityConstraint m_cardinalityConstraint;
             ClauseVec m_cardinalityClauses;
@@ -53,8 +62,9 @@ namespace PME {
             unsigned m_cardinality;
 
             void enhanceModel();
-            void createDebugLatchFor(const AndGate & gate);
+            void createDebugFor(const AndGate & gate);
             ID debugLatchFor(const AndGate & gate) const;
+            ID debugPPIFor(const AndGate & gate) const;
 
         protected:
             virtual ClauseVec toCNF(const AndGate & gate) const override;

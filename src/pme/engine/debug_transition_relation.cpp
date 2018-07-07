@@ -26,10 +26,17 @@
 
 namespace PME {
 
-    std::string debugName(ExternalID id)
+    std::string debugPPIName(ExternalID id)
     {
         std::ostringstream ss;
-        ss << "debug_" << id;
+        ss << "di_" << id;
+        return ss.str();
+    }
+
+    std::string debugLatchName(ExternalID id)
+    {
+        std::ostringstream ss;
+        ss << "dl_" << id;
         return ss.str();
     }
 
@@ -63,7 +70,7 @@ namespace PME {
     {
         for (auto it = begin_gates(); it != end_gates(); ++it)
         {
-            createDebugLatchFor(*it);
+            createDebugFor(*it);
         }
 
         setCardinality(1);
@@ -79,19 +86,51 @@ namespace PME {
                                     new_clauses.begin(), new_clauses.end());
     }
 
-    void DebugTransitionRelation::createDebugLatchFor(const AndGate & gate)
+    ID DebugTransitionRelation::debugPPIForGate(ID id) const
+    {
+        assert(m_IDToDebugPPI.count(id) > 0);
+        return m_IDToDebugPPI.at(id);
+    }
+
+    ID DebugTransitionRelation::debugLatchForGate(ID id) const
+    {
+        assert(m_IDToDebugLatch.count(id) > 0);
+        return m_IDToDebugLatch.at(id);
+    }
+
+    ID DebugTransitionRelation::gateForDebugLatch(ID id) const
+    {
+        assert(m_debugLatchToID.count(id) > 0);
+        return m_debugLatchToID.at(id);
+    }
+
+    void DebugTransitionRelation::createDebugFor(const AndGate & gate)
     {
         ID lhs = gate.lhs;
         assert(m_IDToDebugLatch.count(lhs) == 0);
 
-        std::string name = debugName(toExternal(lhs));
-        const Variable& var = createInternalVar(name);
-        ID debug_latch = var.id;
+        std::string dl_name = debugLatchName(toExternal(lhs));
+        const Variable& dl_var = createInternalVar(dl_name);
+        ID debug_latch = dl_var.id;
+        assert(m_debugLatchToID.count(debug_latch) == 0);
+        assert(m_IDToDebugLatch.count(lhs) == 0);
 
         createLatch(debug_latch, debug_latch, ID_NULL);
 
+        std::string di_name = debugPPIName(toExternal(lhs));
+        const Variable& di_var = createInternalVar(di_name);
+        ID debug_input = di_var.id;
+        assert(m_IDToDebugPPI.count(lhs) == 0);
+
+        createInput(debug_input);
+
         m_debugLatchIDs.push_back(debug_latch);
+        m_debugPPIs.push_back(debug_input);
+
         m_IDToDebugLatch[lhs] = debug_latch;
+        m_debugLatchToID[debug_latch] = lhs;
+
+        m_IDToDebugPPI[lhs] = debug_input;
 
         m_cardinalityConstraint.addInput(debug_latch);
     }
@@ -104,6 +143,12 @@ namespace PME {
         return m_IDToDebugLatch.at(lhs);
     }
 
+    ID DebugTransitionRelation::debugPPIFor(const AndGate & gate) const
+    {
+        ID lhs = gate.lhs;
+        return debugPPIForGate(lhs);
+    }
+
     ClauseVec DebugTransitionRelation::toCNF(const AndGate & gate) const
     {
         ID debug_latch = debugLatchFor(gate);
@@ -113,6 +158,13 @@ namespace PME {
         {
             cls.push_back(debug_latch);
         }
+
+        // Also need lhs = input if dl = 1
+        ID lhs = gate.lhs;
+        ID ppi = debugPPIFor(gate);
+
+        clauses.push_back({lhs, negate(ppi), negate(debug_latch)});
+        clauses.push_back({negate(lhs), ppi, negate(debug_latch)});
 
         return clauses;
     }

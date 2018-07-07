@@ -38,6 +38,7 @@ namespace PME { namespace IC3 {
             const Frame & getFrame(unsigned level) const;
             size_t numFrames() const;
             void shrink(unsigned frames);
+            void clear();
         private:
             bool frameExists(unsigned level) const;
             Frame & getMutableFrame(unsigned level);
@@ -61,6 +62,7 @@ namespace PME { namespace IC3 {
     class InductiveTrace
     {
         public:
+            typedef std::vector<LemmaData>::const_iterator lemma_iterator;
             const LemmaData & getLemma(const Cube & cube) const;
             const LemmaData & getLemma(LemmaID id) const;
             Frame getFullFrame(unsigned level) const;
@@ -73,12 +75,18 @@ namespace PME { namespace IC3 {
             unsigned levelOf(LemmaID id) const;
             unsigned levelOf(const Cube & cube) const;
             bool lemmaExists(const Cube & cube) const;
+            bool lemmaIsActive(const Cube & cube) const;
 
             LemmaID addLemma(const Cube & cube, unsigned level);
             void removeLemma(LemmaID id);
             void pushLemma(LemmaID id, unsigned level);
 
             void clearUnusedFrames();
+
+            lemma_iterator begin_lemmas() const { return m_lemmas.cbegin(); }
+            lemma_iterator end_lemmas() const { return m_lemmas.cend(); }
+
+            void clear();
 
         private:
             LemmaData & getMutableLemma(const Cube & cube);

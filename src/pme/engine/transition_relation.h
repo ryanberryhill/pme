@@ -88,6 +88,10 @@ namespace PME
             id_iterator end_inputs() const { return m_inputIDs.cend(); }
             id_iterator begin_constraints() const { return m_constraints.cbegin(); }
             id_iterator end_constraints() const { return m_constraints.cend(); }
+            id_iterator begin_gate_ids() const { return m_gateIDs.cbegin(); }
+            id_iterator end_gate_ids() const { return m_gateIDs.cend(); }
+            gate_iterator begin_gates() { return m_gates.begin(); }
+            gate_iterator end_gates() { return m_gates.end(); }
 
             void setInit(ID latch, ID val);
             ID getInit(ID latch) const;
@@ -101,6 +105,7 @@ namespace PME
             std::unordered_map<ID, Latch> m_latches;
             std::vector<ID> m_latchIDs;
             std::vector<ID> m_inputIDs;
+            std::vector<ID> m_gateIDs;
             std::vector<ID> m_constraints;
 
             std::vector<AndGate> m_gates;
@@ -117,9 +122,6 @@ namespace PME
             void processInputs(aiger * aig);
 
         protected:
-            gate_iterator begin_gates() { return m_gates.begin(); }
-            gate_iterator end_gates() { return m_gates.end(); }
-
             ID getNewID();
 
             VariableManager & vars() { return m_vars; }
@@ -127,9 +129,10 @@ namespace PME
             const Variable& varOf(ID id);
             const Variable& createVar(ExternalID external, std::string name);
             const Variable& createInternalVar(std::string name);
-            const Variable& getOrCreateVar(ExternalID external);
+            const Variable& getOrCreateVar(ExternalID external, std::string name = "");
 
             void createLatch(ID id, ID next, ID reset);
+            void createInput(ID id);
 
             virtual ClauseVec toCNF() const;
             virtual ClauseVec toCNF(const AndGate & gate) const;

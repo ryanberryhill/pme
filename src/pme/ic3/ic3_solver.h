@@ -35,6 +35,7 @@
 #include <tuple>
 #include <forward_list>
 #include <queue>
+#include <memory>
 
 namespace PME { namespace IC3 {
 
@@ -110,6 +111,10 @@ namespace PME { namespace IC3 {
             IC3Result prove();
             IC3Result prove(const Cube & target);
 
+            void restrictInitialStates(const Clause & cls);
+            void initialStatesExpanded();
+            void initialStatesRestricted();
+
         private:
             typedef std::forward_list<ProofObligation> ObligationPool;
             typedef std::pair<bool, SafetyCounterExample> RecBlockResult;
@@ -148,6 +153,7 @@ namespace PME { namespace IC3 {
             void pushFrameToInf(unsigned level);
             LemmaID addLemma(const Cube & c, unsigned level);
 
+            void resetSAT();
             void initialize();
 
             void recordProof(IC3Result & result) const;
@@ -169,8 +175,10 @@ namespace PME { namespace IC3 {
             InductiveTrace m_trace;
             ObligationPool m_obls;
 
-            FrameSolver m_cons;
-            UNSATCoreLifter m_lift;
+            std::unique_ptr<FrameSolver> m_cons;
+            std::unique_ptr<UNSATCoreLifter> m_lift;
+
+            std::vector<Cube> m_init_constraints;
     };
 } }
 

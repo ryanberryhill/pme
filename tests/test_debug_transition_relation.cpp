@@ -167,6 +167,44 @@ BOOST_AUTO_TEST_CASE(latch_iterators)
     BOOST_CHECK_EQUAL(debug_latches.size(), 3);
 }
 
+BOOST_AUTO_TEST_CASE(input_iterators)
+{
+    AigFixture f;
+    f.buildTR();
+
+    // 1 real input + 3 debug
+    std::vector<ID> inputs(f.tr->begin_inputs(), f.tr->end_inputs());
+    BOOST_CHECK_EQUAL(inputs.size(), 4);
+
+    std::vector<ID> debug_inputs(f.tr->begin_debug_inputs(),
+                                  f.tr->end_debug_inputs());
+    BOOST_CHECK_EQUAL(debug_inputs.size(), 3);
+}
+
+BOOST_AUTO_TEST_CASE(latch_gate_mappings)
+{
+    AigFixture f;
+    f.buildTR();
+
+    std::set<ID> gates(f.tr->begin_gate_ids(), f.tr->end_gate_ids());
+    std::vector<ID> debug_latches(f.tr->begin_debug_latches(),
+                                  f.tr->end_debug_latches());
+
+    BOOST_CHECK_EQUAL(gates.size(), 3);
+    BOOST_CHECK_EQUAL(debug_latches.size(), 3);
+
+    for (ID id : debug_latches)
+    {
+        ID gate_id = f.tr->gateForDebugLatch(id);
+        ID dl_id = f.tr->debugLatchForGate(gate_id);
+        BOOST_CHECK_EQUAL(dl_id, id);
+        BOOST_CHECK(gates.count(gate_id) > 0);
+        gates.erase(gate_id);
+    }
+
+    BOOST_CHECK(gates.empty());
+}
+
 BOOST_AUTO_TEST_CASE(combinational_cardinality_0)
 {
     CombinationalAigFixture f;

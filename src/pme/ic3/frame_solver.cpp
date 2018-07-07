@@ -243,6 +243,8 @@ namespace PME { namespace IC3 {
     {
         for (LemmaID id : m_trace.getFrame(level))
         {
+            const LemmaData & lemma = m_trace.getLemma(id);
+            if (lemma.deleted) { continue; }
             sendLemma(id);
         }
     }

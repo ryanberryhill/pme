@@ -92,29 +92,82 @@ namespace PME { namespace IC3 {
         : m_vars(varman),
           m_tr(tr),
           m_gs(gs),
-          m_cons(varman, tr, m_trace, gs),
-          m_lift(varman, tr, m_trace, gs)
+          m_cons(nullptr),
+          m_lift(nullptr)
     {
        initialize();
     }
 
+    void IC3Solver::resetSAT()
+    {
+        m_cons.reset(new FrameSolver(m_vars, m_tr, m_trace, m_gs));
+        m_lift.reset(new UNSATCoreLifter(m_vars, m_tr, m_trace, m_gs));
+    }
+
     void IC3Solver::initialize()
     {
-        // TODO consider handling complex initial states
-        for (auto it = m_tr.begin_latches(); it != m_tr.end_latches(); ++it)
+        // Add initial states from TR
+        ClauseVec init_state = m_tr.initState();
+        for (const Clause & cls : init_state)
         {
-            ID latch = *it;
-            ID init = m_tr.getInit(latch);
-            if (init != ID_NULL)
+            Cube cube = negateVec(cls);
+            if (!m_trace.lemmaIsActive(cube))
             {
-                assert(init == ID_TRUE || init == ID_FALSE);
-                bool neg = init == ID_FALSE;
-                // The cube for the lemma is negation of the clause, so
-                // negate when neg is false to get the cube
-                ID lit = neg ? latch : negate(latch);
-                m_trace.addLemma({lit}, 0);
+                m_trace.addLemma(cube, 0);
             }
         }
+
+        // Add user provided initial state constraints (e.g., to block
+        // debugging solutions)
+        for (const Cube & cube : m_init_constraints)
+        {
+            if (!m_trace.lemmaIsActive(cube))
+            {
+                m_trace.addLemma(cube, 0);
+            }
+        }
+
+        // Set up SAT solvers with new initial states
+        resetSAT();
+    }
+
+    void IC3Solver::initialStatesExpanded()
+    {
+#if 0
+        // Keep absolute invariants, purge all others
+        // TODO: this is only safe in the case of debugging. In particular,
+        // any cube in F_inf that contains at least one non-debug-latch
+        // literal is still initiated after increasing the cardinality.
+        // However, other expansions of the initial states are not safe
+        // and we also need to check that even this case is safe (or make
+        // it so we don't learn lemmas that contain only debug latches)
+        for (auto it = m_trace.begin_lemmas(); it != m_trace.end_lemmas(); ++it)
+        {
+            const LemmaData & lemma = *it;
+            if (lemma.deleted) { continue; }
+            if (lemma.level == LEVEL_INF) { continue; }
+            m_trace.removeLemma(lemma.id);
+        }
+#endif
+
+        // TODO: incrementality
+        m_trace.clear();
+
+        // Set up SAT solvers again
+        initialize();
+    }
+
+    void IC3Solver::initialStatesRestricted()
+    {
+        // TODO: incrementality
+        m_trace.clear();
+        initialize();
+    }
+
+    void IC3Solver::restrictInitialStates(const Clause & cls)
+    {
+        assert(!cls.empty());
+        m_init_constraints.push_back(negateVec(cls));
     }
 
     std::ostream & IC3Solver::log(int verbosity) const
@@ -271,7 +324,7 @@ namespace PME { namespace IC3 {
             for (LemmaID lemma : frame_copy)
             {
                 const Cube & c = m_trace.cubeOf(lemma);
-                if (m_cons.consecution(k, c))
+                if (m_cons->consecution(k, c))
                 {
                     pushLemma(lemma, k + 1);
                     pushed++;
@@ -319,7 +372,7 @@ namespace PME { namespace IC3 {
         Cube s = target;
         Cube t, inp, pinp;
         bool blocked = false;
-        std::tie(blocked, t, inp, pinp, std::ignore) = m_cons.consecutionFull(level - 1, s);
+        std::tie(blocked, t, inp, pinp, std::ignore) = m_cons->consecutionFull(level - 1, s);
 
         if (blocked)
         {
@@ -330,7 +383,7 @@ namespace PME { namespace IC3 {
         else
         {
             assert(!t.empty());
-            Cube lifted = m_lift.lift(t, s, inp, pinp);
+            Cube lifted = m_lift->lift(t, s, inp, pinp);
             assert(!lifted.empty());
             return BlockResult(false, 0, lifted, t, inp, pinp);
         }
@@ -366,7 +419,7 @@ namespace PME { namespace IC3 {
 
             // Check for consecution
             Cube s_core;
-            bool cons = m_cons.consecutionCore(k, s_copy, s_core);
+            bool cons = m_cons->consecutionCore(k, s_copy, s_core);
 
             if (cons)
             {
@@ -462,7 +515,7 @@ namespace PME { namespace IC3 {
     bool IC3Solver::initiation(const Cube & s)
     {
         if (s.empty()) { return false; }
-        return !m_cons.intersection(0, s);
+        return !m_cons->intersection(0, s);
     }
 
     bool IC3Solver::isSafe(const Cube & target)
@@ -473,7 +526,7 @@ namespace PME { namespace IC3 {
             if (lemma.level == LEVEL_INF) { return true; }
         }
 
-        if (!m_cons.intersection(LEVEL_INF, target))
+        if (!m_cons->intersection(LEVEL_INF, target))
         {
             return true;
         }
@@ -486,7 +539,7 @@ namespace PME { namespace IC3 {
         bool is_initial;
         Cube init_state, inputs;
         SafetyCounterExample cex;
-        std::tie(is_initial, init_state, inputs) = m_cons.intersectionFull(0, target);
+        std::tie(is_initial, init_state, inputs) = m_cons->intersectionFull(0, target);
 
         if (is_initial) { cex.push_back(Step(inputs, init_state)); }
 
@@ -535,7 +588,7 @@ namespace PME { namespace IC3 {
     {
         // TODO consider updating lifting solver
         m_trace.pushLemma(id, level);
-        m_cons.addLemma(id);
+        m_cons->addLemma(id);
         log(4) << "To " << levelString(level) << ": " << clauseStringOf(id) << std::endl;
     }
 
@@ -561,7 +614,7 @@ namespace PME { namespace IC3 {
     {
         // TODO consider updating lifting solver
         LemmaID id = m_trace.addLemma(c, level);
-        m_cons.addLemma(id);
+        m_cons->addLemma(id);
         log(4) << "At " << levelString(level) << ": " << clauseStringOf(id) << std::endl;
         return id;
     }

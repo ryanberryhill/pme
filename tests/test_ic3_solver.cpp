@@ -22,6 +22,8 @@
 #include "pme/id.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/util/proof_checker.h"
+#include "pme/engine/transition_relation.h"
+#include "pme/engine/debug_transition_relation.h"
 
 #define BOOST_TEST_MODULE IC3Test
 #define BOOST_TEST_DYN_LINK
@@ -39,6 +41,7 @@ struct IC3Fixture
     VariableManager vars;
     InductiveTrace trace;
     std::unique_ptr<TransitionRelation> tr;
+    std::unique_ptr<DebugTransitionRelation> debug_tr;
     std::unique_ptr<IC3Solver> solver;
     GlobalState gs;
 
@@ -75,6 +78,7 @@ struct IC3Fixture
 
         gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
+        debug_tr.reset(new DebugTransitionRelation(vars, aig));
         prepareSolver();
     }
 
@@ -83,9 +87,14 @@ struct IC3Fixture
         tr->setInit(latch, val);
     }
 
+    void prepareSolver(TransitionRelation & tr_to_use)
+    {
+        solver.reset(new IC3Solver(vars, tr_to_use, gs));
+    }
+
     void prepareSolver()
     {
-        solver.reset(new IC3Solver(vars, *tr, gs));
+        prepareSolver(*tr);
     }
 
     ~IC3Fixture()
@@ -112,7 +121,7 @@ BOOST_AUTO_TEST_CASE(safe)
     f.prepareSolver();
 
     IC3Result result = f.solver->prove();
-    BOOST_CHECK(result.result == SAFE);
+    BOOST_CHECK_EQUAL(result.result, SAFE);
 
     ProofChecker pc(*f.tr, result.proof, f.gs);
     BOOST_CHECK(pc.checkProof());
@@ -135,7 +144,7 @@ BOOST_AUTO_TEST_CASE(trivual_unsafe)
     f.prepareSolver();
 
     IC3Result result = f.solver->prove();
-    BOOST_CHECK(result.result == UNSAFE);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
 
     // Check the counter-example
     SafetyCounterExample cex = result.cex;
@@ -166,7 +175,7 @@ BOOST_AUTO_TEST_CASE(unsafe)
     f.prepareSolver();
 
     IC3Result result = f.solver->prove();
-    BOOST_CHECK(result.result == UNSAFE);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
 
     std::vector<Cube> expected_states;
     expected_states.push_back({negate(l0), l1, l2, negate(l3)});
@@ -188,5 +197,69 @@ BOOST_AUTO_TEST_CASE(unsafe)
         std::sort(actual.begin(), actual.end());
         BOOST_CHECK(expected == actual);
     }
+}
+
+BOOST_AUTO_TEST_CASE(complex_init_state)
+{
+    IC3Fixture f;
+
+    f.debug_tr->setCardinality(1);
+    f.prepareSolver(*f.debug_tr);
+
+    IC3Result result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+}
+
+BOOST_AUTO_TEST_CASE(complex_init_state_incrementality)
+{
+    IC3Fixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.debug_tr->setInit(l0, ID_TRUE);
+    f.debug_tr->setInit(l1, ID_FALSE);
+    f.debug_tr->setInit(l2, ID_FALSE);
+    f.debug_tr->setInit(l3, ID_FALSE);
+    f.debug_tr->setCardinality(1);
+
+    f.prepareSolver(*f.debug_tr);
+
+    std::set<ID> debug_latches(f.debug_tr->begin_debug_latches(),
+                               f.debug_tr->end_debug_latches());
+    BOOST_REQUIRE(!debug_latches.empty());
+
+    // Each of the and gates is a solution. Find and block them all.
+    for (unsigned i = 0; i < debug_latches.size(); ++i)
+    {
+        IC3Result result = f.solver->prove();
+        BOOST_REQUIRE_EQUAL(result.result, UNSAFE);
+        // Find which debug latch was active, block, reset
+        const SafetyCounterExample & cex = result.cex;
+        BOOST_REQUIRE(cex.size() > 0);
+        const Cube & init = cex.at(0).state;
+
+        ID soln_latch = ID_NULL;
+        for (ID latch : init)
+        {
+            if (debug_latches.count(strip(latch)) > 0)
+            {
+                if (!is_negated(latch))
+                {
+                    BOOST_REQUIRE_EQUAL(soln_latch, ID_NULL);
+                    soln_latch = latch;
+                }
+            }
+        }
+
+        BOOST_REQUIRE(soln_latch != ID_NULL);
+        f.solver->restrictInitialStates({negate(soln_latch)});
+        f.solver->initialStatesRestricted();
+    }
+
+    IC3Result result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, SAFE);
 }
 

@@ -42,6 +42,8 @@ namespace PME { namespace IC3 {
         // Add f_inf lemmas
         for (LemmaID id : m_trace.getFrame(LEVEL_INF))
         {
+            const LemmaData & lemma = m_trace.getLemma(id);
+            if (lemma.deleted) { continue; }
             sendLemma(id);
         }
 
@@ -89,19 +91,31 @@ namespace PME { namespace IC3 {
         assumps.insert(assumps.end(), inp.begin(), inp.end());
         assumps.insert(assumps.end(), pinp_p.begin(), pinp_p.end());
 
-        // ~succ'
-        GroupID gid = solver().createGroup();
-        solver().addGroupClause(gid, negsucc_p);
-
-        // F_inf & pred & inp & Tr & pinp' & ~succ'
-        // Guaranteed to be UNSAT (if lift is called in the usual
-        // circumstance) as pred & <inputs> & Tr => succ'
-        // pred can be reduced using the conflicting assumptions to get a
-        // smaller cube representing a set of states all of which can be
-        // reach succ in one step
         Cube crits;
-        bool sat = solver().groupSolve(gid, assumps, &crits);
-        assert(!sat);
+        // Don't bother creating a group if we can just use assumptions
+        if (succ.size() == 1)
+        {
+            assert(negsucc_p.size() == 1);
+            assumps.push_back(negsucc_p.at(0));
+
+            bool sat = solver().solve(assumps, &crits);
+            assert(!sat);
+        }
+        else
+        {
+            // ~succ'
+            GroupID gid = solver().createGroup();
+            solver().addGroupClause(gid, negsucc_p);
+
+            // F_inf & pred & inp & Tr & pinp' & ~succ'
+            // Guaranteed to be UNSAT (if lift is called in the usual
+            // circumstance) as pred & <inputs> & Tr => succ'
+            // pred can be reduced using the conflicting assumptions to get a
+            // smaller cube representing a set of states all of which can be
+            // reach succ in one step
+            bool sat = solver().groupSolve(gid, assumps, &crits);
+            assert(!sat);
+        }
 
         Cube lifted = extractCore(pred, crits);
 
