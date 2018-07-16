@@ -199,6 +199,46 @@ BOOST_AUTO_TEST_CASE(unsafe)
     }
 }
 
+BOOST_AUTO_TEST_CASE(lemma_access)
+{
+    IC3Fixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.solver->addLemma({negate(l0)}, 1);
+    f.solver->addLemma({negate(l1)}, 2);
+    f.solver->addLemma({negate(l2)}, 2);
+    f.solver->addLemma({negate(l3)}, 2);
+
+    Frame f1 = f.solver->getFrame(1);
+    Frame f2 = f.solver->getFrame(2);
+    Frame f3 = f.solver->getFrame(3);
+    Frame finf = f.solver->getFrame(LEVEL_INF);
+
+    BOOST_CHECK_EQUAL(f1.size(), 1);
+    BOOST_CHECK_EQUAL(f2.size(), 3);
+    BOOST_CHECK_EQUAL(f3.size(), 0);
+    BOOST_CHECK_EQUAL(finf.size(), 0);
+
+    f.solver->addLemma({negate(l0)}, LEVEL_INF);
+    f.solver->addLemma({negate(l1)}, LEVEL_INF);
+    f.solver->addLemma({negate(l2)}, LEVEL_INF);
+    f.solver->addLemma({negate(l3)}, LEVEL_INF);
+
+    f1 = f.solver->getFrame(1);
+    f2 = f.solver->getFrame(2);
+    f3 = f.solver->getFrame(3);
+    finf = f.solver->getFrame(LEVEL_INF);
+
+    BOOST_CHECK_EQUAL(f1.size(), 0);
+    BOOST_CHECK_EQUAL(f2.size(), 0);
+    BOOST_CHECK_EQUAL(f3.size(), 0);
+    BOOST_CHECK_EQUAL(finf.size(), 4);
+}
+
 BOOST_AUTO_TEST_CASE(complex_init_state)
 {
     IC3Fixture f;

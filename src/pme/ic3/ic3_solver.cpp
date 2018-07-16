@@ -98,6 +98,24 @@ namespace PME { namespace IC3 {
        initialize();
     }
 
+    unsigned IC3Solver::numFrames() const
+    {
+        return m_trace.numFrames();
+    }
+
+    Frame IC3Solver::getFrame(unsigned n) const
+    {
+        if (n == LEVEL_INF || n < m_trace.numFrames())
+        {
+            return m_trace.getFrame(n);
+        }
+        else
+        {
+            Frame empty;
+            return empty;
+        }
+    }
+
     void IC3Solver::resetSAT()
     {
         m_cons.reset(new FrameSolver(m_vars, m_tr, m_trace, m_gs));

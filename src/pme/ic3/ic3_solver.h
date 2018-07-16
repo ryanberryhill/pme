@@ -115,6 +115,11 @@ namespace PME { namespace IC3 {
             void initialStatesExpanded();
             void initialStatesRestricted();
 
+            LemmaID addLemma(const Cube & c, unsigned level);
+
+            Frame getFrame(unsigned n) const;
+            unsigned numFrames() const;
+
         private:
             typedef std::forward_list<ProofObligation> ObligationPool;
             typedef std::pair<bool, SafetyCounterExample> RecBlockResult;
@@ -151,7 +156,6 @@ namespace PME { namespace IC3 {
 
             void pushLemma(LemmaID id, unsigned level);
             void pushFrameToInf(unsigned level);
-            LemmaID addLemma(const Cube & c, unsigned level);
 
             void resetSAT();
             void initialize();
