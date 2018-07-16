@@ -23,8 +23,11 @@
 
 #include <sstream>
 #include <cassert>
+#include <limits>
 
 namespace PME {
+
+    const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
 
     std::string debugPPIName(ExternalID id)
     {
@@ -73,7 +76,12 @@ namespace PME {
             createDebugFor(*it);
         }
 
-        setCardinality(1);
+        clearCardinality();
+    }
+
+    void DebugTransitionRelation::clearCardinality()
+    {
+        m_cardinality = CARDINALITY_INF;
     }
 
     void DebugTransitionRelation::setCardinality(unsigned n)
@@ -174,10 +182,13 @@ namespace PME {
         ClauseVec init = TransitionRelation::initState();
         init.insert(init.end(), m_cardinalityClauses.begin(), m_cardinalityClauses.end());
 
-        Cube assumps = m_cardinalityConstraint.assumeLEq(m_cardinality);
-        for (ID id : assumps)
+        if (m_cardinality < CARDINALITY_INF)
         {
-            init.push_back({id});
+            Cube assumps = m_cardinalityConstraint.assumeLEq(m_cardinality);
+            for (ID id : assumps)
+            {
+                init.push_back({id});
+            }
         }
 
         return init;

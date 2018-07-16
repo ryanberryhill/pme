@@ -133,24 +133,7 @@ namespace PME { namespace IC3 {
 
     void IC3Solver::initialStatesExpanded()
     {
-#if 0
-        // Keep absolute invariants, purge all others
-        // TODO: this is only safe in the case of debugging. In particular,
-        // any cube in F_inf that contains at least one non-debug-latch
-        // literal is still initiated after increasing the cardinality.
-        // However, other expansions of the initial states are not safe
-        // and we also need to check that even this case is safe (or make
-        // it so we don't learn lemmas that contain only debug latches)
-        for (auto it = m_trace.begin_lemmas(); it != m_trace.end_lemmas(); ++it)
-        {
-            const LemmaData & lemma = *it;
-            if (lemma.deleted) { continue; }
-            if (lemma.level == LEVEL_INF) { continue; }
-            m_trace.removeLemma(lemma.id);
-        }
-#endif
-
-        // TODO: incrementality
+        // TODO: incrementality?
         m_trace.clear();
 
         // Set up SAT solvers again
@@ -368,15 +351,21 @@ namespace PME { namespace IC3 {
         if (level == 0) { return BlockResult(false); }
 
         Cube s = target;
-        Cube t, inp, pinp;
+        Cube t, inp, pinp, core;
         bool blocked = false;
-        std::tie(blocked, t, inp, pinp, std::ignore) = m_cons->consecutionFull(level - 1, s);
+        std::tie(blocked, t, inp, pinp, core) = m_cons->consecutionFull(level - 1, s);
 
         if (blocked)
         {
-            generalize(s, level);
-            // TODO push s forward
-            return BlockResult(true, level, s);
+            std::sort(core.begin(), core.end());
+
+            initiate(core, s);
+            generalize(core, level);
+
+            assert(initiation(core));
+
+            // TODO push core forward (or do so in generalize)
+            return BlockResult(true, level, core);
         }
         else
         {
@@ -584,7 +573,6 @@ namespace PME { namespace IC3 {
 
     void IC3Solver::pushLemma(LemmaID id, unsigned level)
     {
-        // TODO consider updating lifting solver
         m_trace.pushLemma(id, level);
         m_cons->addLemma(id);
         log(4) << "To " << levelString(level) << ": " << clauseStringOf(id) << std::endl;
@@ -592,7 +580,6 @@ namespace PME { namespace IC3 {
 
     void IC3Solver::pushFrameToInf(unsigned level)
     {
-        // TODO consider updating lifting solver
         assert(level > 0);
         assert(level < LEVEL_INF);
         for (unsigned i = m_trace.numFrames() - 1; i >= level; --i)

@@ -211,7 +211,8 @@ namespace PME { namespace IC3 {
         return intersects;
     }
 
-    FrameSolver::IntersectionResult FrameSolver::intersectionFull(unsigned level, const Cube & c)
+    FrameSolver::IntersectionResult
+    FrameSolver::intersectionFull(unsigned level, const Cube & c)
     {
         assert(!c.empty());
         if (!m_solverInited) { renewSAT(); }

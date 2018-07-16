@@ -301,8 +301,14 @@ BOOST_AUTO_TEST_CASE(complex_init_state_incrementality)
     result = f.solver->prove();
     BOOST_CHECK_EQUAL(result.result, SAFE);
 
-    f.debug_tr->setCardinality(3);
+    f.debug_tr->clearCardinality();
     f.solver->initialStatesExpanded();
+
+    result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, SAFE);
+
+    f.debug_tr->setCardinality(3);
+    f.solver->initialStatesRestricted();
 
     result = f.solver->prove();
     BOOST_CHECK_EQUAL(result.result, SAFE);

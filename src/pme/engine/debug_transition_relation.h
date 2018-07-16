@@ -44,6 +44,7 @@ namespace PME {
             virtual ClauseVec initState() const override;
 
             void setCardinality(unsigned n);
+            void clearCardinality();
 
             ID debugLatchForGate(ID id) const;
             ID debugPPIForGate(ID id) const;
