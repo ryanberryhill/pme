@@ -33,41 +33,77 @@ namespace PME { namespace IC3 {
         : m_debug_tr(tr),
           m_ic3(varman, m_debug_tr, gs),
           m_gs(gs),
-          m_lastCardinality(CARDINALITY_INF)
+          m_cardinality(CARDINALITY_INF),
+          m_cardinalityConstraint(varman)
     {
        clearCardinality();
        m_debug_latches.insert(m_debug_tr.begin_debug_latches(),
                               m_debug_tr.end_debug_latches());
+       for (ID id : m_debug_latches)
+       {
+           m_cardinalityConstraint.addInput(id);
+       }
     }
 
     void IC3Debugger::setCardinality(unsigned n)
     {
-        if (m_lastCardinality == n) { return; }
+        if (m_cardinality == n) { return; }
 
-        m_debug_tr.setCardinality(n);
+        m_ic3.clearRestrictions();
+        addCardinalityCNF(n);
+        addBlockingClauses();
 
-        if (n <= m_lastCardinality)
-        {
-            m_ic3.initialStatesRestricted();
-        }
-        else
+        if (m_cardinality < n)
         {
             m_ic3.initialStatesExpanded();
         }
+        else
+        {
+            m_ic3.initialStatesRestricted();
+        }
 
-        m_lastCardinality = n;
+        m_cardinality = n;
     }
 
     void IC3Debugger::clearCardinality()
     {
-        m_debug_tr.clearCardinality();
+        m_ic3.clearRestrictions();
 
-        if (m_lastCardinality < CARDINALITY_INF)
+        addBlockingClauses();
+
+        if (m_cardinality < CARDINALITY_INF)
         {
             m_ic3.initialStatesExpanded();
         }
 
-        m_lastCardinality = CARDINALITY_INF;
+        m_cardinality = CARDINALITY_INF;
+    }
+
+    void IC3Debugger::addCardinalityCNF(unsigned n)
+    {
+        // Need to use (n+1) in order to assume <= n
+        m_cardinalityConstraint.setCardinality(n + 1);
+        m_cardinalityConstraint.clearIncrementality();
+
+        ClauseVec cnf = m_cardinalityConstraint.CNFize();
+        for (const Clause & cls : cnf)
+        {
+            m_ic3.restrictInitialStates(cls);
+        }
+
+        Cube assumps = m_cardinalityConstraint.assumeLEq(n);
+        for (ID id : assumps)
+        {
+            m_ic3.restrictInitialStates({id});
+        }
+    }
+
+    void IC3Debugger::addBlockingClauses()
+    {
+        for (const Clause & cls : m_blockingClauses)
+        {
+            m_ic3.restrictInitialStates(cls);
+        }
     }
 
     IC3Debugger::Result IC3Debugger::debug()
@@ -111,6 +147,7 @@ namespace PME { namespace IC3 {
             block.push_back(negate(debug_latch));
         }
 
+        m_blockingClauses.push_back(block);
         m_ic3.restrictInitialStates(block);
         m_ic3.initialStatesRestricted();
     }

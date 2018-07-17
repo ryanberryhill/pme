@@ -22,6 +22,7 @@
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/debug_transition_relation.h"
 #include "pme/engine/sat_adaptor.h"
+#include "pme/util/cardinality_constraint.h"
 extern "C" {
 #include "aiger/aiger.h"
 }
@@ -29,6 +30,8 @@ extern "C" {
 #define BOOST_TEST_MODULE DebugTransitionRelationTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
+
+#include <memory>
 
 using namespace PME;
 
@@ -38,6 +41,7 @@ struct CombinationalAigFixture
     ExternalID i1, o1;
     VariableManager vars;
     std::unique_ptr<DebugTransitionRelation> tr;
+    std::unique_ptr<CardinalityConstraint> cardinality;
 
     CombinationalAigFixture()
     {
@@ -69,6 +73,22 @@ struct CombinationalAigFixture
     void buildTR()
     {
         tr.reset(new DebugTransitionRelation(vars, aig));
+
+        cardinality.reset(new CardinalityConstraint(vars));
+
+        cardinality->addInput(debugLatch());
+    }
+
+    ClauseVec getCardinality(unsigned n)
+    {
+        cardinality->setCardinality(n + 1);
+        cardinality->clearIncrementality();
+
+        ClauseVec vec = cardinality->CNFize();
+        Cube assumps = cardinality->assumeLEq(n);
+        for (ID id : assumps) { vec.push_back({id}); }
+
+        return vec;
     }
 };
 
@@ -79,6 +99,7 @@ struct AigFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> ndtr;
     std::unique_ptr<DebugTransitionRelation> tr;
+    std::unique_ptr<CardinalityConstraint> cardinality;
 
     AigFixture()
     {
@@ -140,6 +161,25 @@ struct AigFixture
     {
         ndtr.reset(new TransitionRelation(vars, aig));
         tr.reset(new DebugTransitionRelation(*ndtr));
+        cardinality.reset(new CardinalityConstraint(vars));
+
+        std::vector<ID> dl = debugLatches();
+        for (ID id : dl)
+        {
+            cardinality->addInput(id);
+        }
+    }
+
+    ClauseVec getCardinality(unsigned n)
+    {
+        cardinality->setCardinality(n + 1);
+        cardinality->clearIncrementality();
+
+        ClauseVec vec = cardinality->CNFize();
+        Cube assumps = cardinality->assumeLEq(n);
+        for (ID id : assumps) { vec.push_back({id}); }
+
+        return vec;
     }
 };
 
@@ -209,13 +249,15 @@ BOOST_AUTO_TEST_CASE(combinational_cardinality_0)
 {
     CombinationalAigFixture f;
     f.buildTR();
-    f.tr->setCardinality(0);
 
     ID o1 = f.tr->toInternal(f.o1);
     ID es = f.debugLatch();
 
     SATAdaptor sat;
     sat.addClauses(f.tr->unrollWithInit(1));
+
+    // Add cardinality
+    sat.addClauses(f.getCardinality(0));
 
     BOOST_CHECK(sat.solve());
     BOOST_CHECK_EQUAL(sat.getAssignment(es), SAT::FALSE);
@@ -228,13 +270,15 @@ BOOST_AUTO_TEST_CASE(combinational_cardinality_1)
 {
     CombinationalAigFixture f;
     f.buildTR();
-    f.tr->setCardinality(1);
 
     ID o1 = f.tr->toInternal(f.o1);
     ID es = f.debugLatch();
 
     SATAdaptor sat;
     sat.addClauses(f.tr->unrollWithInit(1));
+
+    // Add cardinality
+    sat.addClauses(f.getCardinality(1));
 
     BOOST_CHECK(sat.solve());
     BOOST_CHECK(sat.solve({negate(o1)}));
@@ -249,7 +293,6 @@ BOOST_AUTO_TEST_CASE(basic_cardinality_0)
     AigFixture f;
     f.initZero();
     f.buildTR();
-    f.tr->setCardinality(0);
 
     ID o0 = f.tr->toInternal(f.o0);
     ID o0_3 = prime(o0, 3);
@@ -257,6 +300,9 @@ BOOST_AUTO_TEST_CASE(basic_cardinality_0)
 
     SATAdaptor sat;
     sat.addClauses(f.tr->unrollWithInit(4));
+
+    // Add cardinality
+    sat.addClauses(f.getCardinality(0));
 
     // Should be SAT with no assumptions
     BOOST_REQUIRE(sat.solve());
@@ -277,7 +323,6 @@ BOOST_AUTO_TEST_CASE(basic_debugging)
     AigFixture f;
     f.initZero();
     f.buildTR();
-    f.tr->setCardinality(1);
 
     ID o0 = f.tr->toInternal(f.o0);
     ID o0_3 = prime(o0, 3);
@@ -291,6 +336,9 @@ BOOST_AUTO_TEST_CASE(basic_debugging)
     {
         SATAdaptor sat;
         sat.addClauses(f.tr->unrollWithInit(4));
+
+        // Add cardinality
+        sat.addClauses(f.getCardinality(1));
 
         BOOST_REQUIRE(sat.solve({o0_3}));
 
@@ -324,48 +372,9 @@ BOOST_AUTO_TEST_CASE(basic_debugging)
     SATAdaptor sat;
     sat.addClauses(f.tr->unrollWithInit(4));
 
+    // Add cardinality
+    sat.addClauses(f.getCardinality(1));
+
     BOOST_CHECK(!sat.solve({o0_3}));
-}
-
-BOOST_AUTO_TEST_CASE(changing_cardinality)
-{
-    AigFixture f;
-    f.initZero();
-    f.buildTR();
-    f.tr->setCardinality(0);
-
-    ID o0 = f.tr->toInternal(f.o0);
-    ID o0_3 = prime(o0, 3);
-    std::vector<ID> debug_latches = f.debugLatches();
-
-    // Should be UNSAT with 0 cardinality and output = 1
-    SATAdaptor sat0, sat1;
-    sat0.addClauses(f.tr->unrollWithInit(4));
-    BOOST_CHECK(!sat0.solve({o0_3}));
-
-    f.tr->setCardinality(1);
-    sat1.addClauses(f.tr->unrollWithInit(4));
-    BOOST_REQUIRE(sat1.solve({o0_3}));
-
-    // One debug latch should be 1 (initially and in all cycles)
-    unsigned count = 0;
-    ID solution = ID_NULL;
-    for (ID id : debug_latches)
-    {
-        if (sat1.getAssignment(id) == SAT::TRUE)
-        {
-            count++;
-            solution = id;
-        }
-    }
-
-    BOOST_REQUIRE(solution != ID_NULL);
-    BOOST_CHECK_EQUAL(count, 1);
-
-    for (unsigned i = 0; i < 4; ++i)
-    {
-        ID primed = prime(solution, i);
-        BOOST_CHECK_EQUAL(sat1.getAssignment(primed), SAT::TRUE);
-    }
 }
 

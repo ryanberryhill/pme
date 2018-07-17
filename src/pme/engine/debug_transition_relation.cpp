@@ -44,9 +44,7 @@ namespace PME {
     }
 
     DebugTransitionRelation::DebugTransitionRelation(VariableManager & varman, aiger * aig)
-        : TransitionRelation(varman, aig),
-          m_cardinalityConstraint(varman),
-          m_cardinality(0)
+        : TransitionRelation(varman, aig)
     {
        enhanceModel();
     }
@@ -54,17 +52,13 @@ namespace PME {
     DebugTransitionRelation::DebugTransitionRelation(VariableManager & varman,
                                                      aiger * aig,
                                                      unsigned property)
-        : TransitionRelation(varman, aig, property),
-          m_cardinalityConstraint(varman),
-          m_cardinality(0)
+        : TransitionRelation(varman, aig, property)
     {
         enhanceModel();
     }
 
     DebugTransitionRelation::DebugTransitionRelation(const TransitionRelation & tr)
-        : TransitionRelation(tr),
-          m_cardinalityConstraint(vars()),
-          m_cardinality(0)
+        : TransitionRelation(tr)
     {
         enhanceModel();
     }
@@ -75,23 +69,6 @@ namespace PME {
         {
             createDebugFor(*it);
         }
-
-        clearCardinality();
-    }
-
-    void DebugTransitionRelation::clearCardinality()
-    {
-        m_cardinality = CARDINALITY_INF;
-    }
-
-    void DebugTransitionRelation::setCardinality(unsigned n)
-    {
-        m_cardinality = n;
-        // Need (n+1) to assume cardinality <= n (or = n)
-        m_cardinalityConstraint.setCardinality(n + 1);
-        ClauseVec new_clauses = m_cardinalityConstraint.CNFize();
-        m_cardinalityClauses.insert(m_cardinalityClauses.end(),
-                                    new_clauses.begin(), new_clauses.end());
     }
 
     ID DebugTransitionRelation::debugPPIForGate(ID id) const
@@ -139,8 +116,6 @@ namespace PME {
         m_debugLatchToID[debug_latch] = lhs;
 
         m_IDToDebugPPI[lhs] = debug_input;
-
-        m_cardinalityConstraint.addInput(debug_latch);
     }
 
     ID DebugTransitionRelation::debugLatchFor(const AndGate & gate) const
@@ -175,22 +150,5 @@ namespace PME {
         clauses.push_back({negate(lhs), ppi, negate(debug_latch)});
 
         return clauses;
-    }
-
-    ClauseVec DebugTransitionRelation::initState() const
-    {
-        ClauseVec init = TransitionRelation::initState();
-        init.insert(init.end(), m_cardinalityClauses.begin(), m_cardinalityClauses.end());
-
-        if (m_cardinality < CARDINALITY_INF)
-        {
-            Cube assumps = m_cardinalityConstraint.assumeLEq(m_cardinality);
-            for (ID id : assumps)
-            {
-                init.push_back({id});
-            }
-        }
-
-        return init;
     }
 }

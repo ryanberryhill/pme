@@ -23,6 +23,7 @@
 #define DEBUG_IC3_SOLVER_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/util/cardinality_constraint.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
@@ -54,12 +55,16 @@ namespace PME { namespace IC3 {
         private:
             std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
             bool isDebugLatch(ID latch) const;
+            void addCardinalityCNF(unsigned n);
+            void addBlockingClauses();
 
             DebugTransitionRelation & m_debug_tr;
             IC3Solver m_ic3;
             GlobalState & m_gs;
-            unsigned m_lastCardinality;
+            unsigned m_cardinality;
+            CardinalityConstraint m_cardinalityConstraint;
             std::set<ID> m_debug_latches;
+            std::vector<Clause> m_blockingClauses;
     };
 
 } }

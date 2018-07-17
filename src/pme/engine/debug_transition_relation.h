@@ -41,11 +41,6 @@ namespace PME {
             id_iterator begin_debug_inputs() const { return m_debugPPIs.cbegin(); }
             id_iterator end_debug_inputs() const { return m_debugPPIs.cend(); }
 
-            virtual ClauseVec initState() const override;
-
-            void setCardinality(unsigned n);
-            void clearCardinality();
-
             ID debugLatchForGate(ID id) const;
             ID debugPPIForGate(ID id) const;
             ID gateForDebugLatch(ID id) const;
@@ -56,11 +51,6 @@ namespace PME {
             std::unordered_map<ID, ID> m_IDToDebugLatch;
             std::unordered_map<ID, ID> m_debugLatchToID;
             std::unordered_map<ID, ID> m_IDToDebugPPI;
-
-            CardinalityConstraint m_cardinalityConstraint;
-            ClauseVec m_cardinalityClauses;
-
-            unsigned m_cardinality;
 
             void enhanceModel();
             void createDebugFor(const AndGate & gate);

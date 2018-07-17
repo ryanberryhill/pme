@@ -22,6 +22,7 @@
 #include "pme/id.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/util/proof_checker.h"
+#include "pme/util/cardinality_constraint.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
 
@@ -252,10 +253,56 @@ BOOST_AUTO_TEST_CASE(complex_init_state)
 {
     IC3Fixture f;
 
-    f.debug_tr->setCardinality(1);
     f.prepareSolver(*f.debug_tr);
 
+    // A cardinality constraint over the debug latches
+    CardinalityConstraint cardinality(f.vars);
+    std::vector<ID> debug_latches(f.debug_tr->begin_latches(), f.debug_tr->end_latches());
+    for (ID id : debug_latches)
+    {
+        cardinality.addInput(id);
+    }
+    cardinality.setCardinality(2);
+
+    ClauseVec cnf = cardinality.CNFize();
+
+    for (const Clause & cls : cnf)
+    {
+        f.solver->restrictInitialStates(cls);
+    }
+
+    Cube leq1 = cardinality.assumeLEq(1);
+    for (ID id : leq1)
+    {
+        f.solver->restrictInitialStates({id});
+    }
+
+    f.solver->initialStatesRestricted();
+
     IC3Result result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+}
+
+BOOST_AUTO_TEST_CASE(clear_restrictions)
+{
+    IC3Fixture f;
+
+    f.prepareSolver(*f.debug_tr);
+
+    std::vector<ID> debug_latches(f.debug_tr->begin_latches(), f.debug_tr->end_latches());
+    for (ID id : debug_latches)
+    {
+        f.solver->restrictInitialStates({negate(id)});
+    }
+    f.solver->initialStatesRestricted();
+
+    IC3Result result = f.solver->prove();
+    BOOST_CHECK_EQUAL(result.result, SAFE);
+
+    f.solver->clearRestrictions();
+    f.solver->initialStatesExpanded();
+
+    result = f.solver->prove();
     BOOST_CHECK_EQUAL(result.result, UNSAFE);
 }
 

@@ -166,6 +166,11 @@ namespace PME { namespace IC3 {
         initialize();
     }
 
+    void IC3Solver::clearRestrictions()
+    {
+        m_init_constraints.clear();
+    }
+
     void IC3Solver::restrictInitialStates(const Clause & cls)
     {
         assert(!cls.empty());
