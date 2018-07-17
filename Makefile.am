@@ -1,5 +1,7 @@
 AM_CPPFLAGS = -I$(srcdir)/src 
-AM_CXXFLAGS = -Wall -Wpedantic -Werror
+# unused private field warnings are only supported in clang, so get rid
+# of them for consistency
+AM_CXXFLAGS = -Wall -Wpedantic -Werror -Wno-unused-private-field
 # No pedantic for CFLAGS because aiger has some mixed code and declarations
 # that gcc4 errors about
 AM_CFLAGS = -Wall -Werror
