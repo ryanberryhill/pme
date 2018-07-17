@@ -27,8 +27,6 @@
 
 namespace PME {
 
-    const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
-
     std::string debugPPIName(ExternalID id)
     {
         std::ostringstream ss;
