@@ -36,7 +36,7 @@ namespace PME { namespace IC3 {
         public:
             typedef std::pair<bool, std::vector<ID>> Result;
             IC3Debugger(VariableManager & varman,
-                        const TransitionRelation & tr,
+                        DebugTransitionRelation & tr,
                         GlobalState & gs);
 
             void setCardinality(unsigned n);
@@ -55,7 +55,7 @@ namespace PME { namespace IC3 {
             std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
             bool isDebugLatch(ID latch) const;
 
-            DebugTransitionRelation m_debug_tr;
+            DebugTransitionRelation & m_debug_tr;
             IC3Solver m_ic3;
             GlobalState & m_gs;
             unsigned m_lastCardinality;

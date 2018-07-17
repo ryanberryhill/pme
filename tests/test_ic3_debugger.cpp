@@ -37,6 +37,7 @@ struct DebugFixture
     VariableManager vars;
     InductiveTrace trace;
     std::unique_ptr<TransitionRelation> tr;
+    std::unique_ptr<DebugTransitionRelation> debug_tr;
     std::unique_ptr<IC3Debugger> debugger;
     GlobalState gs;
 
@@ -73,6 +74,7 @@ struct DebugFixture
 
         gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
+        debug_tr.reset(new DebugTransitionRelation(*tr));
         prepareDebugger();
     }
 
@@ -83,7 +85,7 @@ struct DebugFixture
 
     void prepareDebugger()
     {
-        debugger.reset(new IC3Debugger(vars, *tr, gs));
+        debugger.reset(new IC3Debugger(vars, *debug_tr, gs));
     }
 
     ~DebugFixture()
