@@ -45,6 +45,7 @@ namespace PME
 
             unsigned getInputCardinality() const;
             unsigned getOutputCardinality() const;
+            void clearIncrementality();
             ClauseVec CNFize();
 
             const std::vector<ID> & outputs() const;
@@ -65,6 +66,7 @@ namespace PME
             void increaseNodeCardinality(TotalizerTree * node,
                                          std::set<TotalizerTree *> & visited);
             ClauseVec CNFize(TotalizerTree * tree);
+            void clearIncrementality(TotalizerTree * tree);
             void updateCachedOutputs();
             bool isDirtyClause(const Clause & cls, TotalizerTree * node) const;
     };

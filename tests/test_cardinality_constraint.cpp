@@ -511,3 +511,23 @@ BOOST_AUTO_TEST_CASE(start_from_high_cardinality)
     BOOST_CHECK(f.sat.solve());
 }
 
+BOOST_AUTO_TEST_CASE(clear_incrementality)
+{
+    CardinalityFixture f(20);
+    f.cardinality.setCardinality(16);
+
+    ClauseVec cnf_orig = f.cardinality.CNFize();
+    ClauseVec should_be_empty = f.cardinality.CNFize();
+
+    BOOST_CHECK(!cnf_orig.empty());
+    BOOST_CHECK(should_be_empty.empty());
+
+    f.cardinality.clearIncrementality();
+    ClauseVec cnf_again = f.cardinality.CNFize();
+
+    std::sort(cnf_orig.begin(), cnf_orig.end());
+    std::sort(cnf_again.begin(), cnf_again.end());
+
+    BOOST_CHECK(cnf_again == cnf_orig);
+}
+

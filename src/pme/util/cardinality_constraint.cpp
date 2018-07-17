@@ -54,6 +54,11 @@ namespace PME
                 return s;
             }
             void markClean() { m_dirty.clear(); }
+            void markDirty()
+            {
+                m_dirty.clear();
+                m_dirty.insert(m_outputs.begin(), m_outputs.end());
+            }
             bool isDirty() const { return !m_dirty.empty(); }
             bool isDirty(ID id) const { return m_dirty.count(id) > 0; }
             bool isClean() const { return !isDirty(); }
@@ -198,6 +203,19 @@ namespace PME
         return CNFize(m_root.get());
     }
 
+    void CardinalityConstraint::clearIncrementality()
+    {
+        clearIncrementality(m_root.get());
+    }
+
+    void CardinalityConstraint::clearIncrementality(TotalizerTree * tree)
+    {
+        if (tree == nullptr) { return; }
+        tree->markDirty();
+        if (tree->left()) { clearIncrementality(tree->left().get()); }
+        if (tree->right()) { clearIncrementality(tree->right().get()); }
+    }
+
     ClauseVec CardinalityConstraint::CNFize(TotalizerTree * tree)
     {
         ClauseVec cnf;
@@ -219,7 +237,7 @@ namespace PME
         cnf.insert(cnf.end(), lcnf.begin(), lcnf.end());
         cnf.insert(cnf.end(), rcnf.begin(), rcnf.end());
 
-        // Notation and algorithm are based one "Efficient CNF Encoding of
+        // Notation and algorithm are based on "Efficient CNF Encoding of
         // Boolean Cardinality Constraints"
         // a_vec relates to the left subtree and b_vec to the right subtree,
         // while r_vec relates to this subtree
