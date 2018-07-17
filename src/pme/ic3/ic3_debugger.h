@@ -47,6 +47,10 @@ namespace PME { namespace IC3 {
 
             void blockSolution(const std::vector<ID> & soln);
 
+            LemmaID addLemma(const Cube & c, unsigned level);
+            std::vector<Cube> getFrameCubes(unsigned n) const;
+            unsigned numFrames() const;
+
         private:
             std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
             bool isDebugLatch(ID latch) const;

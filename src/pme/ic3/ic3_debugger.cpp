@@ -139,5 +139,20 @@ namespace PME { namespace IC3 {
         return m_debug_latches.count(strip(latch)) > 0;
     }
 
+    LemmaID IC3Debugger::addLemma(const Cube & c, unsigned level)
+    {
+        return m_ic3.addLemma(c, level);
+    }
+
+    std::vector<Cube> IC3Debugger::getFrameCubes(unsigned n) const
+    {
+        return m_ic3.getFrameCubes(n);
+    }
+
+    unsigned IC3Debugger::numFrames() const
+    {
+        return m_ic3.numFrames();
+    }
+
 } }
 

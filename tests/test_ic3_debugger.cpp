@@ -168,3 +168,52 @@ BOOST_AUTO_TEST_CASE(incremental_debug)
     std::tie(found, std::ignore) = f.debugger->debug();
     BOOST_CHECK(!found);
 }
+
+BOOST_AUTO_TEST_CASE(lemma_access)
+{
+    DebugFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.debugger->addLemma({negate(l0)}, 1);
+    f.debugger->addLemma({negate(l1)}, 2);
+    f.debugger->addLemma({negate(l2)}, 2);
+    f.debugger->addLemma({negate(l3)}, 2);
+
+    std::vector<Cube> f1 = f.debugger->getFrameCubes(1);
+    std::vector<Cube> f2 = f.debugger->getFrameCubes(2);
+    std::vector<Cube> f3 = f.debugger->getFrameCubes(3);
+    std::vector<Cube> finf = f.debugger->getFrameCubes(LEVEL_INF);
+
+    BOOST_CHECK_EQUAL(f1.size(), 1);
+    BOOST_CHECK_EQUAL(f2.size(), 3);
+    BOOST_CHECK_EQUAL(f3.size(), 0);
+    BOOST_CHECK_EQUAL(finf.size(), 0);
+
+    std::vector<Cube> expected = {{negate(l0)}};
+    BOOST_CHECK(f1 == expected);
+
+    expected = {{negate(l1)}, {negate(l2)}, {negate(l3)}};
+    std::sort(expected.begin(), expected.end());
+    std::sort(f2.begin(), f2.end());
+
+    BOOST_CHECK(f2 == expected);
+
+    f.debugger->addLemma({negate(l0)}, LEVEL_INF);
+    f.debugger->addLemma({negate(l1)}, LEVEL_INF);
+    f.debugger->addLemma({negate(l2)}, LEVEL_INF);
+    f.debugger->addLemma({negate(l3)}, LEVEL_INF);
+
+    f1 = f.debugger->getFrameCubes(1);
+    f2 = f.debugger->getFrameCubes(2);
+    f3 = f.debugger->getFrameCubes(3);
+    finf = f.debugger->getFrameCubes(LEVEL_INF);
+
+    BOOST_CHECK_EQUAL(f1.size(), 0);
+    BOOST_CHECK_EQUAL(f2.size(), 0);
+    BOOST_CHECK_EQUAL(f3.size(), 0);
+    BOOST_CHECK_EQUAL(finf.size(), 4);
+}
