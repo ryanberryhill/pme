@@ -117,7 +117,7 @@ namespace PME { namespace IC3 {
 
             LemmaID addLemma(const Cube & c, unsigned level);
 
-            Frame getFrame(unsigned n) const;
+            std::vector<Cube> getFrameCubes(unsigned n) const;
             unsigned numFrames() const;
 
         private:

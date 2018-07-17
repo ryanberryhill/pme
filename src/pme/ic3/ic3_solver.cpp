@@ -103,17 +103,20 @@ namespace PME { namespace IC3 {
         return m_trace.numFrames();
     }
 
-    Frame IC3Solver::getFrame(unsigned n) const
+    std::vector<Cube> IC3Solver::getFrameCubes(unsigned n) const
     {
+        std::vector<Cube> cubes;
+
         if (n == LEVEL_INF || n < m_trace.numFrames())
         {
-            return m_trace.getFrame(n);
+            Frame f = m_trace.getFrame(n);
+            for (LemmaID lemma_id : f)
+            {
+                cubes.push_back(m_trace.cubeOf(lemma_id));
+            }
         }
-        else
-        {
-            Frame empty;
-            return empty;
-        }
+
+        return cubes;
     }
 
     void IC3Solver::resetSAT()

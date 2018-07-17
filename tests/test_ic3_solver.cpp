@@ -213,25 +213,34 @@ BOOST_AUTO_TEST_CASE(lemma_access)
     f.solver->addLemma({negate(l2)}, 2);
     f.solver->addLemma({negate(l3)}, 2);
 
-    Frame f1 = f.solver->getFrame(1);
-    Frame f2 = f.solver->getFrame(2);
-    Frame f3 = f.solver->getFrame(3);
-    Frame finf = f.solver->getFrame(LEVEL_INF);
+    std::vector<Cube> f1 = f.solver->getFrameCubes(1);
+    std::vector<Cube> f2 = f.solver->getFrameCubes(2);
+    std::vector<Cube> f3 = f.solver->getFrameCubes(3);
+    std::vector<Cube> finf = f.solver->getFrameCubes(LEVEL_INF);
 
     BOOST_CHECK_EQUAL(f1.size(), 1);
     BOOST_CHECK_EQUAL(f2.size(), 3);
     BOOST_CHECK_EQUAL(f3.size(), 0);
     BOOST_CHECK_EQUAL(finf.size(), 0);
 
+    std::vector<Cube> expected = {{negate(l0)}};
+    BOOST_CHECK(f1 == expected);
+
+    expected = {{negate(l1)}, {negate(l2)}, {negate(l3)}};
+    std::sort(expected.begin(), expected.end());
+    std::sort(f2.begin(), f2.end());
+
+    BOOST_CHECK(f2 == expected);
+
     f.solver->addLemma({negate(l0)}, LEVEL_INF);
     f.solver->addLemma({negate(l1)}, LEVEL_INF);
     f.solver->addLemma({negate(l2)}, LEVEL_INF);
     f.solver->addLemma({negate(l3)}, LEVEL_INF);
 
-    f1 = f.solver->getFrame(1);
-    f2 = f.solver->getFrame(2);
-    f3 = f.solver->getFrame(3);
-    finf = f.solver->getFrame(LEVEL_INF);
+    f1 = f.solver->getFrameCubes(1);
+    f2 = f.solver->getFrameCubes(2);
+    f3 = f.solver->getFrameCubes(3);
+    finf = f.solver->getFrameCubes(LEVEL_INF);
 
     BOOST_CHECK_EQUAL(f1.size(), 0);
     BOOST_CHECK_EQUAL(f2.size(), 0);
