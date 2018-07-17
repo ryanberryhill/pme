@@ -22,26 +22,24 @@
 #include "pme/id.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/global_state.h"
-#include "pme/ivc/ivc.h"
-#include "pme/ivc/caivc.h"
+#include "pme/ivc/correction_set_finder.h"
 
-#define BOOST_TEST_MODULE IVCTest
+#define BOOST_TEST_MODULE CorrectionSetFinderTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <limits>
-
 using namespace PME;
 
-struct IVCFixture
+struct CorrectionSetFixture
 {
     aiger * aig;
     ExternalID l0, l1, l2, l3, a0, a1, a2, a3, a4, a5, a6, o0;
     VariableManager vars;
-    std::unique_ptr<TransitionRelation> tr;
     GlobalState gs;
+    std::unique_ptr<DebugTransitionRelation> tr;
+    std::unique_ptr<CorrectionSetFinder> finder;
 
-    IVCFixture()
+    CorrectionSetFixture()
     {
         aig = aiger_init();
 
@@ -72,9 +70,7 @@ struct IVCFixture
         // a0-a3 are ands of each pair of adjacent latches
         // a4 and a5 are ands of adjacent pairs of a0 and a3
         // a6 = a4 & a5 = <every adjacent pair is high>
-        // a6 <=> ALL(l0-l3), but the structure is important for IVCs
-        // In particular, this circuit has different IVCs depending on the
-        // initial state.
+        // a6 <=> ALL(l0-l3), but the structure is important
         aiger_add_and(aig, a0, l0, l1);
         aiger_add_and(aig, a1, l1, l2);
         aiger_add_and(aig, a2, l2, l3);
@@ -84,7 +80,8 @@ struct IVCFixture
         aiger_add_and(aig, a6, a4, a5);
         aiger_add_output(aig, a6, "o0");
         o0 = a6;
-        tr.reset(new TransitionRelation(vars, aig));
+        tr.reset(new DebugTransitionRelation(vars, aig));
+        finder.reset(new CorrectionSetFinder(vars, *tr, gs));
     }
 
     void setInit(ID latch, ID val)
@@ -92,26 +89,16 @@ struct IVCFixture
         tr->setInit(latch, val);
     }
 
-    ~IVCFixture()
+    ~CorrectionSetFixture()
     {
         aiger_reset(aig);
         aig = nullptr;
     }
 };
 
-void sortIVCs(std::vector<IVC> & ivcs)
+BOOST_AUTO_TEST_CASE(correction_sets)
 {
-    for (IVC ivc : ivcs)
-    {
-        std::sort(ivc.begin(), ivc.end());
-    }
-    std::sort(ivcs.begin(), ivcs.end());
-}
-
-template<class T>
-void runIVCTest()
-{
-    IVCFixture f;
+    CorrectionSetFixture f;
 
     ID a0 = f.tr->toInternal(f.a0);
     ID a1 = f.tr->toInternal(f.a1);
@@ -121,45 +108,82 @@ void runIVCTest()
     ID a5 = f.tr->toInternal(f.a5);
     ID a6 = f.tr->toInternal(f.a6);
 
-    std::vector<IVC> actual;
-    std::vector<IVC> mivcs = { {a0, a4, a6},
-                               {a1, a4, a6},
-                               {a2, a5, a6},
-                               {a3, a5, a6} };
-    sortIVCs(mivcs);
+    CorrectionSetFinder & finder = *f.finder;
 
-    T finder(f.vars, *f.tr, f.gs);
-    finder.findIVCs();
+    BOOST_REQUIRE(finder.moreCorrectionSets());
 
-    BOOST_CHECK_EQUAL(finder.numMIVCs(), mivcs.size());
-    BOOST_REQUIRE(finder.minimumIVCKnown());
-    IVC min_ivc = finder.getMinimumIVC();
-    std::sort(min_ivc.begin(), min_ivc.end());
+    bool found;
+    CorrectionSet corr;
 
-    bool min_found = false;
+    // MCS {a6}
+    finder.setCardinality(1);
+    std::tie(found, corr) = finder.findAndBlock();
 
-    size_t min_size = std::numeric_limits<size_t>::max();
-    for (size_t i = 0; i < finder.numMIVCs(); ++i)
-    {
-        IVC mivc = finder.getMIVC(i);
-        actual.push_back(mivc);
-        min_size = std::min(min_size, mivc.size());
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 1);
+    BOOST_CHECK_EQUAL(corr.at(0), a6);
 
-        if (mivc == min_ivc)
-        {
-            min_found = true;
-        }
-    }
+    std::tie(found, corr) = finder.findAndBlock();
+    BOOST_REQUIRE(!found);
 
-    BOOST_CHECK(min_found);
-    BOOST_CHECK_EQUAL(finder.getMinimumIVC().size(), min_size);
+    BOOST_REQUIRE(finder.moreCorrectionSets());
 
-    sortIVCs(actual);
-    BOOST_CHECK(actual == mivcs);
-}
+    // MCS {a4, a5}
+    finder.setCardinality(2);
+    std::tie(found, corr) = finder.findAndBlock();
 
-BOOST_AUTO_TEST_CASE(basic_ivc_caivc)
-{
-    runIVCTest<CAIVCFinder>();
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 2);
+    CorrectionSet expected = {a4, a5};
+    std::sort(expected.begin(), expected.end());
+    std::sort(corr.begin(), corr.end());
+    BOOST_CHECK(corr == expected);
+
+    std::tie(found, corr) = finder.findAndBlock();
+    BOOST_REQUIRE(!found);
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+
+    // MCSes {a0, a1, a5} and {a2, a3, a4}
+    finder.setCardinality(3);
+    CorrectionSet expected1 = {a0, a1, a5};
+    CorrectionSet expected2 = {a2, a3, a4};
+    std::sort(expected1.begin(), expected1.end());
+    std::sort(expected2.begin(), expected2.end());
+
+    CorrectionSet actual1, actual2;
+    std::tie(found, actual1) = finder.findAndBlock();
+    BOOST_REQUIRE(found);
+    std::tie(found, actual2) = finder.findAndBlock();
+    BOOST_REQUIRE(found);
+
+    BOOST_CHECK_EQUAL(actual1.size(), 3);
+    BOOST_CHECK_EQUAL(actual2.size(), 3);
+
+    std::tie(found, corr) = finder.findAndBlock();
+    BOOST_REQUIRE(!found);
+
+    std::sort(actual1.begin(), actual1.end());
+    std::sort(actual2.begin(), actual2.end());
+
+    BOOST_REQUIRE(actual1 != actual2);
+    BOOST_CHECK(actual1 == expected1 || actual1 == expected2);
+    BOOST_CHECK(actual2 == expected1 || actual2 == expected2);
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+
+    // MCS {a0, a1, a2, a3}
+    finder.setCardinality(4);
+    std::tie(found, corr) = finder.findAndBlock();
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 4);
+    expected = {a0, a1, a2, a3};
+    std::sort(expected.begin(), expected.end());
+    BOOST_CHECK(corr == expected);
+
+    std::tie(found, corr) = finder.findAndBlock();
+    BOOST_REQUIRE(!found);
+
+    BOOST_REQUIRE(!finder.moreCorrectionSets());
 }
 

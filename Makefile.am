@@ -71,7 +71,13 @@ libpme_a_SOURCES = src/aiger/aiger.h \
 				   src/pme/ic3/transition_relation_solver.h \
 				   src/pme/ic3/transition_relation_solver.cpp \
 				   src/pme/ic3/unsat_core_lifter.h \
-				   src/pme/ic3/unsat_core_lifter.cpp
+				   src/pme/ic3/unsat_core_lifter.cpp \
+				   src/pme/ivc/ivc.h \
+				   src/pme/ivc/ivc.cpp \
+				   src/pme/ivc/correction_set_finder.h \
+				   src/pme/ivc/correction_set_finder.cpp \
+				   src/pme/ivc/caivc.h \
+				   src/pme/ivc/caivc.cpp 
 
 libpme_a_LIBADD = $(SAT_LIBS)
 
@@ -132,7 +138,9 @@ TESTS = test_sat_adaptor \
 		test_unsat_core_lifter \
 		test_ic3_solver \
 		test_ic3_debugger \
-		test_basics
+		test_basics \
+		test_correction_set_finder \
+		test_ivc
 
 check_PROGRAMS = $(TESTS)
 
@@ -202,6 +210,12 @@ test_ic3_debugger_LDADD = $(PME_TEST_LIBS)
 
 test_basics_SOURCES = tests/test_basics.cpp
 test_basics_LDADD = $(PME_TEST_LIBS)
+
+test_ivc_SOURCES = tests/test_ivc.cpp
+test_ivc_LDADD = $(PME_TEST_LIBS)
+
+test_correction_set_finder_SOURCES = tests/test_correction_set_finder.cpp
+test_correction_set_finder_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 
