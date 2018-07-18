@@ -249,7 +249,9 @@ void print_cex(void * pme, aiger * aig)
 
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
-int g_ic3 = 0, g_check = 0, g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_checkmin = 0;
+int g_ic3 = 0, g_bmc = 0;
+int g_check = 0, g_checkmin = 0;
+int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0;
 int g_saveproofs = 0;
 
 int main(int argc, char ** argv)
@@ -261,10 +263,12 @@ int main(int argc, char ** argv)
     void * pme = NULL;
     int option = 0;
     int option_index = 0;
+    unsigned bmc_kmax = 0;
     char failure = 0;
 
     static struct option long_opts[] = {
             {"ic3",             no_argument,        &g_ic3,        1 },
+            {"bmc",             required_argument,  &g_bmc,        1 },
             {"check",           no_argument,        &g_check,      1 },
             {"check-minimal",   no_argument,        &g_checkmin,   1 },
             {"save-proofs",     required_argument,  &g_saveproofs, 1 },
@@ -294,6 +298,18 @@ int main(int argc, char ** argv)
                         strncpy(g_save_path, optarg, sizeof(g_save_path));
                     }
                 }
+                else if (strcmp(long_opts[option_index].name, "bmc") == 0)
+                {
+                    char *endptr = NULL;
+                    // 0 base = decimal, hex, or octal depending on prefix
+                    bmc_kmax = strtoul(optarg, &endptr, 0);
+                    if (*endptr != '\0' && *optarg != '\0')
+                    {
+                        fprintf(stderr, "--bmc argument %s not understood\n", optarg);
+                        print_usage(argv);
+                        return EXIT_FAILURE;
+                    }
+                }
                 break;
             case 'v':
                 g_verbosity++;
@@ -314,9 +330,9 @@ int main(int argc, char ** argv)
         aig_path = argv[optind];
         proof_path = argv[optind + 1];
     }
-    else if (argc == optind + 1 && g_ic3)
+    else if (argc == optind + 1 && (g_ic3 || g_bmc))
     {
-        // Given an AIG and --ic3
+        // Given an AIG and --ic3 or --bmc
         aig_path = argv[optind];
     }
     else
@@ -390,6 +406,31 @@ int main(int argc, char ** argv)
     // Do things in the PME library
     cpme_log_to_stdout(pme);
     cpme_set_verbosity(pme, g_verbosity);
+
+    if (g_bmc)
+    {
+        int safe = cpme_run_bmc(pme, bmc_kmax);
+        if (safe < 0)
+        {
+            fprintf(stderr, "Error running BMC\n");
+            failure = 1; goto cleanup;
+        }
+        else if (safe == 0)
+        {
+            print_cex(pme, aig);
+            goto cleanup;
+        }
+        else
+        {
+            // Bounded safety i.e., we don't know the result: if we don't have
+            // IC3 running or a proof, we need to quit now
+            if (!g_ic3 && !proof)
+            {
+                print(0, "2\n");
+                goto cleanup;
+            }
+        }
+    }
 
     // Run IC3
     if (g_ic3)

@@ -362,6 +362,22 @@ int cpme_run_ic3(void * pme)
     }
 }
 
+int cpme_run_bmc(void * pme, unsigned k_max)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        bool safe = eng->runBMC(k_max);
+        return safe;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 size_t cpme_num_proofs(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

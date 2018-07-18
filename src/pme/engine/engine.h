@@ -47,6 +47,7 @@ namespace PME
             bool checkProof();
             void minimize(PMEMinimizationAlgorithm algorithm);
             bool runIC3();
+            bool runBMC(unsigned k_max);
 
             ClauseVec getOriginalProof() const;
             ExternalClauseVec getOriginalProofExternal() const;

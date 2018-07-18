@@ -28,6 +28,7 @@
 #include "pme/minimization/brute_force.h"
 #include "pme/ic3/ic3.h"
 #include "pme/ic3/ic3_solver.h"
+#include "pme/bmc/bmc_solver.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -100,6 +101,23 @@ namespace PME
         }
 
         return result.result == SAFE;
+    }
+
+    bool Engine::runBMC(unsigned k_max)
+    {
+        BMC::BMCSolver solver(m_vars, m_tr, m_gs);
+        SafetyResult result = solver.solve(k_max);
+
+        if (result.result == UNSAFE)
+        {
+            m_cex = result.cex;
+        }
+        else
+        {
+            assert(result.result == UNKNOWN);
+        }
+
+        return result.result == UNKNOWN;
     }
 
     SafetyCounterExample Engine::getCounterExample() const
