@@ -19,12 +19,12 @@
  * IN THE SOFTWARE.
  */
 
-#include "pme/ic3/ic3_debugger.h"
+#include "pme/util/ic3_debugger.h"
 
 #include <limits>
 #include <cassert>
 
-namespace PME { namespace IC3 {
+namespace PME {
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
 
     IC3Debugger::IC3Debugger(VariableManager & varman,
@@ -106,7 +106,7 @@ namespace PME { namespace IC3 {
         }
     }
 
-    IC3Debugger::Result IC3Debugger::debug()
+    Debugger::Result IC3Debugger::debug()
     {
         SafetyResult result = m_ic3.prove();
 
@@ -123,18 +123,6 @@ namespace PME { namespace IC3 {
 
             return std::make_pair(true, soln);
         }
-    }
-
-    IC3Debugger::Result IC3Debugger::debugAndBlock()
-    {
-        Result result = debug();
-
-        if (result.first)
-        {
-            blockSolution(result.second);
-        }
-
-        return result;
     }
 
     void IC3Debugger::blockSolution(const std::vector<ID> & soln)
@@ -176,7 +164,7 @@ namespace PME { namespace IC3 {
         return m_debug_latches.count(strip(latch)) > 0;
     }
 
-    LemmaID IC3Debugger::addLemma(const Cube & c, unsigned level)
+    IC3::LemmaID IC3Debugger::addLemma(const Cube & c, unsigned level)
     {
         return m_ic3.addLemma(c, level);
     }
@@ -191,5 +179,5 @@ namespace PME { namespace IC3 {
         return m_ic3.numFrames();
     }
 
-} }
+}
 

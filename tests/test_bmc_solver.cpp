@@ -191,6 +191,105 @@ BOOST_AUTO_TEST_CASE(unsafe)
     }
 }
 
+BOOST_AUTO_TEST_CASE(assumptions)
+{
+    BMCFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.setInit(l0, ID_NULL);
+    f.setInit(l1, ID_NULL);
+    f.setInit(l2, ID_NULL);
+    f.setInit(l3, ID_NULL);
+
+    f.prepareSolver();
+
+    // Unsafe with no initial states
+    SafetyResult result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    Cube assumps = {negate(l0), l1, l2, negate(l3)};
+
+    // Safe for one cycle
+    result = f.solver->solve(1, assumps);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+
+    // Unsafe in 2
+    result = f.solver->solve(2, assumps);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    // Unsafe again in one with assumptions removed
+    result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+}
+
+BOOST_AUTO_TEST_CASE(restrict_init_state)
+{
+    BMCFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.setInit(l0, ID_NULL);
+    f.setInit(l1, ID_NULL);
+    f.setInit(l2, ID_NULL);
+    f.setInit(l3, ID_NULL);
+
+    f.prepareSolver();
+
+    // Unsafe with no initial states
+    SafetyResult result = f.solver->solve(0);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    ClauseVec restrict = {{negate(l0)}, {l1}, {l2}, {negate(l3)}};
+    f.solver->restrictInitialStates(restrict);
+
+    // Safe for one cycle
+    result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+
+    // Unsafe in 2
+    result = f.solver->solve(2);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    std::vector<Cube> expected_states;
+    expected_states.push_back({negate(l0), l1, l2, negate(l3)});
+    expected_states.push_back({negate(l0), negate(l1), l2, l3});
+    expected_states.push_back({l0, negate(l1), negate(l2), l3});
+
+    // Check the counter-example
+    SafetyCounterExample cex = result.cex;
+    BOOST_CHECK(cex.size() == expected_states.size());
+
+    for (size_t i = 0; i < expected_states.size(); ++i)
+    {
+        Cube actual, expected;
+        expected = expected_states[i];
+        actual = cex[i].state;
+        BOOST_CHECK(cex[i].inputs.empty());
+        std::sort(expected.begin(), expected.end());
+        std::sort(actual.begin(), actual.end());
+        BOOST_CHECK(expected == actual);
+    }
+
+    f.solver->clearRestrictions();
+
+    // Unsafe once again with no initial states
+    result = f.solver->solve(0);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    // Re-restrict and try again
+    f.solver->restrictInitialStates(restrict);
+
+    result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+}
+
 BOOST_AUTO_TEST_CASE(unsafe_extra_frames)
 {
     BMCFixture f;

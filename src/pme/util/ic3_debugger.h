@@ -19,10 +19,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef DEBUG_IC3_SOLVER_H_INCLUDED
-#define DEBUG_IC3_SOLVER_H_INCLUDED
+#ifndef IC3_DEBUGGER_H_INCLUDED
+#define IC3_DEBUGGER_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/util/debugger.h"
 #include "pme/util/cardinality_constraint.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
@@ -30,25 +31,22 @@
 #include "pme/engine/global_state.h"
 #include "pme/ic3/ic3_solver.h"
 
-namespace PME { namespace IC3 {
+namespace PME {
 
-    class IC3Debugger
+    class IC3Debugger : public Debugger
     {
         public:
-            typedef std::pair<bool, std::vector<ID>> Result;
             IC3Debugger(VariableManager & varman,
                         DebugTransitionRelation & tr,
                         GlobalState & gs);
 
-            void setCardinality(unsigned n);
-            void clearCardinality();
+            virtual void setCardinality(unsigned n) override;
+            virtual void clearCardinality() override;
 
-            Result debug();
-            Result debugAndBlock();
+            virtual Result debug() override;
+            virtual void blockSolution(const std::vector<ID> & soln) override;
 
-            void blockSolution(const std::vector<ID> & soln);
-
-            LemmaID addLemma(const Cube & c, unsigned level);
+            IC3::LemmaID addLemma(const Cube & c, unsigned level);
             std::vector<Cube> getFrameCubes(unsigned n) const;
             unsigned numFrames() const;
 
@@ -59,7 +57,7 @@ namespace PME { namespace IC3 {
             void addBlockingClauses();
 
             DebugTransitionRelation & m_debug_tr;
-            IC3Solver m_ic3;
+            IC3::IC3Solver m_ic3;
             GlobalState & m_gs;
             unsigned m_cardinality;
             CardinalityConstraint m_cardinalityConstraint;
@@ -67,7 +65,7 @@ namespace PME { namespace IC3 {
             std::vector<Clause> m_blockingClauses;
     };
 
-} }
+}
 
 #endif
 

@@ -33,19 +33,49 @@ namespace PME { namespace BMC {
           m_gs(gs),
           m_numFrames(0),
           m_solverInited(false)
+    { }
+
+    void BMCSolver::restrictInitialStates(const ClauseVec & vec)
     {
+        for (const Clause & cls : vec)
+        {
+            restrictInitialStates(cls);
+        }
+    }
+
+    void BMCSolver::restrictInitialStates(const Clause & cls)
+    {
+        m_init_constraints.push_back(cls);
+        if (m_solverInited) { m_solver.addClause(cls); }
+    }
+
+    void BMCSolver::clearRestrictions()
+    {
+        m_init_constraints.clear();
+        m_solver.reset();
+        m_solverInited = false;
+        m_numFrames = 0;
     }
 
     SafetyResult BMCSolver::solve(unsigned k_max)
+    {
+        Cube assumps;
+        return solve(k_max, assumps);
+    }
+
+    SafetyResult BMCSolver::solve(unsigned k_max, const Cube & assumps)
     {
         SafetyResult result;
 
         for (unsigned k = 0; k <= k_max; ++k)
         {
             ID bad = prime(m_tr.bad(), k);
+
             if (k >= m_numFrames) { unroll(k + 1); }
 
-            bool sat = m_solver.solve({bad});
+            Cube kassumps = assumps;
+            kassumps.push_back({bad});
+            bool sat = m_solver.solve(kassumps);
             if (sat)
             {
                 result.result = UNSAFE;
@@ -83,6 +113,7 @@ namespace PME { namespace BMC {
 
         m_solver.addClauses(m_tr.initState());
         m_solver.addClauses(m_tr.unrollFrame(0));
+        m_solver.addClauses(m_init_constraints);
 
         m_numFrames = 0;
         m_solverInited = true;

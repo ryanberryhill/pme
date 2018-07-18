@@ -53,6 +53,12 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/find_minimal_support.cpp \
                    src/pme/util/simplify_tr.h \
                    src/pme/util/simplify_tr.cpp \
+                   src/pme/util/debugger.h \
+                   src/pme/util/debugger.cpp \
+                   src/pme/util/ic3_debugger.h \
+                   src/pme/util/ic3_debugger.cpp \
+                   src/pme/util/bmc_debugger.h \
+                   src/pme/util/bmc_debugger.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \
@@ -67,8 +73,6 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ic3/ic3.cpp \
                    src/pme/ic3/ic3_solver.h \
                    src/pme/ic3/ic3_solver.cpp \
-                   src/pme/ic3/ic3_debugger.h \
-                   src/pme/ic3/ic3_debugger.cpp \
                    src/pme/ic3/inductive_trace.h \
                    src/pme/ic3/inductive_trace.cpp \
                    src/pme/ic3/frame_solver.h \
@@ -144,7 +148,7 @@ TESTS = test_sat_adaptor \
         test_frame_solver \
         test_unsat_core_lifter \
         test_ic3_solver \
-        test_ic3_debugger \
+        test_debugger \
         test_bmc_solver \
         test_basics \
         test_correction_set_finder \
@@ -213,8 +217,8 @@ test_unsat_core_lifter_LDADD = $(PME_TEST_LIBS)
 test_ic3_solver_SOURCES = tests/test_ic3_solver.cpp
 test_ic3_solver_LDADD = $(PME_TEST_LIBS)
 
-test_ic3_debugger_SOURCES = tests/test_ic3_debugger.cpp
-test_ic3_debugger_LDADD = $(PME_TEST_LIBS)
+test_debugger_SOURCES = tests/test_debugger.cpp
+test_debugger_LDADD = $(PME_TEST_LIBS)
 
 test_bmc_solver_SOURCES = tests/test_bmc_solver.cpp
 test_bmc_solver_LDADD = $(PME_TEST_LIBS)

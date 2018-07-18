@@ -27,6 +27,7 @@ namespace PME
 
     PMEOptions::PMEOptions() :
         simplify(true),
-        camsis_abstraction_refinement(true)
+        camsis_abstraction_refinement(true),
+        caivc_use_bmc(true)
     { }
 }

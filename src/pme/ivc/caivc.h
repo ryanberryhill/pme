@@ -25,7 +25,7 @@
 #include "pme/ivc/ivc.h"
 #include "pme/ivc/correction_set_finder.h"
 #include "pme/engine/debug_transition_relation.h"
-#include "pme/ic3/ic3_debugger.h"
+#include "pme/util/ic3_debugger.h"
 #include "pme/util/maxsat_solver.h"
 
 #include <vector>

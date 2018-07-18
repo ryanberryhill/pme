@@ -19,33 +19,19 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CORRECTION_SET_FINDER_H_INCLUDED
-#define CORRECTION_SET_FINDER_H_INCLUDED
-
-#include "pme/util/ic3_debugger.h"
+#include "pme/util/debugger.h"
 
 namespace PME {
-
-    typedef std::vector<ID> CorrectionSet;
-
-    class CorrectionSetFinder
+    Debugger::Result Debugger::debugAndBlock()
     {
-        public:
-            CorrectionSetFinder(VariableManager & varman,
-                                DebugTransitionRelation & tr,
-                                GlobalState & gs);
+        Result result = debug();
 
-            bool moreCorrectionSets();
-            std::pair<bool, CorrectionSet> findAndBlock();
-            void setCardinality(unsigned n);
+        if (result.first)
+        {
+            blockSolution(result.second);
+        }
 
-        private:
-            unsigned m_cardinality;
-            IC3Debugger m_solver;
-            IC3Debugger m_solver_inf;
-    };
-
+        return result;
+    }
 }
-
-#endif
 

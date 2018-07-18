@@ -38,6 +38,11 @@ namespace PME { namespace BMC {
                       GlobalState & gs);
 
             SafetyResult solve(unsigned k_max);
+            SafetyResult solve(unsigned k_max, const Cube & assumps);
+
+            void restrictInitialStates(const Clause & cls);
+            void restrictInitialStates(const ClauseVec & vec);
+            void clearRestrictions();
 
         private:
             void unroll(unsigned n);
@@ -51,6 +56,7 @@ namespace PME { namespace BMC {
             SATAdaptor m_solver;
             unsigned m_numFrames;
             bool m_solverInited;
+            std::vector<Clause> m_init_constraints;
     };
 
 } }

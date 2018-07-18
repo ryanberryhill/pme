@@ -19,30 +19,47 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CORRECTION_SET_FINDER_H_INCLUDED
-#define CORRECTION_SET_FINDER_H_INCLUDED
+#ifndef BMC_DEBUGGER_H_INCLUDED
+#define BMC_DEBUGGER_H_INCLUDED
 
-#include "pme/util/ic3_debugger.h"
+#include "pme/bmc/bmc_solver.h"
+#include "pme/util/debugger.h"
+#include "pme/util/cardinality_constraint.h"
+#include "pme/engine/variable_manager.h"
+#include "pme/engine/debug_transition_relation.h"
+#include "pme/engine/global_state.h"
+#include "pme/engine/sat_adaptor.h"
 
 namespace PME {
 
-    typedef std::vector<ID> CorrectionSet;
-
-    class CorrectionSetFinder
+    class BMCDebugger : public Debugger
     {
         public:
-            CorrectionSetFinder(VariableManager & varman,
-                                DebugTransitionRelation & tr,
-                                GlobalState & gs);
+            BMCDebugger(VariableManager & varman,
+                        const DebugTransitionRelation & tr,
+                        GlobalState & gs);
 
-            bool moreCorrectionSets();
-            std::pair<bool, CorrectionSet> findAndBlock();
-            void setCardinality(unsigned n);
+            virtual void setCardinality(unsigned n) override;
+            virtual void clearCardinality() override;
+
+            virtual Result debug() override;
+            virtual void blockSolution(const std::vector<ID> & soln) override;
+
+            void setKMax(unsigned k) { m_kmax = k; }
 
         private:
+            std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
+
+            VariableManager & m_vars;
+            const DebugTransitionRelation & m_tr;
+            GlobalState & m_gs;
+
+            unsigned m_kmax;
             unsigned m_cardinality;
-            IC3Debugger m_solver;
-            IC3Debugger m_solver_inf;
+            CardinalityConstraint m_cardinalityConstraint;
+            std::set<ID> m_debug_latches;
+
+            BMC::BMCSolver m_solver;
     };
 
 }

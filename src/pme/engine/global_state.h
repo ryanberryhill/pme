@@ -30,6 +30,7 @@ namespace PME
     {
         bool simplify;
         bool camsis_abstraction_refinement;
+        bool caivc_use_bmc;
         PMEOptions();
     };
 

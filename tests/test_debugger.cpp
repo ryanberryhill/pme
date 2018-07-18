@@ -20,25 +20,27 @@
  */
 
 #include "pme/id.h"
-#include "pme/ic3/ic3_debugger.h"
+#include "pme/ic3/ic3.h"
+#include "pme/util/ic3_debugger.h"
+#include "pme/util/bmc_debugger.h"
 #include "pme/engine/transition_relation.h"
 
-#define BOOST_TEST_MODULE IC3DebuggerTest
+#define BOOST_TEST_MODULE DebuggerTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 using namespace PME;
 using namespace PME::IC3;
 
+template<class DebuggerType>
 struct DebugFixture
 {
     aiger * aig;
     ExternalID l0, l1, l2, l3, a0, a1, a2, o0;
     VariableManager vars;
-    InductiveTrace trace;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<DebugTransitionRelation> debug_tr;
-    std::unique_ptr<IC3Debugger> debugger;
+    std::unique_ptr<Debugger> debugger;
     GlobalState gs;
 
     DebugFixture(bool simplify = true)
@@ -85,7 +87,7 @@ struct DebugFixture
 
     void prepareDebugger()
     {
-        debugger.reset(new IC3Debugger(vars, *debug_tr, gs));
+        debugger.reset(new DebuggerType(vars, *debug_tr, gs));
     }
 
     ~DebugFixture()
@@ -95,9 +97,10 @@ struct DebugFixture
     }
 };
 
-BOOST_AUTO_TEST_CASE(basic_debug)
+template<class T>
+void testBasicDebug()
 {
-    DebugFixture f;
+    DebugFixture<T> f;
 
     f.prepareDebugger();
 
@@ -111,9 +114,10 @@ BOOST_AUTO_TEST_CASE(basic_debug)
     BOOST_CHECK(soln.empty());
 }
 
-BOOST_AUTO_TEST_CASE(incremental_debug)
+template<class T>
+void testIncrementalDebug()
 {
-    DebugFixture f;
+    DebugFixture<T> f;
 
     ID a0 = f.tr->toInternal(f.a0);
     ID a1 = f.tr->toInternal(f.a1);
@@ -171,24 +175,46 @@ BOOST_AUTO_TEST_CASE(incremental_debug)
     BOOST_CHECK(!found);
 }
 
-BOOST_AUTO_TEST_CASE(lemma_access)
+BOOST_AUTO_TEST_CASE(basic_debug_ic3)
 {
-    DebugFixture f;
+    testBasicDebug<IC3Debugger>();
+}
+
+BOOST_AUTO_TEST_CASE(basic_debug_bmc)
+{
+    testBasicDebug<BMCDebugger>();
+}
+
+BOOST_AUTO_TEST_CASE(incremental_debug_ic3)
+{
+    testIncrementalDebug<IC3Debugger>();
+}
+
+BOOST_AUTO_TEST_CASE(incremental_debug_bmc)
+{
+    testIncrementalDebug<BMCDebugger>();
+}
+
+BOOST_AUTO_TEST_CASE(ic3debugger_lemma_access)
+{
+    DebugFixture<IC3Debugger> f;
+
+    IC3Debugger * debugger = dynamic_cast<IC3Debugger *>(f.debugger.get());
 
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);
     ID l2 = f.tr->toInternal(f.l2);
     ID l3 = f.tr->toInternal(f.l3);
 
-    f.debugger->addLemma({negate(l0)}, 1);
-    f.debugger->addLemma({negate(l1)}, 2);
-    f.debugger->addLemma({negate(l2)}, 2);
-    f.debugger->addLemma({negate(l3)}, 2);
+    debugger->addLemma({negate(l0)}, 1);
+    debugger->addLemma({negate(l1)}, 2);
+    debugger->addLemma({negate(l2)}, 2);
+    debugger->addLemma({negate(l3)}, 2);
 
-    std::vector<Cube> f1 = f.debugger->getFrameCubes(1);
-    std::vector<Cube> f2 = f.debugger->getFrameCubes(2);
-    std::vector<Cube> f3 = f.debugger->getFrameCubes(3);
-    std::vector<Cube> finf = f.debugger->getFrameCubes(LEVEL_INF);
+    std::vector<Cube> f1 = debugger->getFrameCubes(1);
+    std::vector<Cube> f2 = debugger->getFrameCubes(2);
+    std::vector<Cube> f3 = debugger->getFrameCubes(3);
+    std::vector<Cube> finf = debugger->getFrameCubes(LEVEL_INF);
 
     BOOST_CHECK_EQUAL(f1.size(), 1);
     BOOST_CHECK_EQUAL(f2.size(), 3);
@@ -204,15 +230,15 @@ BOOST_AUTO_TEST_CASE(lemma_access)
 
     BOOST_CHECK(f2 == expected);
 
-    f.debugger->addLemma({negate(l0)}, LEVEL_INF);
-    f.debugger->addLemma({negate(l1)}, LEVEL_INF);
-    f.debugger->addLemma({negate(l2)}, LEVEL_INF);
-    f.debugger->addLemma({negate(l3)}, LEVEL_INF);
+    debugger->addLemma({negate(l0)}, LEVEL_INF);
+    debugger->addLemma({negate(l1)}, LEVEL_INF);
+    debugger->addLemma({negate(l2)}, LEVEL_INF);
+    debugger->addLemma({negate(l3)}, LEVEL_INF);
 
-    f1 = f.debugger->getFrameCubes(1);
-    f2 = f.debugger->getFrameCubes(2);
-    f3 = f.debugger->getFrameCubes(3);
-    finf = f.debugger->getFrameCubes(LEVEL_INF);
+    f1 = debugger->getFrameCubes(1);
+    f2 = debugger->getFrameCubes(2);
+    f3 = debugger->getFrameCubes(3);
+    finf = debugger->getFrameCubes(LEVEL_INF);
 
     BOOST_CHECK_EQUAL(f1.size(), 0);
     BOOST_CHECK_EQUAL(f2.size(), 0);
