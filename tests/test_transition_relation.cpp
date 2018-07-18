@@ -307,6 +307,64 @@ BOOST_AUTO_TEST_CASE(sequential_unroll)
     ID l2 = tr.toInternal(f.l2);
     ID l3 = tr.toInternal(f.l3);
 
+    SATAdaptor sat;
+    sat.addClauses(tr.initState());
+    sat.addClauses(tr.unrollFrame(0));
+
+    for (unsigned i = 1; i < 8; ++i)
+    {
+        sat.addClauses(tr.unrollFrame(i));
+
+        // TR on its own should be SAT
+        BOOST_CHECK(sat.solve());
+
+        for (unsigned j = 0; j <= i; ++j)
+        {
+            // l0' = 1 should be reachable in the first cycle (and all others)
+            if (j > 0) { BOOST_CHECK(sat.solve({prime(l0, j)})); }
+            else       { BOOST_CHECK(!sat.solve({prime(l0, j)})); }
+
+            // l1 = 1 should be reachable after the first cycle
+            if (j > 1) { BOOST_CHECK(sat.solve({prime(l1, j)})); }
+            else       { BOOST_CHECK(!sat.solve({prime(l1, j)})); }
+
+            if (j > 2) { BOOST_CHECK(sat.solve({prime(l2, j)})); }
+            else       { BOOST_CHECK(!sat.solve({prime(l2, j)})); }
+
+            if (j > 3) { BOOST_CHECK(sat.solve({prime(l3, j)})); }
+            else       { BOOST_CHECK(!sat.solve({prime(l3, j)})); }
+        }
+
+        // To make the output 0 at the end, inputs must be both 1 for every
+        // cycle. Note we don't prime(i0, i) because it doesn't exist -- it
+        // refers to the input on the next (unmodeled) cycle.
+        if (i > 3)
+        {
+            BOOST_CHECK(sat.solve({prime(l3, i)}));
+            for (unsigned j = 0; j < i; ++j)
+            {
+                BOOST_CHECK_EQUAL(sat.getAssignment(prime(i0, j)),
+                                  SAT::TRUE);
+                BOOST_CHECK_EQUAL(sat.getAssignment(prime(i1, j)),
+                                  SAT::TRUE);
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(incremental_unroll)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID i0 = tr.toInternal(f.i0);
+    ID i1 = tr.toInternal(f.i1);
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
+
     for (unsigned i = 1; i < 8; ++i)
     {
         SATAdaptor sat;

@@ -86,30 +86,29 @@ namespace PME
     bool Engine::runIC3()
     {
         IC3::IC3Solver solver(m_vars, m_tr, m_gs);
-        IC3::IC3Result result = solver.prove();
+        SafetyResult result = solver.prove();
 
-        if (result.result == IC3::SAFE)
+        if (result.result == SAFE)
         {
             m_proof = result.proof;
             removeProperty(m_proof);
         }
         else
         {
-            assert(result.result == IC3::UNSAFE);
+            assert(result.result == UNSAFE);
             m_cex = result.cex;
         }
 
-        return result.result == IC3::SAFE;
+        return result.result == SAFE;
     }
 
-    IC3::SafetyCounterExample Engine::getCounterExample() const
+    SafetyCounterExample Engine::getCounterExample() const
     {
         return m_cex;
     }
 
     ExternalCounterExample Engine::getExternalCounterExample() const
     {
-        using namespace PME::IC3;
         ExternalCounterExample cex;
 
         for (const Step & step : m_cex)

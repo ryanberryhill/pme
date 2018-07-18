@@ -19,22 +19,39 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef IC3_H_INCLUDED
-#define IC3_H_INCLUDED
+#ifndef BMC_SOLVER_H_INCLUDED
+#define BMC_SOLVER_H_INCLUDED
 
-#include "pme/pme.h"
 #include "pme/safety.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/global_state.h"
+#include "pme/engine/sat_adaptor.h"
 
-#include <set>
-#include <vector>
+namespace PME { namespace BMC {
 
-namespace PME { namespace IC3 {
-    extern const unsigned LEVEL_INF;
-    typedef unsigned LemmaID;
-    typedef std::set<LemmaID> Frame;
+    class BMCSolver
+    {
+        public:
+            BMCSolver(VariableManager & varman,
+                      const TransitionRelation & tr,
+                      GlobalState & gs);
+
+            SafetyResult solve(unsigned k_max);
+
+        private:
+            void unroll(unsigned n);
+            void initSolver();
+            SafetyCounterExample extractTrace(unsigned k);
+            Cube extract(Cube vars, unsigned k);
+
+            VariableManager & m_vars;
+            const TransitionRelation & m_tr;
+            GlobalState & m_gs;
+            SATAdaptor m_solver;
+            unsigned m_numFrames;
+            bool m_solverInited;
+    };
 
 } }
 

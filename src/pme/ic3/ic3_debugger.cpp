@@ -108,7 +108,7 @@ namespace PME { namespace IC3 {
 
     IC3Debugger::Result IC3Debugger::debug()
     {
-        IC3Result result = m_ic3.prove();
+        SafetyResult result = m_ic3.prove();
 
         if (result.result == SAFE)
         {

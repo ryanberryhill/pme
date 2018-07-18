@@ -19,24 +19,30 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef IC3_H_INCLUDED
-#define IC3_H_INCLUDED
+#ifndef SAFETY_H_INCLUDED
+#define SAFETY_H_INCLUDED
 
 #include "pme/pme.h"
-#include "pme/safety.h"
-#include "pme/engine/variable_manager.h"
-#include "pme/engine/transition_relation.h"
-#include "pme/engine/global_state.h"
 
-#include <set>
-#include <vector>
+namespace PME {
+    enum SafetyAnswer { SAFE, UNSAFE, UNKNOWN };
 
-namespace PME { namespace IC3 {
-    extern const unsigned LEVEL_INF;
-    typedef unsigned LemmaID;
-    typedef std::set<LemmaID> Frame;
+    struct Step {
+        Cube inputs;
+        Cube state;
+        Step(const Cube & inputs, const Cube & state) : inputs(inputs), state(state)
+        { }
+    };
 
-} }
+    typedef std::vector<Clause> SafetyProof;
+    typedef std::vector<Step> SafetyCounterExample;
+
+    struct SafetyResult {
+        SafetyAnswer result;
+        SafetyProof proof;
+        SafetyCounterExample cex;
+    };
+}
 
 #endif
 

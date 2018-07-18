@@ -108,8 +108,8 @@ namespace PME { namespace IC3 {
                       const TransitionRelation & tr,
                       GlobalState & gs);
 
-            IC3Result prove();
-            IC3Result prove(const Cube & target);
+            SafetyResult prove();
+            SafetyResult prove(const Cube & target);
 
             void restrictInitialStates(const Clause & cls);
             void clearRestrictions();
@@ -161,7 +161,7 @@ namespace PME { namespace IC3 {
             void resetSAT();
             void initialize();
 
-            void recordProof(IC3Result & result) const;
+            void recordProof(SafetyResult & result) const;
             SafetyCounterExample buildCex(const ProofObligation * obl) const;
 
             std::ostream & log(int verbosity) const;

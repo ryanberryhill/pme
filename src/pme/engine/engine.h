@@ -58,7 +58,7 @@ namespace PME
             ExternalClauseVec getProofExternal(size_t i) const;
             ExternalClauseVec getMinimumProofExternal() const;
 
-            IC3::SafetyCounterExample getCounterExample() const;
+            SafetyCounterExample getCounterExample() const;
             ExternalCounterExample getExternalCounterExample() const;
 
             void setLogStream(std::ostream & stream);
@@ -69,7 +69,7 @@ namespace PME
             VariableManager m_vars;
             TransitionRelation m_tr;
             ClauseVec m_proof;
-            IC3::SafetyCounterExample m_cex;
+            SafetyCounterExample m_cex;
             std::unique_ptr<ProofMinimizer> m_minimizer;
             GlobalState m_gs;
 

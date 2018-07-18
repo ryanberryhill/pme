@@ -356,6 +356,17 @@ namespace PME
         return unrolled;
     }
 
+    ClauseVec TransitionRelation::unrollFrame(unsigned n) const
+    {
+        ClauseVec clauses, frame;
+        clauses = toCNF();
+
+        addTimeFrame(n, clauses, frame);
+        constrainTimeFrame(n, frame);
+
+        return frame;
+    }
+
     ClauseVec TransitionRelation::initState() const
     {
         ClauseVec init;

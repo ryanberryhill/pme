@@ -182,15 +182,15 @@ namespace PME { namespace IC3 {
         return m_gs.logger.log(LOG_IC3, verbosity);
     }
 
-    IC3Result IC3Solver::prove()
+    SafetyResult IC3Solver::prove()
     {
         Cube target = { m_tr.bad() };
         return prove(target);
     }
 
-    IC3Result IC3Solver::prove(const Cube & target)
+    SafetyResult IC3Solver::prove(const Cube & target)
     {
-        IC3Result result;
+        SafetyResult result;
 
         bool blocked;
         SafetyCounterExample cex;
@@ -232,7 +232,7 @@ namespace PME { namespace IC3 {
         return result;
     }
 
-    void IC3Solver::recordProof(IC3Result & result) const
+    void IC3Solver::recordProof(SafetyResult & result) const
     {
         const Frame & proof = m_trace.getFrame(LEVEL_INF);
         for (LemmaID lemma : proof)

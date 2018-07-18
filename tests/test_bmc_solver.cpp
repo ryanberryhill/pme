@@ -20,33 +20,30 @@
  */
 
 #include "pme/id.h"
-#include "pme/ic3/ic3_solver.h"
-#include "pme/util/proof_checker.h"
-#include "pme/util/cardinality_constraint.h"
+#include "pme/engine/variable_manager.h"
+#include "pme/engine/global_state.h"
 #include "pme/engine/transition_relation.h"
-#include "pme/engine/debug_transition_relation.h"
+#include "pme/bmc/bmc_solver.h"
 
-#define BOOST_TEST_MODULE IC3Test
+#define BOOST_TEST_MODULE BMCTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
 
 using namespace PME;
-using namespace PME::IC3;
+using namespace PME::BMC;
 
-struct IC3Fixture
+struct BMCFixture
 {
     aiger * aig;
     ExternalID l0, l1, l2, l3, a0, a1, a2, o0;
     VariableManager vars;
-    InductiveTrace trace;
     std::unique_ptr<TransitionRelation> tr;
-    std::unique_ptr<DebugTransitionRelation> debug_tr;
-    std::unique_ptr<IC3Solver> solver;
+    std::unique_ptr<BMCSolver> solver;
     GlobalState gs;
 
-    IC3Fixture(bool simplify = true)
+    BMCFixture()
     {
         aig = aiger_init();
 
@@ -77,9 +74,7 @@ struct IC3Fixture
         aiger_add_output(aig, a2, "o0");
         o0 = a2;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        debug_tr.reset(new DebugTransitionRelation(vars, aig));
         prepareSolver();
     }
 
@@ -88,17 +83,12 @@ struct IC3Fixture
         tr->setInit(latch, val);
     }
 
-    void prepareSolver(TransitionRelation & tr_to_use)
-    {
-        solver.reset(new IC3Solver(vars, tr_to_use, gs));
-    }
-
     void prepareSolver()
     {
-        prepareSolver(*tr);
+        solver.reset(new BMCSolver(vars, *tr, gs));
     }
 
-    ~IC3Fixture()
+    ~BMCFixture()
     {
         aiger_reset(aig);
         aig = nullptr;
@@ -107,7 +97,7 @@ struct IC3Fixture
 
 BOOST_AUTO_TEST_CASE(safe)
 {
-    IC3Fixture f;
+    BMCFixture f;
 
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);
@@ -121,16 +111,14 @@ BOOST_AUTO_TEST_CASE(safe)
 
     f.prepareSolver();
 
-    SafetyResult result = f.solver->prove();
-    BOOST_CHECK_EQUAL(result.result, SAFE);
-
-    ProofChecker pc(*f.tr, result.proof, f.gs);
-    BOOST_CHECK(pc.checkProof());
+    SafetyResult result = f.solver->solve(20);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+    BOOST_CHECK(result.cex.empty());
 }
 
-BOOST_AUTO_TEST_CASE(trivual_unsafe)
+BOOST_AUTO_TEST_CASE(trivial_unsafe)
 {
-    IC3Fixture f;
+    BMCFixture f;
 
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);
@@ -144,12 +132,12 @@ BOOST_AUTO_TEST_CASE(trivual_unsafe)
 
     f.prepareSolver();
 
-    SafetyResult result = f.solver->prove();
+    SafetyResult result = f.solver->solve(1);
     BOOST_CHECK_EQUAL(result.result, UNSAFE);
 
     // Check the counter-example
     SafetyCounterExample cex = result.cex;
-    BOOST_CHECK(cex.size() == 1);
+    BOOST_CHECK_EQUAL(cex.size(), 1);
 
     Cube actual, expected;
     expected = {l0, negate(l1), negate(l2), l3};
@@ -161,7 +149,7 @@ BOOST_AUTO_TEST_CASE(trivual_unsafe)
 
 BOOST_AUTO_TEST_CASE(unsafe)
 {
-    IC3Fixture f;
+    BMCFixture f;
 
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);
@@ -175,14 +163,17 @@ BOOST_AUTO_TEST_CASE(unsafe)
 
     f.prepareSolver();
 
-    SafetyResult result = f.solver->prove();
+    // Safe for one cycle
+    SafetyResult result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+
+    result = f.solver->solve(2);
     BOOST_CHECK_EQUAL(result.result, UNSAFE);
 
     std::vector<Cube> expected_states;
     expected_states.push_back({negate(l0), l1, l2, negate(l3)});
     expected_states.push_back({negate(l0), negate(l1), l2, l3});
-    // Last state is the property violation and is empty
-    expected_states.push_back({});
+    expected_states.push_back({l0, negate(l1), negate(l2), l3});
 
     // Check the counter-example
     SafetyCounterExample cex = result.cex;
@@ -200,109 +191,63 @@ BOOST_AUTO_TEST_CASE(unsafe)
     }
 }
 
-BOOST_AUTO_TEST_CASE(lemma_access)
+BOOST_AUTO_TEST_CASE(unsafe_extra_frames)
 {
-    IC3Fixture f;
+    BMCFixture f;
 
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);
     ID l2 = f.tr->toInternal(f.l2);
     ID l3 = f.tr->toInternal(f.l3);
 
-    f.solver->addLemma({negate(l0)}, 1);
-    f.solver->addLemma({negate(l1)}, 2);
-    f.solver->addLemma({negate(l2)}, 2);
-    f.solver->addLemma({negate(l3)}, 2);
+    f.setInit(l0, ID_FALSE);
+    f.setInit(l1, ID_TRUE);
+    f.setInit(l2, ID_TRUE);
+    f.setInit(l3, ID_FALSE);
 
-    std::vector<Cube> f1 = f.solver->getFrameCubes(1);
-    std::vector<Cube> f2 = f.solver->getFrameCubes(2);
-    std::vector<Cube> f3 = f.solver->getFrameCubes(3);
-    std::vector<Cube> finf = f.solver->getFrameCubes(LEVEL_INF);
+    f.prepareSolver();
 
-    BOOST_CHECK_EQUAL(f1.size(), 1);
-    BOOST_CHECK_EQUAL(f2.size(), 3);
-    BOOST_CHECK_EQUAL(f3.size(), 0);
-    BOOST_CHECK_EQUAL(finf.size(), 0);
+    // Safe for one cycle
+    SafetyResult result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
 
-    std::vector<Cube> expected = {{negate(l0)}};
-    BOOST_CHECK(f1 == expected);
-
-    expected = {{negate(l1)}, {negate(l2)}, {negate(l3)}};
-    std::sort(expected.begin(), expected.end());
-    std::sort(f2.begin(), f2.end());
-
-    BOOST_CHECK(f2 == expected);
-
-    f.solver->addLemma({negate(l0)}, LEVEL_INF);
-    f.solver->addLemma({negate(l1)}, LEVEL_INF);
-    f.solver->addLemma({negate(l2)}, LEVEL_INF);
-    f.solver->addLemma({negate(l3)}, LEVEL_INF);
-
-    f1 = f.solver->getFrameCubes(1);
-    f2 = f.solver->getFrameCubes(2);
-    f3 = f.solver->getFrameCubes(3);
-    finf = f.solver->getFrameCubes(LEVEL_INF);
-
-    BOOST_CHECK_EQUAL(f1.size(), 0);
-    BOOST_CHECK_EQUAL(f2.size(), 0);
-    BOOST_CHECK_EQUAL(f3.size(), 0);
-    BOOST_CHECK_EQUAL(finf.size(), 4);
-}
-
-BOOST_AUTO_TEST_CASE(complex_init_state)
-{
-    IC3Fixture f;
-
-    f.prepareSolver(*f.debug_tr);
-
-    // A cardinality constraint over the debug latches
-    CardinalityConstraint cardinality(f.vars);
-    std::vector<ID> debug_latches(f.debug_tr->begin_latches(), f.debug_tr->end_latches());
-    for (ID id : debug_latches)
-    {
-        cardinality.addInput(id);
-    }
-    cardinality.setCardinality(2);
-
-    ClauseVec cnf = cardinality.CNFize();
-
-    for (const Clause & cls : cnf)
-    {
-        f.solver->restrictInitialStates(cls);
-    }
-
-    Cube leq1 = cardinality.assumeLEq(1);
-    for (ID id : leq1)
-    {
-        f.solver->restrictInitialStates({id});
-    }
-
-    f.solver->initialStatesRestricted();
-
-    SafetyResult result = f.solver->prove();
+    result = f.solver->solve(7);
     BOOST_CHECK_EQUAL(result.result, UNSAFE);
-}
 
-BOOST_AUTO_TEST_CASE(clear_restrictions)
-{
-    IC3Fixture f;
+    std::vector<Cube> expected_states;
+    expected_states.push_back({negate(l0), l1, l2, negate(l3)});
+    expected_states.push_back({negate(l0), negate(l1), l2, l3});
+    expected_states.push_back({l0, negate(l1), negate(l2), l3});
 
-    f.prepareSolver(*f.debug_tr);
+    // Check the counter-example
+    SafetyCounterExample cex = result.cex;
+    BOOST_CHECK_EQUAL(cex.size(), expected_states.size());
 
-    std::vector<ID> debug_latches(f.debug_tr->begin_latches(), f.debug_tr->end_latches());
-    for (ID id : debug_latches)
+    for (size_t i = 0; i < expected_states.size(); ++i)
     {
-        f.solver->restrictInitialStates({negate(id)});
+        Cube actual, expected;
+        expected = expected_states[i];
+        actual = cex[i].state;
+        BOOST_CHECK(cex[i].inputs.empty());
+        std::sort(expected.begin(), expected.end());
+        std::sort(actual.begin(), actual.end());
+        BOOST_CHECK(expected == actual);
     }
-    f.solver->initialStatesRestricted();
 
-    SafetyResult result = f.solver->prove();
-    BOOST_CHECK_EQUAL(result.result, SAFE);
-
-    f.solver->clearRestrictions();
-    f.solver->initialStatesExpanded();
-
-    result = f.solver->prove();
+    result = f.solver->solve(2);
     BOOST_CHECK_EQUAL(result.result, UNSAFE);
+    BOOST_CHECK_EQUAL(result.cex.size(), expected_states.size());
+
+    result = f.solver->solve(5);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+    BOOST_CHECK_EQUAL(result.cex.size(), expected_states.size());
+
+    result = f.solver->solve(1);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+    BOOST_CHECK_EQUAL(result.cex.size(), 0);
+
+    result = f.solver->solve(5);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+    BOOST_CHECK_EQUAL(result.cex.size(), expected_states.size());
 }
 

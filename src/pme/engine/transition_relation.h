@@ -77,6 +77,7 @@ namespace PME
 
             ClauseVec unroll(unsigned n = 1) const;
             ClauseVec unrollWithInit(unsigned n = 1) const;
+            ClauseVec unrollFrame(unsigned n) const;
 
             ID property() const { return negate(m_bad); }
             ID bad() const { return m_bad; }

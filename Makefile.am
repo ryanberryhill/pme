@@ -20,6 +20,7 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/id.h \
                    src/pme/id.cpp \
                    src/pme/cpme.cpp \
+                   src/pme/safety.h \
                    src/pme/engine/engine.h \
                    src/pme/engine/engine.cpp \
                    src/pme/engine/transition_relation.h \
@@ -50,8 +51,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/find_safe_mis.cpp \
                    src/pme/util/find_minimal_support.h \
                    src/pme/util/find_minimal_support.cpp \
-				   src/pme/util/simplify_tr.h \
-				   src/pme/util/simplify_tr.cpp \
+                   src/pme/util/simplify_tr.h \
+                   src/pme/util/simplify_tr.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \
@@ -62,26 +63,28 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/minimization/sisi.cpp \
                    src/pme/minimization/minimization.h \
                    src/pme/minimization/minimization.cpp \
-				   src/pme/ic3/ic3.h \
-				   src/pme/ic3/ic3.cpp \
-				   src/pme/ic3/ic3_solver.h \
-				   src/pme/ic3/ic3_solver.cpp \
-				   src/pme/ic3/ic3_debugger.h \
-				   src/pme/ic3/ic3_debugger.cpp \
-				   src/pme/ic3/inductive_trace.h \
-				   src/pme/ic3/inductive_trace.cpp \
-				   src/pme/ic3/frame_solver.h \
-				   src/pme/ic3/frame_solver.cpp \
-				   src/pme/ic3/transition_relation_solver.h \
-				   src/pme/ic3/transition_relation_solver.cpp \
-				   src/pme/ic3/unsat_core_lifter.h \
-				   src/pme/ic3/unsat_core_lifter.cpp \
-				   src/pme/ivc/ivc.h \
-				   src/pme/ivc/ivc.cpp \
-				   src/pme/ivc/correction_set_finder.h \
-				   src/pme/ivc/correction_set_finder.cpp \
-				   src/pme/ivc/caivc.h \
-				   src/pme/ivc/caivc.cpp 
+                   src/pme/ic3/ic3.h \
+                   src/pme/ic3/ic3.cpp \
+                   src/pme/ic3/ic3_solver.h \
+                   src/pme/ic3/ic3_solver.cpp \
+                   src/pme/ic3/ic3_debugger.h \
+                   src/pme/ic3/ic3_debugger.cpp \
+                   src/pme/ic3/inductive_trace.h \
+                   src/pme/ic3/inductive_trace.cpp \
+                   src/pme/ic3/frame_solver.h \
+                   src/pme/ic3/frame_solver.cpp \
+                   src/pme/ic3/transition_relation_solver.h \
+                   src/pme/ic3/transition_relation_solver.cpp \
+                   src/pme/ic3/unsat_core_lifter.h \
+                   src/pme/ic3/unsat_core_lifter.cpp \
+                   src/pme/bmc/bmc_solver.h \
+                   src/pme/bmc/bmc_solver.cpp \
+                   src/pme/ivc/ivc.h \
+                   src/pme/ivc/ivc.cpp \
+                   src/pme/ivc/correction_set_finder.h \
+                   src/pme/ivc/correction_set_finder.cpp \
+                   src/pme/ivc/caivc.h \
+                   src/pme/ivc/caivc.cpp 
 
 libpme_a_LIBADD = $(SAT_LIBS)
 
@@ -137,14 +140,15 @@ TESTS = test_sat_adaptor \
         test_logger \
         test_clause_database \
         test_collapse_set_finder \
-		test_inductive_trace \
-		test_frame_solver \
-		test_unsat_core_lifter \
-		test_ic3_solver \
-		test_ic3_debugger \
-		test_basics \
-		test_correction_set_finder \
-		test_ivc
+        test_inductive_trace \
+        test_frame_solver \
+        test_unsat_core_lifter \
+        test_ic3_solver \
+        test_ic3_debugger \
+        test_bmc_solver \
+        test_basics \
+        test_correction_set_finder \
+        test_ivc
 
 check_PROGRAMS = $(TESTS)
 
@@ -211,6 +215,9 @@ test_ic3_solver_LDADD = $(PME_TEST_LIBS)
 
 test_ic3_debugger_SOURCES = tests/test_ic3_debugger.cpp
 test_ic3_debugger_LDADD = $(PME_TEST_LIBS)
+
+test_bmc_solver_SOURCES = tests/test_bmc_solver.cpp
+test_bmc_solver_LDADD = $(PME_TEST_LIBS)
 
 test_basics_SOURCES = tests/test_basics.cpp
 test_basics_LDADD = $(PME_TEST_LIBS)
