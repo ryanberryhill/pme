@@ -50,6 +50,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/find_safe_mis.cpp \
                    src/pme/util/find_minimal_support.h \
                    src/pme/util/find_minimal_support.cpp \
+				   src/pme/util/simplify_tr.h \
+				   src/pme/util/simplify_tr.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \

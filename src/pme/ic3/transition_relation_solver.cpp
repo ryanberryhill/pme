@@ -21,6 +21,7 @@
 
 #include "pme/id.h"
 #include "pme/ic3/transition_relation_solver.h"
+#include "pme/util/simplify_tr.h"
 
 namespace PME { namespace IC3 {
 
@@ -74,29 +75,14 @@ namespace PME { namespace IC3 {
     {
         m_unrolled.clear();
 
-        // Unroll 2 so we get primed constraints
-        ClauseVec unrolled = m_tr.unroll(2);
-
         if (m_gs.opts.simplify)
         {
-            SATAdaptor simpSolver(MINISATSIMP);
-
-            simpSolver.addClauses(unrolled);
-
-            // Freeze latches, inputs, and constraints (including primes)
-            simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
-            simpSolver.freeze(m_tr.begin_inputs(), m_tr.end_inputs(), true);
-            simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
-
-            // Freeze bad and bad'
-            simpSolver.freeze(m_tr.bad());
-            simpSolver.freeze(prime(m_tr.bad()));
-
-            m_unrolled = simpSolver.simplify();
+            m_unrolled = simplifyTR(m_tr);
         }
         else
         {
-            m_unrolled = unrolled;
+            // Unroll 2 so we get primed constraints
+            m_unrolled = m_tr.unroll(2);
         }
     }
 } }

@@ -20,6 +20,7 @@
  */
 
 #include "pme/util/proof_checker.h"
+#include "pme/util/simplify_tr.h"
 
 namespace PME
 {
@@ -37,30 +38,19 @@ namespace PME
         ClauseVec simp, simp_init;
         if (m_gs.opts.simplify)
         {
-            SATAdaptor simpSolver(MINISATSIMP);
-            simpSolver.addClauses(unrolled);
-            simpSolver.addClauses(m_proof);
-
-            // Freeze latches and constraints (including primes)
-            simpSolver.freeze(m_tr.begin_latches(), m_tr.end_latches(), true);
-            simpSolver.freeze(m_tr.begin_constraints(), m_tr.end_constraints(), true);
-
-            // Freeze bad and bad'
-            simpSolver.freeze(m_tr.bad());
-            simpSolver.freeze(prime(m_tr.bad()));
-
             // Simplify
-            simp = simpSolver.simplify();
+            simp = simplifyTR(m_tr);
         }
         else
         {
-            simp.reserve(unrolled.size() + m_proof.size());
-            simp.insert(simp.end(), unrolled.begin(), unrolled.end());
-            simp.insert(simp.end(), m_proof.begin(), m_proof.end());
+            simp = unrolled;
         }
 
         // Copy simplified clauses over to indSolver
         m_indSolver.addClauses(simp);
+
+        // Add the proof
+        m_indSolver.addClauses(proof);
 
         // Set up initSolver with initial states and simplified clauses
         ClauseVec init = m_tr.initState();
