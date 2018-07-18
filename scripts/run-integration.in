@@ -12,7 +12,11 @@ VALGRIND_COMMAND="valgrind -q --tool=memcheck --leak-check=full --error-exitcode
 
 tests_passed=0
 tests_failed=0
-ic3_only=0
+
+run_bmc=0
+run_ic3=0
+run_min=0
+limited_run=0
 
 POSITIONAL=()
 while [[ $# -gt 0 ]] ; do
@@ -24,7 +28,18 @@ while [[ $# -gt 0 ]] ; do
         shift
         ;;
         --ic3)
-        ic3_only=1
+        limited_run=1
+        run_ic3=1
+        shift
+        ;;
+        --bmc)
+        limited_run=1
+        run_bmc=1
+        shift
+        ;;
+        --minimization)
+        limited_run=1
+        run_min=1
         shift
         ;;
         *)    # unknown option
@@ -229,6 +244,68 @@ function ic3_integration() {
     fi
 }
 
+function bmc_integration() {
+    name=$1 ; shift
+    errors=0
+    bmc_tmpdir=$tmpdir/$name
+    mkdir $bmc_tmpdir
+    for aig_file in examples/safe/*.aig examples/unsafe/*.aig ; do
+        prefix=${aig_file%.*}
+        aig_name=${prefix##*/}
+        logfile=$bmc_tmpdir/$aig_name.log
+        echo $aig_file $aig_name
+        expected_safe=0
+        case "$aig_file" in
+            */unsafe/*) expected_safe=0 ;;
+            */safe/*)   expected_safe=1 ;;
+            *) echo "Don't know how to handle $aig_file" ; errors=$((errors+1)) ; continue ;;
+        esac
+
+        $VALGRIND $PME $@ $aig_file > $logfile 2>&1
+
+        if (($? != 0)) ; then
+            echo "Error running PME (BMC) for $aig_file: see $logfile for details"
+            errors=$((errors+1))
+            continue
+        fi
+
+        if [[ "$expected_safe" == "1" ]] ; then
+            grep -q "^2$" $logfile
+            if (( $? != 0 )) ; then
+                echo "Expected $aig_file to be unknown/safe but it was not, see $logfile"
+                errors=$((errors+1))
+                continue
+            fi
+        else
+            grep -q "^1$" $logfile
+            if (( $? != 0 )) ; then
+                echo "Expected $aig_file to be unsafe but it was not: see $logfile"
+                errors=$((errors+1))
+                continue
+            fi
+
+            command -v $AIGSIM
+            if (($? != 0)) ; then
+                echo "Skipping counter-example validation because aigsim was not found"
+                continue
+            fi
+
+            $AIGSIM -c $aig_file $logfile > /dev/null 2>&1
+            if (( $? != 0 )) ; then
+                echo "Counter-example was faulty: see $logfile"
+                errors=$((errors+1))
+                continue
+            fi
+        fi
+    done
+
+    if ((errors > 0)) ; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 function run_test() {
     name=$1 ; shift
     args=$@
@@ -270,13 +347,36 @@ function run_ic3_test() {
     fi
 }
 
-if ((ic3_only == 0)) ; then
+function run_bmc_test() {
+    name=$1 ; shift
+    args=$@
+
+    echo -n "Running test $name: "
+    bmc_integration $name $args > $tmpdir/$name.log
+
+    if [ $? -eq 0 ] ; then
+        echo passed
+        tests_passed=$((tests_passed+1))
+    else
+        echo failed
+        tests_failed=$((tests_failed+1))
+    fi
+}
+
+if ((limited_run == 0 || run_min == 1)) ; then
     run_msis_test BRUTEFORCE --bfmin
     run_msis_test SISI --sisi
     run_all_msis_test MARCO --marco
     run_all_msis_test CAMSIS --camsis
 fi
-run_ic3_test IC3 --ic3
+
+if ((limited_run == 0 || run_bmc == 1)) ; then
+    run_bmc_test BMC --bmc 4
+fi
+
+if ((limited_run == 0 || run_ic3 == 1)) ; then
+    run_ic3_test IC3 --ic3
+fi
 
 echo PASS: $tests_passed
 echo FAIL: $tests_failed
