@@ -31,7 +31,12 @@ namespace PME {
         : m_cardinality(0),
           m_solver(varman, tr, gs),
           m_solver_inf(varman, tr, gs)
-    { }
+    {
+        if (!gs.opts.caivc_use_bmc)
+        {
+            m_solver.setKMax(0);
+        }
+    }
 
     bool CorrectionSetFinder::moreCorrectionSets()
     {

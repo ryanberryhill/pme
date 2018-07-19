@@ -56,6 +56,7 @@ namespace PME {
         private:
             BMCDebugger m_bmc;
             IC3Debugger m_ic3;
+            unsigned m_kmax;
     };
 
 }

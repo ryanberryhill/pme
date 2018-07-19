@@ -22,7 +22,7 @@
 #ifndef CORRECTION_SET_FINDER_H_INCLUDED
 #define CORRECTION_SET_FINDER_H_INCLUDED
 
-#include "pme/util/ic3_debugger.h"
+#include "pme/util/hybrid_debugger.h"
 
 namespace PME {
 
@@ -41,8 +41,8 @@ namespace PME {
 
         private:
             unsigned m_cardinality;
-            IC3Debugger m_solver;
-            IC3Debugger m_solver_inf;
+            HybridDebugger m_solver;
+            HybridDebugger m_solver_inf;
     };
 
 }

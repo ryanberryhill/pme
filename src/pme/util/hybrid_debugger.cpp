@@ -24,11 +24,14 @@
 namespace PME {
 
     HybridDebugger::HybridDebugger(VariableManager & varman,
-                             const DebugTransitionRelation & tr,
-                             GlobalState & gs)
+                                   const DebugTransitionRelation & tr,
+                                   GlobalState & gs)
         : m_bmc(varman, tr, gs),
-          m_ic3(varman, tr, gs)
-    { }
+          m_ic3(varman, tr, gs),
+          m_kmax(0)
+    {
+        setKMax(gs.opts.hybrid_debug_bmc_frames);
+    }
 
     void HybridDebugger::setCardinality(unsigned n)
     {
@@ -44,7 +47,14 @@ namespace PME {
 
     Debugger::Result HybridDebugger::debug()
     {
-        Result result = m_bmc.debug();
+        Result result;
+
+        result.first = false;
+
+        // Do BMC if it's enabled
+        if (m_kmax > 0) { result = m_bmc.debug(); }
+
+        // If BMC gave an unknown result, do IC3
         if (result.first == false)
         {
             result = m_ic3.debug();
