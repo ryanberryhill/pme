@@ -43,6 +43,7 @@ namespace PME {
             virtual void clearCardinality() override;
 
             virtual Result debug() override;
+            virtual Result debugOverGates(const std::vector<ID> & gates) override;
             virtual void blockSolution(const std::vector<ID> & soln) override;
 
             // BMC functions

@@ -37,6 +37,7 @@ namespace PME {
 
             bool moreCorrectionSets();
             std::pair<bool, CorrectionSet> findAndBlock();
+            std::pair<bool, CorrectionSet> findAndBlockOverGates(const std::vector<ID> & gates);
             void setCardinality(unsigned n);
 
         private:

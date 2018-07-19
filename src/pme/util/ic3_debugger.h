@@ -44,6 +44,7 @@ namespace PME {
             virtual void clearCardinality() override;
 
             virtual Result debug() override;
+            virtual Result debugOverGates(const std::vector<ID> & gates) override;
             virtual void blockSolution(const std::vector<ID> & soln) override;
 
             IC3::LemmaID addLemma(const Cube & c, unsigned level);
@@ -55,6 +56,8 @@ namespace PME {
             bool isDebugLatch(ID latch) const;
             void addCardinalityCNF(unsigned n);
             void addBlockingClauses();
+            void setupInitialStates();
+            ClauseVec onlyTheseGates(const std::vector<ID> & gates) const;
 
             const DebugTransitionRelation & m_debug_tr;
             IC3::IC3Solver m_ic3;

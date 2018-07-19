@@ -32,7 +32,8 @@ namespace PME {
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
           m_finder(varman, m_debug_tr, gs),
-          m_solver(varman)
+          m_solver(varman),
+          m_ivc_checker(varman, m_debug_tr, gs)
     {
         for (ID gate : m_gates)
         {
@@ -49,8 +50,68 @@ namespace PME {
     {
         log(2) << "Starting CAIVC (there are " << m_gates.size() << " gates)" << std::endl;
 
+        if (opts().caivc_abstraction_refinement)
+        {
+            abstractionRefinementFindIVCs();
+        }
+        else
+        {
+            naiveFindIVCs();
+        }
+    }
+
+    void CAIVCFinder::abstractionRefinementFindIVCs()
+    {
+        // Find all cardinality 1 MCSes
+        m_finder.setCardinality(1);
+        while (true)
+        {
+            bool found;
+            CorrectionSet corr;
+            std::tie(found, corr) = findCorrectionSet();
+            if (!found) { break; }
+
+            logMCS(corr);
+            m_solver.addClause(corr);
+        }
+
+        // Repeatedly find candidate MIVCs. If the candidate is not safe, then
+        // find a new MCS consiting only of clauses outside the candidate.
+        while (true)
+        {
+            bool found;
+            IVC candidate;
+            std::tie(found, candidate) = findCandidateMIVC();
+
+            if (found) { logCandidate(candidate); }
+            else
+            {
+                log(2) << "No more candidates" << std::endl;
+                break;
+            }
+
+            if (isIVC(candidate))
+            {
+                if (!minimumIVCKnown()) { setMinimumIVC(candidate); }
+                addMIVC(candidate);
+                logMIVC(candidate);
+                blockMIVC(candidate);
+            }
+            else
+            {
+                std::vector<ID> neg = negateGateSet(candidate);
+                CorrectionSet corr = findCorrectionSetOverGates(neg);
+                logMCS(corr);
+                m_solver.addClause(corr);
+            }
+        }
+    }
+
+    void CAIVCFinder::naiveFindIVCs()
+    {
         unsigned cardinality = 1;
 
+        unsigned count = 0;
         do {
             m_finder.setCardinality(cardinality);
 
@@ -59,15 +120,10 @@ namespace PME {
                 bool found;
                 CorrectionSet corr;
                 std::tie(found, corr) = findCorrectionSet();
-                if (!found) {
-                    log(2) << "Done cardinality " << cardinality << std::endl;
-                    break;
-                }
+                if (!found) { break; }
 
-                log(2) << "Found correction set of size " << corr.size() << std::endl;
-                for (ID id : corr) { log(2) << id << " "; }
-                log(2) << std::endl;
-
+                count++;
+                logMCS(corr);
                 m_solver.addClause(corr);
             }
 
@@ -75,21 +131,18 @@ namespace PME {
 
         } while (moreCorrectionSets());
 
-        log(2) << "Done finding correction sets" << std::endl;
+        log(2) << "Done finding correction sets (" << count << " found)" << std::endl;
 
         while (true)
         {
             bool found;
             IVC mivc;
-            std::tie(found, mivc) = findMIVC();
+            std::tie(found, mivc) = findAndBlockCandidateMIVC();
             if (!found) { break; }
 
             if (!minimumIVCKnown()) { setMinimumIVC(mivc); }
             addMIVC(mivc);
-
-            log(2) << "Found MIVC of size " << mivc.size() << std::endl;
-            for (ID id : mivc) { log(2) << id << " "; }
-            log(2) << std::endl;
+            logMIVC(mivc);
         }
     }
 
@@ -103,7 +156,35 @@ namespace PME {
         return m_finder.findAndBlock();
     }
 
-    std::pair<bool, IVC> CAIVCFinder::findMIVC()
+    CorrectionSet CAIVCFinder::findCorrectionSetOverGates(const std::vector<ID> & gates)
+    {
+        assert(!gates.empty());
+
+        // Assuming we already found all cardinality 1 MCSes
+        for (unsigned cardinality = 2; cardinality <= gates.size(); ++cardinality)
+        {
+            bool found;
+            CorrectionSet corr;
+            m_finder.setCardinality(cardinality);
+            std::tie(found, corr) = m_finder.findAndBlockOverGates(gates);
+            if (found) { return corr; }
+        }
+
+        // This should only be called when we know a correction set exists
+        assert(false);
+    }
+
+    std::pair<bool, IVC> CAIVCFinder::findAndBlockCandidateMIVC()
+    {
+        return findCandidateMIVC(true);
+    }
+
+    std::pair<bool, IVC> CAIVCFinder::findCandidateMIVC()
+    {
+        return findCandidateMIVC(false);
+    }
+
+    std::pair<bool, IVC> CAIVCFinder::findCandidateMIVC(bool block)
     {
         bool found;
         IVC mivc;
@@ -114,10 +195,30 @@ namespace PME {
 
         mivc = extractIVC();
 
-        Clause block = negateVec(mivc);
-        m_solver.addClause(block);
+        if (block) { blockMIVC(mivc); }
 
         return std::make_pair(true, mivc);
+    }
+
+    void CAIVCFinder::blockMIVC(const IVC & mivc)
+    {
+        Clause block_cls = negateVec(mivc);
+        m_solver.addClause(block_cls);
+    }
+
+    bool CAIVCFinder::isIVC(const IVC & candidate)
+    {
+        // Debug over the gates not in candidate with unlimited cardinality
+        // (i.e., all non-candidate gates are removed)
+        // TODO: we don't get very much incrementality at all here (indeed,
+        // none in IC3, only whatever we get in BMC)
+
+        std::vector<ID> neg = negateGateSet(candidate);
+
+        bool unsafe;
+        std::tie(unsafe, std::ignore) = m_ivc_checker.debugOverGates(neg);
+
+        return !unsafe;
     }
 
     IVC CAIVCFinder::extractIVC() const
@@ -135,6 +236,46 @@ namespace PME {
         }
 
         return mivc;
+    }
+
+    std::vector<ID> CAIVCFinder::negateGateSet(const std::vector<ID> & gates) const
+    {
+        std::set<ID> gate_set(gates.begin(), gates.end());
+
+        std::vector<ID> neg;
+        for (ID gate : m_gates)
+        {
+            if (gate_set.count(gate) == 0)
+            {
+                neg.push_back(gate);
+            }
+        }
+
+        return neg;
+    }
+
+    void CAIVCFinder::logMCS(const CorrectionSet & mcs) const
+    {
+        log(2) << "Found correction set of size " << mcs.size() << std::endl;
+        log(3) << "[ ";
+        for (ID id : mcs) { log(3) << id << " "; }
+        log(3) << "]" << std::endl;
+    }
+
+    void CAIVCFinder::logMIVC(const IVC & mivc) const
+    {
+        log(2) << "Found MIVC of size " << mivc.size() << std::endl;
+        log(3) << "[ ";
+        for (ID id : mivc) { log(3) << id << " "; }
+        log(3) << "]" << std::endl;
+    }
+
+    void CAIVCFinder::logCandidate(const IVC & candidate) const
+    {
+        log(3) << "Found candidate MIVC of size " << candidate.size() << std::endl;
+        log(3) << "[ ";
+        for (ID id : candidate) { log(3) << id << " "; }
+        log(3) << "]" << std::endl;
     }
 }
 

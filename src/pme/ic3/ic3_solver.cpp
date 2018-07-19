@@ -171,6 +171,14 @@ namespace PME { namespace IC3 {
         m_init_constraints.clear();
     }
 
+    void IC3Solver::restrictInitialStates(const ClauseVec & vec)
+    {
+        for (const Clause & cls : vec)
+        {
+            restrictInitialStates(cls);
+        }
+    }
+
     void IC3Solver::restrictInitialStates(const Clause & cls)
     {
         assert(!cls.empty());

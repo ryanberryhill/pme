@@ -112,6 +112,7 @@ namespace PME { namespace IC3 {
             SafetyResult prove(const Cube & target);
 
             void restrictInitialStates(const Clause & cls);
+            void restrictInitialStates(const ClauseVec & vec);
             void clearRestrictions();
             void initialStatesExpanded();
             void initialStatesRestricted();

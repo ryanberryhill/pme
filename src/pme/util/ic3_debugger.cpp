@@ -45,15 +45,23 @@ namespace PME {
        }
     }
 
+    void IC3Debugger::setupInitialStates()
+    {
+        m_ic3.clearRestrictions();
+        if (m_cardinality < CARDINALITY_INF) { addCardinalityCNF(m_cardinality); }
+        addBlockingClauses();
+    }
+
     void IC3Debugger::setCardinality(unsigned n)
     {
         if (m_cardinality == n) { return; }
 
-        m_ic3.clearRestrictions();
-        addCardinalityCNF(n);
-        addBlockingClauses();
+        unsigned old_cardinality = m_cardinality;
+        m_cardinality = n;
 
-        if (m_cardinality < n)
+        setupInitialStates();
+
+        if (old_cardinality < n)
         {
             m_ic3.initialStatesExpanded();
         }
@@ -61,8 +69,6 @@ namespace PME {
         {
             m_ic3.initialStatesRestricted();
         }
-
-        m_cardinality = n;
     }
 
     void IC3Debugger::clearCardinality()
@@ -94,7 +100,8 @@ namespace PME {
         Cube assumps = m_cardinalityConstraint.assumeLEq(n);
         for (ID id : assumps)
         {
-            m_ic3.restrictInitialStates({id});
+            Clause assump = {id};
+            m_ic3.restrictInitialStates(assump);
         }
     }
 
@@ -123,6 +130,62 @@ namespace PME {
 
             return std::make_pair(true, soln);
         }
+    }
+
+    Debugger::Result IC3Debugger::debugOverGates(const std::vector<ID> & gates)
+    {
+        // TODO try to find a good way to do this incrementally
+
+        // Restrict to only these gates
+        ClauseVec restrict = onlyTheseGates(gates);
+        m_ic3.restrictInitialStates(restrict);
+        m_ic3.initialStatesRestricted();
+
+        // Debug
+        SafetyResult result = m_ic3.prove();
+        Result debug_result;
+
+        if (result.result == SAFE)
+        {
+            debug_result = std::make_pair(false, std::vector<ID>());
+        }
+        else
+        {
+            assert(result.result == UNSAFE);
+            SafetyCounterExample cex = result.cex;
+
+            std::vector<ID> soln = extractSolution(cex);
+
+            debug_result = std::make_pair(true, soln);
+        }
+
+        // Clear restrictions
+        setupInitialStates();
+        m_ic3.initialStatesExpanded();
+
+        return debug_result;
+    }
+
+    ClauseVec IC3Debugger::onlyTheseGates(const std::vector<ID> & gates) const
+    {
+        ClauseVec restrict;
+        std::set<ID> gate_dl_set;
+
+        for (ID gate : gates)
+        {
+            ID dl = m_debug_tr.debugLatchForGate(gate);
+            gate_dl_set.insert(dl);
+        }
+
+        for (ID dl : m_debug_latches)
+        {
+            if (gate_dl_set.count(dl) == 0)
+            {
+                restrict.push_back({negate(dl)});
+            }
+        }
+
+        return restrict;
     }
 
     void IC3Debugger::blockSolution(const std::vector<ID> & soln)

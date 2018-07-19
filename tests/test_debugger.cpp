@@ -174,6 +174,114 @@ void testIncrementalDebug()
     BOOST_CHECK(!found);
 }
 
+template<class T>
+void testDebugOverGates()
+{
+    DebugFixture<T> f;
+
+    ID a0 = f.debug_tr->toInternal(f.a0);
+    ID a1 = f.debug_tr->toInternal(f.a1);
+    ID a2 = f.debug_tr->toInternal(f.a2);
+
+    f.prepareDebugger();
+
+    // All zero initial state, 0 cardinality = SAFE
+    f.debugger->setCardinality(0);
+
+    bool found = false;
+    std::vector<ID> soln;
+
+    std::tie(found, soln) = f.debugger->debug();
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0, a1, a2});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0});
+    BOOST_CHECK(!found);
+
+    // a2 is a solution of cardinality 1
+    f.debugger->setCardinality(1);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0, a1});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a1});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a2});
+    BOOST_CHECK(found);
+    BOOST_CHECK(!soln.empty());
+    BOOST_CHECK_EQUAL(soln.size(), 1);
+    BOOST_CHECK_EQUAL(soln.at(0), a2);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0, a2});
+    BOOST_CHECK(found);
+    BOOST_CHECK(!soln.empty());
+    BOOST_CHECK_EQUAL(soln.size(), 1);
+    BOOST_CHECK_EQUAL(soln.at(0), a2);
+
+    f.debugger->blockSolution(soln);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0, a1, a2});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debug();
+    BOOST_CHECK(!found);
+
+    // (a0, a1) is a solution of cardinality 2
+    f.debugger->setCardinality(2);
+    std::vector<ID> expected_soln = {a0, a1};
+    std::sort(expected_soln.begin(), expected_soln.end());
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a1});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a1, a2});
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = f.debugger->debugOverGates({a0, a1});
+    BOOST_CHECK(found);
+
+    BOOST_CHECK_EQUAL(soln.size(), 2);
+    std::sort(soln.begin(), soln.end());
+    BOOST_CHECK(soln == expected_soln);
+
+    // Test out the "and block" version
+    std::tie(found, soln) = f.debugger->debugAndBlockOverGates({a0, a1, a2});
+    BOOST_CHECK(found);
+
+    BOOST_CHECK_EQUAL(soln.size(), 2);
+    std::sort(soln.begin(), soln.end());
+    BOOST_CHECK(soln == expected_soln);
+
+    // There should be no further solutions
+    std::tie(found, std::ignore) = f.debugger->debug();
+    BOOST_CHECK(!found);
+
+    f.debugger->clearCardinality();
+
+    std::tie(found, std::ignore) = f.debugger->debug();
+    BOOST_CHECK(!found);
+
+    std::tie(found, std::ignore) = f.debugger->debugOverGates({a0});
+    BOOST_CHECK(!found);
+
+    std::tie(found, std::ignore) = f.debugger->debugOverGates({a0, a1, a2});
+    BOOST_CHECK(!found);
+
+    f.debugger->setCardinality(3);
+
+    std::tie(found, std::ignore) = f.debugger->debug();
+    BOOST_CHECK(!found);
+}
+
 BOOST_AUTO_TEST_CASE(basic_debug_ic3)
 {
     testBasicDebug<IC3Debugger>();
@@ -202,6 +310,21 @@ BOOST_AUTO_TEST_CASE(incremental_debug_bmc)
 BOOST_AUTO_TEST_CASE(incremental_debug_hyrbid)
 {
     testIncrementalDebug<HybridDebugger>();
+}
+
+BOOST_AUTO_TEST_CASE(debug_over_gates_ic3)
+{
+    testDebugOverGates<IC3Debugger>();
+}
+
+BOOST_AUTO_TEST_CASE(debug_over_gates_bmc)
+{
+    testDebugOverGates<BMCDebugger>();
+}
+
+BOOST_AUTO_TEST_CASE(debug_over_gates_hybrid)
+{
+    testDebugOverGates<HybridDebugger>();
 }
 
 BOOST_AUTO_TEST_CASE(ic3debugger_lemma_access)

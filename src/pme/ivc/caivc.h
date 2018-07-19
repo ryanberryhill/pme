@@ -44,15 +44,30 @@ namespace PME {
             virtual std::ostream & log(int verbosity) const override;
 
         private:
+            void logMCS(const CorrectionSet & mcs) const;
+            void logMIVC(const IVC & mivc) const;
+            void logCandidate(const IVC & candidate) const;
+
+            void naiveFindIVCs();
+            void abstractionRefinementFindIVCs();
+
+            std::vector<ID> negateGateSet(const std::vector<ID> & gates) const;
+
             bool moreCorrectionSets();
             std::pair<bool, CorrectionSet> findCorrectionSet();
-            std::pair<bool, IVC> findMIVC();
+            CorrectionSet findCorrectionSetOverGates(const std::vector<ID> & gates);
+            std::pair<bool, IVC> findCandidateMIVC();
+            std::pair<bool, IVC> findAndBlockCandidateMIVC();
+            std::pair<bool, IVC> findCandidateMIVC(bool block);
+            void blockMIVC(const IVC & mivc);
             IVC extractIVC() const;
+            bool isIVC(const IVC & candidate);
 
             DebugTransitionRelation m_debug_tr;
             std::vector<ID> m_gates;
             CorrectionSetFinder m_finder;
             MaxSATSolver m_solver;
+            HybridDebugger m_ivc_checker;
     };
 }
 

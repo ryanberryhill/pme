@@ -274,7 +274,8 @@ BOOST_AUTO_TEST_CASE(complex_init_state)
     Cube leq1 = cardinality.assumeLEq(1);
     for (ID id : leq1)
     {
-        f.solver->restrictInitialStates({id});
+        Clause cls = {id};
+        f.solver->restrictInitialStates(cls);
     }
 
     f.solver->initialStatesRestricted();
@@ -292,7 +293,8 @@ BOOST_AUTO_TEST_CASE(clear_restrictions)
     std::vector<ID> debug_latches(f.debug_tr->begin_latches(), f.debug_tr->end_latches());
     for (ID id : debug_latches)
     {
-        f.solver->restrictInitialStates({negate(id)});
+        Clause cls = {negate(id)};
+        f.solver->restrictInitialStates(cls);
     }
     f.solver->initialStatesRestricted();
 

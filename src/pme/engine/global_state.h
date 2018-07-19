@@ -31,6 +31,7 @@ namespace PME
         bool simplify;
         bool camsis_abstraction_refinement;
         bool caivc_use_bmc;
+        bool caivc_abstraction_refinement;
         unsigned hybrid_debug_bmc_frames;
         PMEOptions();
     };

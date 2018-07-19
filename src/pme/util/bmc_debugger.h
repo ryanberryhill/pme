@@ -43,12 +43,15 @@ namespace PME {
             virtual void clearCardinality() override;
 
             virtual Result debug() override;
+            virtual Result debugOverGates(const std::vector<ID> & gates) override;
             virtual void blockSolution(const std::vector<ID> & soln) override;
 
             void setKMax(unsigned k) { m_kmax = k; }
 
         private:
+            Result debugWithAssumptions(const Cube & assumps);
             std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
+            Cube onlyTheseGates(const std::vector<ID> & gates) const;
 
             VariableManager & m_vars;
             const DebugTransitionRelation & m_tr;

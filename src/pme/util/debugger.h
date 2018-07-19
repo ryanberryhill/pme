@@ -37,6 +37,8 @@ namespace PME {
             virtual void clearCardinality() = 0;
 
             virtual Result debug() = 0;
+            virtual Result debugOverGates(const std::vector<ID> & gates) = 0;
+            virtual Result debugAndBlockOverGates(const std::vector<ID> & gates);
             virtual Result debugAndBlock();
 
             virtual void blockSolution(const std::vector<ID> & soln) = 0;

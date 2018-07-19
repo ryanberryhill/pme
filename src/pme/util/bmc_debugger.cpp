@@ -61,19 +61,33 @@ namespace PME {
         m_cardinality = CARDINALITY_INF;
     }
 
+    Debugger::Result BMCDebugger::debugOverGates(const std::vector<ID> & gates)
+    {
+        Cube assumps = onlyTheseGates(gates);
+        return debugWithAssumptions(assumps);
+    }
+
     Debugger::Result BMCDebugger::debug()
+    {
+        Cube assumps;
+        return debugWithAssumptions(assumps);
+    }
+
+    Debugger::Result BMCDebugger::debugWithAssumptions(const Cube & assumps)
     {
         Debugger::Result result;
 
         // Assume cardinality if needed
-        Cube assumps;
+        Cube local_assumps = assumps;
         if (m_cardinality < CARDINALITY_INF)
         {
-            assumps = m_cardinalityConstraint.assumeLEq(m_cardinality);
+            Cube cardinality_assumps = m_cardinalityConstraint.assumeLEq(m_cardinality);
+            local_assumps.insert(local_assumps.end(), cardinality_assumps.begin(),
+                                                      cardinality_assumps.end());
         }
 
         // Solve with limit of k_max time frames
-        SafetyResult bmc = m_solver.solve(m_kmax, assumps);
+        SafetyResult bmc = m_solver.solve(m_kmax, local_assumps);
 
         if (bmc.result == UNSAFE)
         {
@@ -118,6 +132,28 @@ namespace PME {
         }
 
         return soln;
+    }
+
+    Cube BMCDebugger::onlyTheseGates(const std::vector<ID> & gates) const
+    {
+        Cube assumps;
+        std::set<ID> gate_dl_set;
+
+        for (ID gate : gates)
+        {
+            ID dl = m_tr.debugLatchForGate(gate);
+            gate_dl_set.insert(dl);
+        }
+
+        for (ID dl : m_debug_latches)
+        {
+            if (gate_dl_set.count(dl) == 0)
+            {
+                assumps.push_back(negate(dl));
+            }
+        }
+
+        return assumps;
     }
 
 }

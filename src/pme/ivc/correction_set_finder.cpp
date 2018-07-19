@@ -26,8 +26,8 @@
 namespace PME {
 
     CorrectionSetFinder::CorrectionSetFinder(VariableManager & varman,
-                             DebugTransitionRelation & tr,
-                             GlobalState & gs)
+                                             DebugTransitionRelation & tr,
+                                             GlobalState & gs)
         : m_cardinality(0),
           m_solver(varman, tr, gs),
           m_solver_inf(varman, tr, gs)
@@ -43,6 +43,21 @@ namespace PME {
         bool more;
         std::tie(more, std::ignore) = m_solver_inf.debug();
         return more;
+    }
+
+    std::pair<bool, CorrectionSet>
+    CorrectionSetFinder::findAndBlockOverGates(const std::vector<ID> & gates)
+    {
+        bool found;
+        CorrectionSet corr;
+
+        std::tie(found, corr) = m_solver.debugAndBlockOverGates(gates);
+        if (found)
+        {
+            m_solver_inf.blockSolution(corr);
+        }
+
+        return std::make_pair(found, corr);
     }
 
     std::pair<bool, CorrectionSet> CorrectionSetFinder::findAndBlock()
@@ -61,7 +76,6 @@ namespace PME {
 
     void CorrectionSetFinder::setCardinality(unsigned n)
     {
-        assert(n >= m_cardinality);
         m_cardinality = n;
         m_solver.setCardinality(n);
     }

@@ -187,3 +187,65 @@ BOOST_AUTO_TEST_CASE(correction_sets)
     BOOST_REQUIRE(!finder.moreCorrectionSets());
 }
 
+BOOST_AUTO_TEST_CASE(correction_sets_over_gates)
+{
+    CorrectionSetFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    std::vector<ID> all = {a0, a1, a2, a3, a4, a5, a6};
+
+    CorrectionSetFinder & finder = *f.finder;
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+
+    bool found;
+    CorrectionSet corr;
+
+    // MCS {a6}
+    finder.setCardinality(1);
+
+    std::tie(found, corr) = finder.findAndBlockOverGates({a4});
+    BOOST_CHECK(!found);
+
+    std::tie(found, corr) = finder.findAndBlockOverGates({a4, a1});
+    BOOST_CHECK(!found);
+
+    std::tie(found, corr) = finder.findAndBlockOverGates(all);
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 1);
+    BOOST_CHECK_EQUAL(corr.at(0), a6);
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+
+    // MCS {a4, a5}
+    finder.setCardinality(2);
+    std::tie(found, corr) = finder.findAndBlockOverGates({a6, a5});
+    BOOST_CHECK(!found);
+
+    std::tie(found, corr) = finder.findAndBlockOverGates({a6, a4});
+    BOOST_CHECK(!found);
+
+    std::tie(found, corr) = finder.findAndBlockOverGates({a0, a1, a2, a3, a4, a5});
+
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 2);
+    CorrectionSet expected = {a4, a5};
+    std::sort(expected.begin(), expected.end());
+    std::sort(corr.begin(), corr.end());
+    BOOST_CHECK(corr == expected);
+
+    std::tie(found, corr) = finder.findAndBlock();
+    BOOST_CHECK(!found);
+
+    std::tie(found, corr) = finder.findAndBlockOverGates({a4, a5});
+    BOOST_CHECK(!found);
+}
+
+

@@ -45,10 +45,26 @@ namespace PME {
         m_ic3.clearCardinality();
     }
 
+    Debugger::Result HybridDebugger::debugOverGates(const std::vector<ID> & gates)
+    {
+        Result result;
+        result.first = false;
+
+        // Do BMC if it's enabled
+        if (m_kmax > 0) { result = m_bmc.debugOverGates(gates); }
+
+        // If BMC gave an unknown result, do IC3
+        if (result.first == false)
+        {
+            result = m_ic3.debugOverGates(gates);
+        }
+
+        return result;
+    }
+
     Debugger::Result HybridDebugger::debug()
     {
         Result result;
-
         result.first = false;
 
         // Do BMC if it's enabled

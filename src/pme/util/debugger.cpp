@@ -33,5 +33,17 @@ namespace PME {
 
         return result;
     }
+
+    Debugger::Result Debugger::debugAndBlockOverGates(const std::vector<ID> & gates)
+    {
+        Result result = debugOverGates(gates);
+
+        if (result.first)
+        {
+            blockSolution(result.second);
+        }
+
+        return result;
+    }
 }
 
