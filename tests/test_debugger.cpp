@@ -23,7 +23,8 @@
 #include "pme/ic3/ic3.h"
 #include "pme/util/ic3_debugger.h"
 #include "pme/util/bmc_debugger.h"
-#include "pme/engine/transition_relation.h"
+#include "pme/util/hybrid_debugger.h"
+#include "pme/engine/debug_transition_relation.h"
 
 #define BOOST_TEST_MODULE DebuggerTest
 #define BOOST_TEST_DYN_LINK
@@ -38,7 +39,6 @@ struct DebugFixture
     aiger * aig;
     ExternalID l0, l1, l2, l3, a0, a1, a2, o0;
     VariableManager vars;
-    std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<DebugTransitionRelation> debug_tr;
     std::unique_ptr<Debugger> debugger;
     GlobalState gs;
@@ -75,14 +75,13 @@ struct DebugFixture
         o0 = a2;
 
         gs.opts.simplify = simplify;
-        tr.reset(new TransitionRelation(vars, aig));
-        debug_tr.reset(new DebugTransitionRelation(*tr));
+        debug_tr.reset(new DebugTransitionRelation(vars, aig));
         prepareDebugger();
     }
 
     void setInit(ID latch, ID val)
     {
-        tr->setInit(latch, val);
+        debug_tr->setInit(latch, val);
     }
 
     void prepareDebugger()
@@ -119,9 +118,9 @@ void testIncrementalDebug()
 {
     DebugFixture<T> f;
 
-    ID a0 = f.tr->toInternal(f.a0);
-    ID a1 = f.tr->toInternal(f.a1);
-    ID a2 = f.tr->toInternal(f.a2);
+    ID a0 = f.debug_tr->toInternal(f.a0);
+    ID a1 = f.debug_tr->toInternal(f.a1);
+    ID a2 = f.debug_tr->toInternal(f.a2);
 
     f.prepareDebugger();
 
@@ -185,6 +184,11 @@ BOOST_AUTO_TEST_CASE(basic_debug_bmc)
     testBasicDebug<BMCDebugger>();
 }
 
+BOOST_AUTO_TEST_CASE(basic_debug_hybrid)
+{
+    testBasicDebug<HybridDebugger>();
+}
+
 BOOST_AUTO_TEST_CASE(incremental_debug_ic3)
 {
     testIncrementalDebug<IC3Debugger>();
@@ -195,16 +199,21 @@ BOOST_AUTO_TEST_CASE(incremental_debug_bmc)
     testIncrementalDebug<BMCDebugger>();
 }
 
+BOOST_AUTO_TEST_CASE(incremental_debug_hyrbid)
+{
+    testIncrementalDebug<HybridDebugger>();
+}
+
 BOOST_AUTO_TEST_CASE(ic3debugger_lemma_access)
 {
     DebugFixture<IC3Debugger> f;
 
     IC3Debugger * debugger = dynamic_cast<IC3Debugger *>(f.debugger.get());
 
-    ID l0 = f.tr->toInternal(f.l0);
-    ID l1 = f.tr->toInternal(f.l1);
-    ID l2 = f.tr->toInternal(f.l2);
-    ID l3 = f.tr->toInternal(f.l3);
+    ID l0 = f.debug_tr->toInternal(f.l0);
+    ID l1 = f.debug_tr->toInternal(f.l1);
+    ID l2 = f.debug_tr->toInternal(f.l2);
+    ID l3 = f.debug_tr->toInternal(f.l3);
 
     debugger->addLemma({negate(l0)}, 1);
     debugger->addLemma({negate(l1)}, 2);

@@ -19,50 +19,43 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef IC3_DEBUGGER_H_INCLUDED
-#define IC3_DEBUGGER_H_INCLUDED
+#ifndef HYBRID_DEBUGGER_H_INCLUDED
+#define HYBRID_DEBUGGER_H_INCLUDED
 
-#include "pme/pme.h"
 #include "pme/util/debugger.h"
-#include "pme/util/cardinality_constraint.h"
+#include "pme/util/bmc_debugger.h"
+#include "pme/util/ic3_debugger.h"
 #include "pme/engine/variable_manager.h"
-#include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
 #include "pme/engine/global_state.h"
-#include "pme/ic3/ic3_solver.h"
 
 namespace PME {
 
-    class IC3Debugger : public Debugger
+    class HybridDebugger : public Debugger
     {
         public:
-            IC3Debugger(VariableManager & varman,
-                        const DebugTransitionRelation & tr,
-                        GlobalState & gs);
+            HybridDebugger(VariableManager & varman,
+                           const DebugTransitionRelation & tr,
+                           GlobalState & gs);
 
+            // Debugging functions
             virtual void setCardinality(unsigned n) override;
             virtual void clearCardinality() override;
 
             virtual Result debug() override;
             virtual void blockSolution(const std::vector<ID> & soln) override;
 
+            // BMC functions
+            void setKMax(unsigned k);
+
+            // IC3 functions
             IC3::LemmaID addLemma(const Cube & c, unsigned level);
             std::vector<Cube> getFrameCubes(unsigned n) const;
             unsigned numFrames() const;
 
         private:
-            std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
-            bool isDebugLatch(ID latch) const;
-            void addCardinalityCNF(unsigned n);
-            void addBlockingClauses();
-
-            const DebugTransitionRelation & m_debug_tr;
-            IC3::IC3Solver m_ic3;
-            GlobalState & m_gs;
-            unsigned m_cardinality;
-            CardinalityConstraint m_cardinalityConstraint;
-            std::set<ID> m_debug_latches;
-            std::vector<Clause> m_blockingClauses;
+            BMCDebugger m_bmc;
+            IC3Debugger m_ic3;
     };
 
 }

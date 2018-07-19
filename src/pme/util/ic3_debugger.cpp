@@ -28,7 +28,7 @@ namespace PME {
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
 
     IC3Debugger::IC3Debugger(VariableManager & varman,
-                             DebugTransitionRelation & tr,
+                             const DebugTransitionRelation & tr,
                              GlobalState & gs)
         : m_debug_tr(tr),
           m_ic3(varman, m_debug_tr, gs),
