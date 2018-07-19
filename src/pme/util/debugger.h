@@ -30,6 +30,9 @@ namespace PME {
     {
         public:
             typedef std::pair<bool, std::vector<ID>> Result;
+
+            virtual ~Debugger() { }
+
             virtual void setCardinality(unsigned n) = 0;
             virtual void clearCardinality() = 0;
 
