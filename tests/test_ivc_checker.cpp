@@ -22,7 +22,7 @@
 #include "pme/id.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/global_state.h"
-#include "pme/ivc/ivc_checker.h"
+#include "pme/util/ivc_checker.h"
 
 #define BOOST_TEST_MODULE IVCCheckerTest
 #define BOOST_TEST_DYN_LINK
@@ -38,6 +38,7 @@ struct IVCFixture
     ExternalID l0, l1, l2, l3, a0, a1, a2, a3, a4, a5, a6, o0;
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
+    std::unique_ptr<IVCChecker> checker;
     GlobalState gs;
 
     IVCFixture()
@@ -84,6 +85,7 @@ struct IVCFixture
         aiger_add_output(aig, a6, "o0");
         o0 = a6;
         tr.reset(new TransitionRelation(vars, aig));
+        checker.reset(new IVCChecker(vars, *tr, gs));
     }
 
     void setInit(ID latch, ID val)
@@ -98,17 +100,7 @@ struct IVCFixture
     }
 };
 
-void sortIVCs(std::vector<IVC> & ivcs)
-{
-    for (IVC ivc : ivcs)
-    {
-        std::sort(ivc.begin(), ivc.end());
-    }
-    std::sort(ivcs.begin(), ivcs.end());
-}
-
-template<class T>
-void runIVCTest()
+BOOST_AUTO_TEST_CASE(full_ivc)
 {
     IVCFixture f;
 
@@ -120,45 +112,48 @@ void runIVCTest()
     ID a5 = f.tr->toInternal(f.a5);
     ID a6 = f.tr->toInternal(f.a6);
 
-    std::vector<IVC> actual;
-    std::vector<IVC> mivcs = { {a0, a4, a6},
-                               {a1, a4, a6},
-                               {a2, a5, a6},
-                               {a3, a5, a6} };
-    sortIVCs(mivcs);
+    IVC ivc = {a0, a1, a2, a3, a4, a5, a6};
 
-    T finder(f.vars, *f.tr, f.gs);
-    finder.findIVCs();
-
-    BOOST_CHECK_EQUAL(finder.numMIVCs(), mivcs.size());
-    BOOST_REQUIRE(finder.minimumIVCKnown());
-    IVC min_ivc = finder.getMinimumIVC();
-    std::sort(min_ivc.begin(), min_ivc.end());
-
-    bool min_found = false;
-
-    size_t min_size = std::numeric_limits<size_t>::max();
-    for (size_t i = 0; i < finder.numMIVCs(); ++i)
-    {
-        IVC mivc = finder.getMIVC(i);
-        actual.push_back(mivc);
-        min_size = std::min(min_size, mivc.size());
-
-        if (mivc == min_ivc)
-        {
-            min_found = true;
-        }
-    }
-
-    BOOST_CHECK(min_found);
-    BOOST_CHECK_EQUAL(finder.getMinimumIVC().size(), min_size);
-
-    sortIVCs(actual);
-    BOOST_CHECK(actual == mivcs);
+    BOOST_CHECK(f.checker->checkSafe(ivc));
+    BOOST_CHECK(!f.checker->checkMinimal(ivc));
+    BOOST_CHECK(!f.checker->checkMIVC(ivc));
 }
 
-BOOST_AUTO_TEST_CASE(basic_ivc_caivc)
+BOOST_AUTO_TEST_CASE(safe_ivc)
 {
-    runIVCTest<CAIVCFinder>();
+    IVCFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    IVC ivc = {a0, a1, a2, a3, a4, a6};
+
+    BOOST_CHECK(f.checker->checkSafe(ivc));
+    BOOST_CHECK(!f.checker->checkMinimal(ivc));
+    BOOST_CHECK(!f.checker->checkMIVC(ivc));
 }
 
+BOOST_AUTO_TEST_CASE(mivcs)
+{
+    IVCFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    BOOST_CHECK(f.checker->checkSafe({a0, a4, a6}));
+    BOOST_CHECK(f.checker->checkMinimal({a0, a4, a6}));
+    BOOST_CHECK(f.checker->checkMIVC({a0, a4, a6}));
+
+    BOOST_CHECK(f.checker->checkMIVC({a1, a4, a6}));
+    BOOST_CHECK(f.checker->checkMIVC({a2, a5, a6}));
+    BOOST_CHECK(f.checker->checkMIVC({a3, a5, a6}));
+}

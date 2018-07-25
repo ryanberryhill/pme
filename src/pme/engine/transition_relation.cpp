@@ -93,6 +93,8 @@ namespace PME
         std::set<ID> gate_set(gates.begin(), gates.end());
         std::set<ID> relevant_set;
 
+        relevant_set.insert(m_bad);
+
         // For each gate, check if we want to copy it
         for (const auto & p : other.m_gates)
         {

@@ -45,6 +45,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/clause_database.cpp \
                    src/pme/util/proof_checker.h \
                    src/pme/util/proof_checker.cpp \
+                   src/pme/util/ivc_checker.h \
+                   src/pme/util/ivc_checker.cpp \
                    src/pme/util/maxsat_solver.h \
                    src/pme/util/maxsat_solver.cpp \
                    src/pme/util/find_safe_mis.h \
@@ -154,7 +156,8 @@ TESTS = test_sat_adaptor \
         test_bmc_solver \
         test_basics \
         test_correction_set_finder \
-        test_ivc
+        test_ivc \
+        test_ivc_checker
 
 check_PROGRAMS = $(TESTS)
 
@@ -230,6 +233,9 @@ test_basics_LDADD = $(PME_TEST_LIBS)
 
 test_ivc_SOURCES = tests/test_ivc.cpp
 test_ivc_LDADD = $(PME_TEST_LIBS)
+
+test_ivc_checker_SOURCES = tests/test_ivc_checker.cpp
+test_ivc_checker_LDADD = $(PME_TEST_LIBS)
 
 test_correction_set_finder_SOURCES = tests/test_correction_set_finder.cpp
 test_correction_set_finder_LDADD = $(PME_TEST_LIBS)
