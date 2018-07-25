@@ -93,11 +93,40 @@ void parse_proof(void * proof, FILE * proof_file)
     }
 }
 
+void report_ivc_run(void * pme, const char * name)
+{
+    size_t num_ivcs = cpme_num_ivcs(pme);
+    size_t largest = 0;
+    size_t smallest = UINT_MAX;
+
+    for (size_t i = 0; i < num_ivcs; ++i)
+    {
+        void * mivc = cpme_get_ivc(pme, i);
+        size_t current = cpme_ivc_num_gates(mivc);
+
+        if (current > largest) { largest = current; }
+        if (current < smallest) { smallest = current; }
+
+        cpme_free_ivc(mivc);
+    }
+
+    if (num_ivcs > 0)
+    {
+        print(1, "Found %lu minimal IVC(s) of size %lu-%lu with %s\n",
+                  num_ivcs, smallest, largest, name);
+    }
+    else
+    {
+        print(1, "Found no IVCs with %s\n", name);
+    }
+}
+
 void report_run(void * pme, const char * name)
 {
     size_t num_proofs = cpme_num_proofs(pme);
     size_t largest = 0;
     size_t smallest = UINT_MAX;
+
     for (size_t i = 0; i < num_proofs; ++i)
     {
         void * min_proof = cpme_get_proof(pme, i);
@@ -148,6 +177,138 @@ void save_proof(void * pme, size_t pindex, const char * filepath)
     cpme_free_proof(proof);
 }
 
+void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
+{
+    FILE * fp = fopen(filepath, "w");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "Couldn't open %s for writing\n", filepath);
+        return;
+    }
+
+    aiger * ivc_aig = aiger_init();
+
+    void * ivc = cpme_get_ivc(pme, pindex);
+    size_t size = cpme_ivc_num_gates(ivc);
+    size_t num_vars = aig->maxvar + 1;
+    unsigned char * relevant = calloc(num_vars, sizeof(unsigned char));
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        unsigned gate_id = cpme_ivc_get_gate(ivc, i);
+
+        // Find the AND gate in the original aig
+        // NOTE: and gates apparently are not sorted by lhs
+        for (size_t and_index = 0; and_index < aig->num_ands; ++and_index)
+        {
+            unsigned lhs = aig->ands[and_index].lhs;
+
+            if (lhs == gate_id)
+            {
+                // We've found it
+                unsigned rhs0 = aig->ands[and_index].rhs0;
+                unsigned rhs1 = aig->ands[and_index].rhs1;
+
+                // Mark the variables as relevant
+                unsigned l = aiger_lit2var(lhs);
+                unsigned r0 = aiger_lit2var(rhs0);
+                unsigned r1 = aiger_lit2var(rhs1);
+                relevant[l] = 1;
+                relevant[r0] = 1;
+                relevant[r1] = 1;
+
+                // Copy the gate
+                aiger_add_and(ivc_aig, lhs, rhs0, rhs1);
+
+                break;
+            }
+        }
+    }
+
+    // For all relevant latches, their next-states must also be relevant,
+    // and their next-states, and so forth
+    char fixpoint = 0;
+    while (!fixpoint)
+    {
+        fixpoint = 1;
+        for (unsigned i = 0; i < num_vars; ++i)
+        {
+            if (!relevant[i]) { continue; }
+
+            unsigned lit = aiger_var2lit(i);
+
+            aiger_symbol * sym = NULL;
+
+            // If it's a latch, copy it and the reset
+            sym = aiger_is_latch(aig, lit);
+            if (sym)
+            {
+                unsigned next = aiger_lit2var(sym->next);
+                if (!relevant[next])
+                {
+                    relevant[next] = 1;
+                    fixpoint = 0;
+                }
+            }
+        }
+    }
+
+    // Iterate over all relevant variables
+    // Start from i = 1 because 0 is the variable represeting constant 1
+    for (unsigned i = 1; i < num_vars; ++i)
+    {
+        if (!relevant[i]) { continue; }
+
+        unsigned lit = aiger_var2lit(i);
+
+        aiger_symbol * sym = NULL;
+
+        // If it's a latch, copy it and the reset
+        sym = aiger_is_latch(aig, lit);
+        if (sym)
+        {
+            unsigned next = sym->next;
+            unsigned reset = sym->reset;
+            const char * name = sym->name;
+            aiger_add_latch(ivc_aig, lit, next, name);
+            aiger_add_reset(ivc_aig, lit, reset);
+            continue;
+        }
+
+        // If it's an input, copy it with its name
+        sym = aiger_is_input(aig, lit);
+        if (sym)
+        {
+            const char * name = sym->name;
+            aiger_add_input(ivc_aig, lit, name);
+            continue;
+        }
+
+        // If it's neither latch nor an input nor an AND gate of the IVC,
+        // then it's a PPI created by removing gates
+        if (!aiger_is_and(ivc_aig, lit))
+        {
+            aiger_add_input(ivc_aig, lit, NULL);
+            continue;
+        }
+    }
+
+    // Copy the first output
+    assert(aig->num_outputs == 1);
+    unsigned o_lit = aig->outputs[0].lit;
+    const char * o_name = aig->outputs[0].name;
+    aiger_add_output(ivc_aig, o_lit, o_name);
+
+    aiger_write_to_file(ivc_aig, aiger_binary_mode, fp);
+
+    fclose(fp); fp = NULL;
+    aiger_reset(ivc_aig); ivc_aig = NULL;
+
+    cpme_free_ivc(ivc); ivc = NULL;
+
+    free(relevant); relevant = NULL;
+}
+
 char g_save_path[512];
 
 void save_proofs(void * pme, char * name)
@@ -166,6 +327,26 @@ void save_proofs(void * pme, char * name)
         }
 
         save_proof(pme, i, filepath);
+    }
+}
+
+void save_ivcs(aiger * aig, void * pme, char * name)
+{
+    char filepath[1024];
+
+    unsigned num_ivcs = cpme_num_ivcs(pme);
+    for (size_t i = 0; i < num_ivcs; ++i)
+    {
+        size_t len = snprintf(filepath, sizeof(filepath),
+                              "%s.%s%lu.aig", g_save_path, name, i);
+
+        if (len >= sizeof(filepath))
+        {
+            fprintf(stderr, "Filepath ``%s...'' is too long\n", filepath);
+            continue;
+        }
+
+        save_ivc(aig, pme, i, filepath);
     }
 }
 
@@ -250,9 +431,25 @@ void print_cex(void * pme, aiger * aig)
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
 int g_ic3 = 0, g_bmc = 0;
-int g_check = 0, g_checkmin = 0;
+int g_checkproof = 0, g_checkmin = 0;
 int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0;
-int g_saveproofs = 0;
+int g_caivc = 0, g_marcoivc = 0;
+int g_saveproofs = 0, g_saveivcs = 0;
+
+int needs_proof_arg()
+{
+    return !(g_ic3 || g_bmc || g_caivc || g_marcoivc);
+}
+
+int uses_proof()
+{
+    return !(g_bmc || g_caivc || g_marcoivc);
+}
+
+int ic3_should_be_quiet()
+{
+    return (g_caivc || g_marcoivc);
+}
 
 int main(int argc, char ** argv)
 {
@@ -269,13 +466,16 @@ int main(int argc, char ** argv)
     static struct option long_opts[] = {
             {"ic3",             no_argument,        &g_ic3,        1 },
             {"bmc",             required_argument,  &g_bmc,        1 },
-            {"check",           no_argument,        &g_check,      1 },
+            {"check",           no_argument,        &g_checkproof, 1 },
             {"check-minimal",   no_argument,        &g_checkmin,   1 },
             {"save-proofs",     required_argument,  &g_saveproofs, 1 },
+            {"save-ivcs",       required_argument,  &g_saveivcs,   1 },
             {"marco",           no_argument,        &g_marco,      1 },
             {"camsis",          no_argument,        &g_camsis,     1 },
             {"sisi",            no_argument,        &g_sisi,       1 },
             {"bfmin",           no_argument,        &g_bfmin,      1 },
+            {"caivc",           no_argument,        &g_caivc,      1 },
+            {"marco-ivc",       no_argument,        &g_marcoivc,   1 },
             {"help",            no_argument,        0,            'h'},
             {0,                 0,                  0,             0 }
     };
@@ -288,9 +488,33 @@ int main(int argc, char ** argv)
             case 0:
                 if (strcmp(long_opts[option_index].name, "save-proofs") == 0)
                 {
+                    if (g_saveivcs)
+                    {
+                        fprintf(stderr, "--save-ivcs and save-proofs cannot be given together\n");
+                        return EXIT_FAILURE;
+                    }
+
                     if (strlen(optarg) >= sizeof(g_save_path))
                     {
                         fprintf(stderr, "argument to save-proofs is too long\n");
+                        return EXIT_FAILURE;
+                    }
+                    else
+                    {
+                        strncpy(g_save_path, optarg, sizeof(g_save_path));
+                    }
+                }
+                else if (strcmp(long_opts[option_index].name, "save-ivcs") == 0)
+                {
+                    if (g_saveproofs)
+                    {
+                        fprintf(stderr, "--save-ivcs and save-proofs cannot be given together\n");
+                        return EXIT_FAILURE;
+                    }
+
+                    if (strlen(optarg) >= sizeof(g_save_path))
+                    {
+                        fprintf(stderr, "argument to save-ivcs is too long\n");
                         return EXIT_FAILURE;
                     }
                     else
@@ -330,7 +554,7 @@ int main(int argc, char ** argv)
         aig_path = argv[optind];
         proof_path = argv[optind + 1];
     }
-    else if (argc == optind + 1 && (g_ic3 || g_bmc))
+    else if (argc == optind + 1 && !needs_proof_arg())
     {
         // Given an AIG and --ic3 or --bmc
         aig_path = argv[optind];
@@ -407,6 +631,11 @@ int main(int argc, char ** argv)
     cpme_log_to_stdout(pme);
     cpme_set_verbosity(pme, g_verbosity);
 
+    if (ic3_should_be_quiet())
+    {
+        cpme_set_channel_verbosity(pme, LOG_IC3, 0);
+    }
+
     if (g_bmc)
     {
         int safe = cpme_run_bmc(pme, bmc_kmax);
@@ -456,11 +685,15 @@ int main(int argc, char ** argv)
         //cpme_set_proof(pme, proof);
     }
 
-    size_t proof_size = cpme_proof_num_clauses(proof);
-    print(1, "The proof has %lu clauses\n", proof_size);
+    size_t proof_size = 0;
+    if (uses_proof())
+    {
+        assert(proof);
+        proof_size = cpme_proof_num_clauses(proof);
+        print(1, "The proof has %lu clauses\n", proof_size);
+    }
 
-
-    if (g_check)
+    if (g_checkproof)
     {
         int proof_ok = cpme_check_proof(pme);
         if (proof_ok < 0)
@@ -573,6 +806,29 @@ int main(int argc, char ** argv)
         if (g_saveproofs)
         {
             save_proofs(pme, "camsis");
+        }
+    }
+
+    if (g_marcoivc)
+    {
+        fprintf(stderr, "MARCO-IVC is not implemented\n");
+        failure = 1; goto cleanup;
+    }
+
+    if (g_caivc)
+    {
+        int caivc_ok = cpme_run_caivc(pme);
+        if (caivc_ok < 0)
+        {
+            fprintf(stderr, "Error running CAIVC\n");
+            failure = 1; goto cleanup;
+        }
+
+        report_ivc_run(pme, "CAIVC");
+
+        if (g_saveivcs)
+        {
+            save_ivcs(aig, pme, "caivc");
         }
     }
 

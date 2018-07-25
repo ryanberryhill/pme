@@ -39,6 +39,8 @@ namespace PME {
                       TransitionRelation & tr,
                       GlobalState & gs);
 
+            virtual ~IVCFinder() { }
+
             virtual void findIVCs() = 0;
 
             size_t numMIVCs() const;

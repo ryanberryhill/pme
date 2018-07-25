@@ -23,6 +23,7 @@
 #define LOGGER_H_INCLUDED
 
 #include <iostream>
+#include "pme/pme.h"
 
 /*
  * Logging functionality
@@ -58,22 +59,6 @@ namespace PME
     };
 
     extern null_out_stream g_null_ostream;
-
-    enum LogChannelID
-    {
-        LOG_TEST = 0,
-        LOG_PME,
-        LOG_MINIMIZATION,
-        LOG_MARCO,
-        LOG_CAMSIS,
-        LOG_SISI,
-        LOG_BFMIN,
-        LOG_IC3,
-        LOG_IVC,
-        LOG_CAIVC,
-        LOG_INVALID,
-        NUM_LOG_CHANNELS = LOG_INVALID
-    };
 
     std::ostream& operator<< (std::ostream& stream, LogChannelID channel);
 

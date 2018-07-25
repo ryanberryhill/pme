@@ -30,6 +30,7 @@
 #include "pme/engine/logger.h"
 #include "pme/engine/global_state.h"
 #include "pme/minimization/minimization.h"
+#include "pme/ivc/ivc.h"
 
 #include <vector>
 #include <unordered_map>
@@ -46,6 +47,7 @@ namespace PME
 
             bool checkProof();
             void minimize(PMEMinimizationAlgorithm algorithm);
+            void findIVCs(PMEIVCAlgorithm algorithm);
             bool runIC3();
             bool runBMC(unsigned k_max);
 
@@ -58,6 +60,13 @@ namespace PME
 
             ExternalClauseVec getProofExternal(size_t i) const;
             ExternalClauseVec getMinimumProofExternal() const;
+
+            size_t getNumIVCs() const;
+            IVC getIVC(size_t i) const;
+            IVC getMinimumIVC() const;
+
+            ExternalIVC getIVCExternal(size_t i) const;
+            ExternalIVC getMinimumIVCExternal() const;
 
             SafetyCounterExample getCounterExample() const;
             ExternalCounterExample getExternalCounterExample() const;
@@ -72,6 +81,7 @@ namespace PME
             ClauseVec m_proof;
             SafetyCounterExample m_cex;
             std::unique_ptr<ProofMinimizer> m_minimizer;
+            std::unique_ptr<IVCFinder> m_ivc_finder;
             GlobalState m_gs;
 
             std::ostream & log(int v) const;

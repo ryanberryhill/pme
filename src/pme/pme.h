@@ -30,11 +30,33 @@ extern "C" {
 
 typedef enum
 {
+    LOG_TEST = 0,
+    LOG_PME,
+    LOG_MINIMIZATION,
+    LOG_MARCO,
+    LOG_CAMSIS,
+    LOG_SISI,
+    LOG_BFMIN,
+    LOG_IC3,
+    LOG_IVC,
+    LOG_CAIVC,
+    LOG_INVALID,
+    NUM_LOG_CHANNELS = LOG_INVALID
+} LogChannelID;
+
+typedef enum
+{
     PME_MINIMIZATION_MARCO,
     PME_MINIMIZATION_CAMSIS,
     PME_MINIMIZATION_SISI,
     PME_MINIMIZATION_BRUTEFORCE
 } PMEMinimizationAlgorithm;
+
+typedef enum
+{
+    PME_IVC_MARCO,
+    PME_IVC_CAIVC
+} PMEIVCAlgorithm;
 
 const char * cpme_version();
 void * cpme_init(aiger * aig, void * proof);
@@ -42,6 +64,7 @@ void cpme_free(void * pme);
 
 void cpme_log_to_stdout(void * pme);
 void cpme_set_verbosity(void * pme, int v);
+void cpme_set_channel_verbosity(void * pme, LogChannelID channel, int v);
 
 void * cpme_alloc_proof();
 void * cpme_copy_proof(void * pme);
@@ -64,11 +87,18 @@ size_t cpme_num_proofs(void * pme);
 void * cpme_get_proof(void * pme, size_t i);
 void cpme_set_proof(void * pme, void * proof);
 
+size_t cpme_num_ivcs(void * pme);
+void * cpme_get_ivc(void * pme, size_t i);
+size_t cpme_ivc_num_gates(void * ivc);
+unsigned cpme_ivc_get_gate(void * ivc, size_t i);
+void cpme_free_ivc(void * ivc);
+
 int cpme_check_proof(void * pme);
 int cpme_run_marco(void * pme);
 int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
+int cpme_run_caivc(void * pme);
 
 int cpme_run_ic3(void * pme);
 int cpme_run_bmc(void * pme, unsigned k_max);
@@ -95,9 +125,11 @@ namespace PME
 
     typedef std::vector<ID> Clause;
     typedef std::vector<ID> Cube;
+    typedef std::vector<ID> IVC;
     typedef std::vector<Clause> ClauseVec;
 
     typedef std::vector<unsigned> ExternalCube;
+    typedef std::vector<unsigned> ExternalIVC;
 
     struct ExternalStep {
         ExternalCube inputs;

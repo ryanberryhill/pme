@@ -216,6 +216,14 @@ void cpme_set_verbosity(void * pme, int v)
     eng->setVerbosity(v);
 }
 
+void cpme_set_channel_verbosity(void * pme, LogChannelID channel, int v)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+    assert(channel < NUM_LOG_CHANNELS);
+    eng->setChannelVerbosity(channel, v);
+}
+
 void cpme_add_clause(void * proof, const unsigned * cls, size_t n)
 {
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);
@@ -346,6 +354,22 @@ int cpme_run_bfmin(void * pme)
     }
 }
 
+int cpme_run_caivc(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->findIVCs(PME_IVC_CAIVC);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 int cpme_run_ic3(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);
@@ -407,6 +431,57 @@ void cpme_set_proof(void * pme, void * proof)
     assert(p);
 
     eng->setProof(*p);
+}
+
+size_t cpme_num_ivcs(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return 0; }
+
+    return eng->getNumIVCs();
+}
+
+void * cpme_get_ivc(void * pme, size_t i)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return NULL; }
+
+    assert(i < eng->getNumIVCs());
+    PME::ExternalIVC * proof = new PME::ExternalIVC;
+    *proof = eng->getIVCExternal(i);
+
+    return proof;
+}
+
+size_t cpme_ivc_num_gates(void * ivc)
+{
+    PME::ExternalIVC * p = static_cast<PME::ExternalIVC *>(ivc);
+    assert(p);
+
+    return p->size();
+}
+
+unsigned cpme_ivc_get_gate(void * ivc, size_t i)
+{
+    PME::ExternalIVC * p = static_cast<PME::ExternalIVC *>(ivc);
+    assert(p);
+
+    return p->at(i);
+}
+
+void cpme_free_ivc(void * ivc)
+{
+    PME::ExternalIVC * p = static_cast<PME::ExternalIVC *>(ivc);
+    assert(p);
+
+    try
+    {
+        delete p;
+    }
+    catch (...)
+    {
+        assert(false);
+    }
 }
 
 size_t cpme_proof_num_clauses(void * proof)

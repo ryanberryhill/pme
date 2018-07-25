@@ -26,6 +26,7 @@
 #include "pme/minimization/camsis.h"
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
+#include "pme/ivc/caivc.h"
 #include "pme/ic3/ic3.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/bmc/bmc_solver.h"
@@ -82,6 +83,27 @@ namespace PME
 
         assert(m_minimizer);
         m_minimizer->minimize();
+    }
+
+    void Engine::findIVCs(PMEIVCAlgorithm algorithm)
+    {
+        switch (algorithm)
+        {
+            case PME_IVC_MARCO:
+                log(1) << "Starting MARCO" << std::endl;
+                throw std::logic_error("MARCO IVC not implemented");
+                break;
+            case PME_IVC_CAIVC:
+                log(1) << "Starting CAIVC" << std::endl;
+                m_ivc_finder.reset(new CAIVCFinder(m_vars, m_tr, m_gs));
+                break;
+            default:
+                throw std::logic_error("Unknown IVC algorithm");
+                break;
+        }
+
+        assert(m_ivc_finder);
+        m_ivc_finder->findIVCs();
     }
 
     bool Engine::runIC3()
@@ -186,6 +208,40 @@ namespace PME
         ClauseVec proof = getMinimumProof();
         removeProperty(proof);
         ExternalClauseVec vec = m_tr.makeExternal(proof);
+        return vec;
+    }
+
+    size_t Engine::getNumIVCs() const
+    {
+        if (!m_ivc_finder) { return 0; }
+        return m_ivc_finder->numMIVCs();
+    }
+
+    IVC Engine::getIVC(size_t i) const
+    {
+        IVC empty;
+        if (!m_ivc_finder) { return empty; }
+        return m_ivc_finder->getMIVC(i);
+    }
+
+    IVC Engine::getMinimumIVC() const
+    {
+        IVC empty;
+        if (!m_ivc_finder) { return empty; }
+        return m_ivc_finder->getMinimumIVC();
+    }
+
+    ExternalIVC Engine::getIVCExternal(size_t i) const
+    {
+        IVC ivc = getIVC(i);
+        ExternalIVC vec = m_tr.makeExternal(ivc);
+        return vec;
+    }
+
+    ExternalIVC Engine::getMinimumIVCExternal() const
+    {
+        IVC ivc = getMinimumIVC();
+        ExternalIVC vec = m_tr.makeExternal(ivc);
         return vec;
     }
 
