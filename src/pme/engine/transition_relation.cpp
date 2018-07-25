@@ -25,6 +25,7 @@ extern "C" {
 #include "aiger/aiger.h"
 }
 
+#include <set>
 #include <sstream>
 #include <cassert>
 #include <algorithm>
@@ -77,12 +78,80 @@ namespace PME
         : m_vars(other.m_vars),
           m_bad(other.m_bad),
           m_latches(other.m_latches),
+          m_gates(other.m_gates),
           m_latchIDs(other.m_latchIDs),
           m_inputIDs(other.m_inputIDs),
-          m_gateIDs(other.m_gateIDs),
-          m_constraints(other.m_constraints),
-          m_gates(other.m_gates)
+          m_gateIDs(other.m_gateIDs)
     { }
+
+    TransitionRelation::TransitionRelation(const TransitionRelation & other,
+                                           const std::vector<ID> & gates)
+        : m_vars(other.m_vars),
+          m_bad(other.m_bad),
+          m_constraints(other.m_constraints)
+    {
+        std::set<ID> gate_set(gates.begin(), gates.end());
+        std::set<ID> relevant_set;
+
+        // For each gate, check if we want to copy it
+        for (const auto & p : other.m_gates)
+        {
+            ID lhs = p.first;
+            // If so, copy it and record its inputs
+            if (gate_set.count(lhs) > 0)
+            {
+                const AndGate & gate = p.second;
+                assert(gate.lhs == lhs);
+
+                m_gates.insert(std::make_pair(lhs, gate));
+                m_gateIDs.push_back(lhs);
+
+                relevant_set.insert(strip(gate.rhs0));
+                relevant_set.insert(strip(gate.rhs1));
+            }
+        }
+
+        // For each latch, we want to copy it if it's in the relevant set.
+        // We need to mark it's next-state relevant and possibly add it too
+        bool fixpoint = false;
+        while (!fixpoint)
+        {
+            fixpoint = true;
+            for (const auto & p : other.m_latches)
+            {
+                ID lit = p.first;
+
+                // Don't need to copy the latch, skip
+                if (relevant_set.count(lit) == 0) { continue; }
+
+                // Already copied the latch, skip
+                if (m_latches.count(lit) > 0) { continue; }
+
+                const Latch & latch = p.second;
+                assert(latch.id == lit);
+
+                ID next = strip(latch.next);
+                m_latches.insert(std::make_pair(lit, latch));
+                m_latchIDs.push_back(lit);
+
+                if (relevant_set.count(next) == 0)
+                {
+                    relevant_set.insert(next);
+                    fixpoint = false;
+                }
+            }
+        }
+
+        // Everything in the relevant set that is not a latch or a gate
+        // is now an input
+        for (ID id : relevant_set)
+        {
+            if (m_latches.count(id) == 0 && m_gates.count(id) == 0)
+            {
+                m_inputIDs.push_back(id);
+            }
+        }
+    }
 
     ID TransitionRelation::toInternal(ExternalID external) const
     {
@@ -109,7 +178,6 @@ namespace PME
 
     void TransitionRelation::processAnds(aiger * aig)
     {
-        m_gates.reserve(aig->num_ands);
         m_gateIDs.reserve(aig->num_ands);
 
         for (size_t i = 0; i < aig->num_ands; ++i)
@@ -126,7 +194,7 @@ namespace PME
             ID r0 = toInternal(rhs0);
             ID r1 = toInternal(rhs1);
 
-            m_gates.push_back(AndGate(l, r0, r1));
+            m_gates.insert(std::make_pair(l, AndGate(l, r0, r1)));
             m_gateIDs.push_back(l);
         }
     }
@@ -293,8 +361,9 @@ namespace PME
     {
         ClauseVec clauses;
 
-        for (const AndGate & gate : m_gates)
+        for (const auto & p : m_gates)
         {
+            const AndGate & gate = p.second;
             ClauseVec c = toCNF(gate);
             clauses.insert(clauses.end(), c.begin(), c.end());
         }

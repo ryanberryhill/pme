@@ -62,10 +62,10 @@ namespace PME
     class TransitionRelation
     {
         public:
-            typedef std::vector<AndGate>::const_iterator gate_iterator;
             TransitionRelation(VariableManager & varman, aiger * aig);
             TransitionRelation(VariableManager & varman, aiger * aig, unsigned property);
             TransitionRelation(const TransitionRelation & other);
+            TransitionRelation(const TransitionRelation & other, const std::vector<ID> & gates);
 
             ID toInternal(ExternalID aig_id) const;
             ExternalID toExternal(ID pme_id) const;
@@ -91,8 +91,6 @@ namespace PME
             id_iterator end_constraints() const { return m_constraints.cend(); }
             id_iterator begin_gate_ids() const { return m_gateIDs.cbegin(); }
             id_iterator end_gate_ids() const { return m_gateIDs.cend(); }
-            gate_iterator begin_gates() { return m_gates.begin(); }
-            gate_iterator end_gates() { return m_gates.end(); }
 
             void setInit(ID latch, ID val);
             ID getInit(ID latch) const;
@@ -104,12 +102,11 @@ namespace PME
             ID m_bad;
 
             std::unordered_map<ID, Latch> m_latches;
+            std::unordered_map<ID, AndGate> m_gates;
             std::vector<ID> m_latchIDs;
             std::vector<ID> m_inputIDs;
             std::vector<ID> m_gateIDs;
             std::vector<ID> m_constraints;
-
-            std::vector<AndGate> m_gates;
 
             void buildModel(aiger * aig);
             void processAnds(aiger * aig);

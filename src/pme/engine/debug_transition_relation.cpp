@@ -63,7 +63,7 @@ namespace PME {
 
     void DebugTransitionRelation::enhanceModel()
     {
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_gate_ids(); it != end_gate_ids(); ++it)
         {
             createDebugFor(*it);
         }
@@ -87,52 +87,37 @@ namespace PME {
         return m_debugLatchToID.at(id);
     }
 
-    void DebugTransitionRelation::createDebugFor(const AndGate & gate)
+    void DebugTransitionRelation::createDebugFor(ID gate)
     {
-        ID lhs = gate.lhs;
-        assert(m_IDToDebugLatch.count(lhs) == 0);
+        assert(m_IDToDebugLatch.count(gate) == 0);
 
-        std::string dl_name = debugLatchName(toExternal(lhs));
+        std::string dl_name = debugLatchName(toExternal(gate));
         const Variable& dl_var = createInternalVar(dl_name);
         ID debug_latch = dl_var.id;
         assert(m_debugLatchToID.count(debug_latch) == 0);
-        assert(m_IDToDebugLatch.count(lhs) == 0);
+        assert(m_IDToDebugLatch.count(gate) == 0);
 
         createLatch(debug_latch, debug_latch, ID_NULL);
 
-        std::string di_name = debugPPIName(toExternal(lhs));
+        std::string di_name = debugPPIName(toExternal(gate));
         const Variable& di_var = createInternalVar(di_name);
         ID debug_input = di_var.id;
-        assert(m_IDToDebugPPI.count(lhs) == 0);
+        assert(m_IDToDebugPPI.count(gate) == 0);
 
         createInput(debug_input);
 
         m_debugLatchIDs.push_back(debug_latch);
         m_debugPPIs.push_back(debug_input);
 
-        m_IDToDebugLatch[lhs] = debug_latch;
-        m_debugLatchToID[debug_latch] = lhs;
+        m_IDToDebugLatch[gate] = debug_latch;
+        m_debugLatchToID[debug_latch] = gate;
 
-        m_IDToDebugPPI[lhs] = debug_input;
-    }
-
-    ID DebugTransitionRelation::debugLatchFor(const AndGate & gate) const
-    {
-        ID lhs = gate.lhs;
-        assert(m_IDToDebugLatch.count(lhs) > 0);
-
-        return m_IDToDebugLatch.at(lhs);
-    }
-
-    ID DebugTransitionRelation::debugPPIFor(const AndGate & gate) const
-    {
-        ID lhs = gate.lhs;
-        return debugPPIForGate(lhs);
+        m_IDToDebugPPI[gate] = debug_input;
     }
 
     ClauseVec DebugTransitionRelation::toCNF(const AndGate & gate) const
     {
-        ID debug_latch = debugLatchFor(gate);
+        ID debug_latch = debugLatchForGate(gate.lhs);
         ClauseVec clauses = TransitionRelation::toCNF(gate);
 
         for (Clause & cls : clauses)
@@ -142,7 +127,7 @@ namespace PME {
 
         // Also need lhs = input if dl = 1
         ID lhs = gate.lhs;
-        ID ppi = debugPPIFor(gate);
+        ID ppi = debugPPIForGate(gate.lhs);
 
         clauses.push_back({lhs, negate(ppi), negate(debug_latch)});
         clauses.push_back({negate(lhs), ppi, negate(debug_latch)});

@@ -138,6 +138,93 @@ struct AigFixture
     }
 };
 
+struct ManyGateAigFixture
+{
+    aiger * aig;
+    ExternalID i0, l0, l1, l2, l3, a0, a1, a2, a3, a4, a5, a6, o0;
+    VariableManager vars;
+    std::unique_ptr<TransitionRelation> tr;
+
+    ManyGateAigFixture()
+    {
+        aig = aiger_init();
+
+        i0 = 2;
+        l0 = 4;
+        l1 = 6;
+        l2 = 8;
+        l3 = 10;
+        a0 = 12;
+        a1 = 14;
+        a2 = 16;
+        a3 = 18;
+        a4 = 20;
+        a5 = 22;
+        a6 = 24;
+
+        aiger_add_input(aig, i0, "i0");
+
+        // l0' = i0
+        aiger_add_latch(aig, l0, i0, "l0");
+
+        // l1' = l0
+        aiger_add_latch(aig, l1, l0, "l1");
+
+        // l2' = l1
+        aiger_add_latch(aig, l2, l1, "l2");
+
+        // l3' = l2
+        aiger_add_latch(aig, l3, l2, "l3");
+
+        // a0-a3 are ands of each pair of adjacent latches
+        // a4 and a5 are ands of adjacent pairs of a0 and a3
+        // a6 = a4 & a5 = <every adjacent pair is high>
+        // a6 <=> ALL(l0-l3)
+        aiger_add_and(aig, a0, l0, l1);
+        aiger_add_and(aig, a1, l1, l2);
+        aiger_add_and(aig, a2, l2, l3);
+        aiger_add_and(aig, a3, l3, l0);
+        aiger_add_and(aig, a4, a0, a1);
+        aiger_add_and(aig, a5, a2, a3);
+        aiger_add_and(aig, a6, a4, a5);
+        aiger_add_output(aig, a6, "o0");
+        o0 = a6;
+    }
+
+    ~ManyGateAigFixture()
+    {
+        aiger_reset(aig);
+        aig = nullptr;
+    }
+
+    void addResets(unsigned value)
+    {
+        assert(value == 0 || value == 1);
+        aiger_add_reset(aig, l0, value);
+        aiger_add_reset(aig, l1, value);
+        aiger_add_reset(aig, l2, value);
+        aiger_add_reset(aig, l3, value);
+    }
+
+    void clearResets()
+    {
+        aiger_add_reset(aig, l0, l0);
+        aiger_add_reset(aig, l1, l1);
+        aiger_add_reset(aig, l2, l2);
+        aiger_add_reset(aig, l3, l3);
+    }
+
+    void addConstraint()
+    {
+        aiger_add_constraint(aig, a0, "c0");
+    }
+
+    void buildTR()
+    {
+        tr.reset(new TransitionRelation(vars, aig));
+    }
+};
+
 void sortClauseVec(ClauseVec & vec)
 {
     for (Clause & cls : vec)
@@ -614,7 +701,7 @@ BOOST_AUTO_TEST_CASE(inputs_iter)
     BOOST_CHECK_EQUAL(inputs.count(i1), 1);
 }
 
-BOOST_AUTO_TEST_CASE(gates_iter)
+BOOST_AUTO_TEST_CASE(gate_ids_iter)
 {
     AigFixture f;
     f.buildTR();
@@ -623,13 +710,9 @@ BOOST_AUTO_TEST_CASE(gates_iter)
     ID a0 = tr.toInternal(f.a0);
 
     std::vector<ID> gate_ids(tr.begin_gate_ids(), tr.end_gate_ids());
-    std::vector<AndGate> gates(tr.begin_gates(), tr.end_gates());
 
     BOOST_CHECK_EQUAL(gate_ids.size(), 1);
-    BOOST_CHECK_EQUAL(gates.size(), 1);
-
     BOOST_CHECK_EQUAL(gate_ids.at(0), a0);
-    BOOST_CHECK_EQUAL(gates.at(0).lhs, a0);
 }
 
 BOOST_AUTO_TEST_CASE(copy_constructor)
@@ -680,17 +763,13 @@ BOOST_AUTO_TEST_CASE(copy_constructor)
     std::set<ID> constraints(tr.begin_constraints(), tr.end_constraints());
     BOOST_CHECK_EQUAL(constraints.size(), 0);
 
-    // Gates and gate IDs
+    // Gate IDs
     ID a0 = tr.toInternal(f.a0);
 
     std::vector<ID> gate_ids(tr.begin_gate_ids(), tr.end_gate_ids());
-    std::vector<AndGate> gates(tr.begin_gates(), tr.end_gates());
 
     BOOST_CHECK_EQUAL(gate_ids.size(), 1);
-    BOOST_CHECK_EQUAL(gates.size(), 1);
-
     BOOST_CHECK_EQUAL(gate_ids.at(0), a0);
-    BOOST_CHECK_EQUAL(gates.at(0).lhs, a0);
 
     // Initial states
     SATAdaptor sat;
@@ -735,5 +814,177 @@ BOOST_AUTO_TEST_CASE(copy_constructor)
     ID o0 = tr.toInternal(f.o0);
     BOOST_CHECK(!sat1.solve({o0}));
     BOOST_CHECK(sat1.solve({negate(o0)}));
+}
+
+BOOST_AUTO_TEST_CASE(partial_copy_constructor_full_copy)
+{
+    ManyGateAigFixture f;
+    f.buildTR();
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    // Set init state to 0000
+    f.tr->setInit(l0, ID_FALSE);
+    f.tr->setInit(l1, ID_FALSE);
+    f.tr->setInit(l2, ID_FALSE);
+    f.tr->setInit(l3, ID_FALSE);
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    ID o0 = f.tr->toInternal(f.o0);
+
+    // Partial copy (but actually full)
+    TransitionRelation tr(*f.tr, {a0, a1, a2, a3, a4, a5, a6});
+
+    // Everything should be the same
+    std::vector<ID> old_inputs(f.tr->begin_inputs(), f.tr->end_inputs());
+    std::vector<ID> old_latches(f.tr->begin_latches(), f.tr->end_latches());
+    std::vector<ID> old_constraints(f.tr->begin_constraints(), f.tr->end_constraints());
+    std::vector<ID> old_gates(f.tr->begin_gate_ids(), f.tr->end_gate_ids());
+
+    std::vector<ID> new_inputs(tr.begin_inputs(), tr.end_inputs());
+    std::vector<ID> new_latches(tr.begin_latches(), tr.end_latches());
+    std::vector<ID> new_constraints(tr.begin_constraints(), tr.end_constraints());
+    std::vector<ID> new_gates(tr.begin_gate_ids(), tr.end_gate_ids());
+
+    std::sort(old_inputs.begin(), old_inputs.end());
+    std::sort(old_latches.begin(), old_latches.end());
+    std::sort(old_constraints.begin(), old_constraints.end());
+    std::sort(old_gates.begin(), old_gates.end());
+
+    std::sort(new_inputs.begin(), new_inputs.end());
+    std::sort(new_latches.begin(), new_latches.end());
+    std::sort(new_constraints.begin(), new_constraints.end());
+    std::sort(new_gates.begin(), new_gates.end());
+
+    BOOST_CHECK(old_inputs == new_inputs);
+    BOOST_CHECK(old_latches == new_latches);
+    BOOST_CHECK(old_constraints == new_constraints);
+    BOOST_CHECK(old_gates == new_gates);
+
+    // Should be unreachable in 3 or fewer cycles
+    SATAdaptor sat;
+    sat.addClauses(tr.unrollWithInit(5));
+    BOOST_CHECK(!sat.solve({o0}));
+    BOOST_CHECK(!sat.solve({prime(o0, 3)}));
+    BOOST_CHECK(sat.solve({negate(prime(o0, 3))}));
+    BOOST_CHECK(sat.solve({prime(o0, 4)}));
+}
+
+BOOST_AUTO_TEST_CASE(partial_copy_1)
+{
+    ManyGateAigFixture f;
+    f.buildTR();
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    // Set init state to 0000
+    f.tr->setInit(l0, ID_FALSE);
+    f.tr->setInit(l1, ID_FALSE);
+    f.tr->setInit(l2, ID_FALSE);
+    f.tr->setInit(l3, ID_FALSE);
+
+    ID i0 = f.tr->toInternal(f.i0);
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    ID o0 = f.tr->toInternal(f.o0);
+
+    // Partial copy (if i0 = 0, this should be SAFE)
+    TransitionRelation tr(*f.tr, {a0, a4, a6});
+
+    std::vector<ID> new_gates(tr.begin_gate_ids(), tr.end_gate_ids());
+    std::sort(new_gates.begin(), new_gates.end());
+    std::vector<ID> expected_gates = {a0, a4, a6};
+    std::sort(expected_gates.begin(), expected_gates.end());
+
+    BOOST_CHECK(new_gates == expected_gates);
+
+    Cube input_0;
+    for (unsigned i = 0; i <= 8; ++i)
+    {
+        input_0.push_back(negate(prime(i0, i)));
+    }
+
+    SATAdaptor sat;
+    sat.addClauses(tr.unrollWithInit(8));
+    for (unsigned i = 0; i < 8; ++i)
+    {
+        Cube assumps_safe = input_0;
+        ID o = prime(o0, i);
+        assumps_safe.push_back(o);
+        BOOST_CHECK(!sat.solve(assumps_safe));
+
+        BOOST_CHECK(sat.solve({negate(o)}));
+
+        Cube assumps_unsafe = input_0;
+        assumps_unsafe.push_back(negate(o));
+        BOOST_CHECK(sat.solve(assumps_unsafe));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(partial_copy_2)
+{
+    ManyGateAigFixture f;
+    f.buildTR();
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    // Set init state to 0000
+    f.tr->setInit(l0, ID_FALSE);
+    f.tr->setInit(l1, ID_FALSE);
+    f.tr->setInit(l2, ID_FALSE);
+    f.tr->setInit(l3, ID_FALSE);
+
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    // Partial copy of just a6
+    TransitionRelation tr(*f.tr, {a6});
+
+    std::vector<ID> new_inputs(tr.begin_inputs(), tr.end_inputs());
+    std::vector<ID> new_latches(tr.begin_latches(), tr.end_latches());
+    std::vector<ID> new_constraints(tr.begin_constraints(), tr.end_constraints());
+    std::vector<ID> new_gates(tr.begin_gate_ids(), tr.end_gate_ids());
+
+    std::vector<ID> expected_inputs = { a4, a5 };
+
+    BOOST_CHECK_EQUAL(new_inputs.size(), 2);
+    BOOST_CHECK_EQUAL(new_latches.size(), 0);
+    BOOST_CHECK_EQUAL(new_constraints.size(), 0);
+    BOOST_CHECK_EQUAL(new_gates.size(), 1);
+    BOOST_CHECK_EQUAL(new_gates.at(0), a6);
+
+    std::sort(new_inputs.begin(), new_inputs.end());
+    std::sort(expected_inputs.begin(), expected_inputs.end());
+
+    BOOST_CHECK(new_inputs == expected_inputs);
+
+    SATAdaptor sat;
+    sat.addClauses(tr.unrollWithInit(1));
+
+    BOOST_CHECK(sat.solve({a4, a5, a6}));
+    BOOST_CHECK(sat.solve({a4, a6}));
+    BOOST_CHECK(sat.solve({a5, a6}));
+    BOOST_CHECK(!sat.solve({negate(a5), a6}));
+    BOOST_CHECK(!sat.solve({a4, a5, negate(a6)}));
 }
 

@@ -53,9 +53,7 @@ namespace PME {
             std::unordered_map<ID, ID> m_IDToDebugPPI;
 
             void enhanceModel();
-            void createDebugFor(const AndGate & gate);
-            ID debugLatchFor(const AndGate & gate) const;
-            ID debugPPIFor(const AndGate & gate) const;
+            void createDebugFor(ID gate);
 
         protected:
             virtual ClauseVec toCNF(const AndGate & gate) const override;
