@@ -39,6 +39,8 @@ namespace PME { namespace BMC {
 
             SafetyResult solve(unsigned k_max);
             SafetyResult solve(unsigned k_max, const Cube & assumps);
+            SafetyResult solveRange(unsigned k_min, unsigned k_max);
+            SafetyResult solveRange(unsigned k_min, unsigned k_max, const Cube & assumps);
             SafetyResult solveAtK(unsigned k);
             SafetyResult solveAtK(unsigned k, const Cube & assumps);
 

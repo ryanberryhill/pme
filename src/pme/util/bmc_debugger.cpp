@@ -27,7 +27,6 @@
 namespace PME {
 
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
-    const unsigned K_INF = std::numeric_limits<unsigned>::max();
 
     BMCDebugger::BMCDebugger(VariableManager & varman,
                              const DebugTransitionRelation & tr,
@@ -62,27 +61,52 @@ namespace PME {
         m_cardinality = CARDINALITY_INF;
     }
 
+    Debugger::Result BMCDebugger::debugRange(unsigned k_min, unsigned k_max)
+    {
+        Cube assumps;
+        return debugWithAssumptions(assumps, k_min, k_max);
+    }
+
+    Debugger::Result BMCDebugger::debugOverGatesRange(const std::vector<ID> & gates,
+                                                      unsigned k_min,
+                                                      unsigned k_max)
+    {
+        Cube assumps = onlyTheseGates(gates);
+        return debugWithAssumptions(assumps, k_min, k_max);
+    }
+
     Debugger::Result BMCDebugger::debugAtK(unsigned k)
     {
         Cube assumps;
-        return debugWithAssumptions(assumps, k);
+        return debugWithAssumptions(assumps, k, k);
     }
 
     Debugger::Result BMCDebugger::debugOverGatesAtK(const std::vector<ID> & gates, unsigned k)
     {
         Cube assumps = onlyTheseGates(gates);
-        return debugWithAssumptions(assumps, k);
+        return debugWithAssumptions(assumps, k, k);
     }
 
     Debugger::Result BMCDebugger::debugOverGates(const std::vector<ID> & gates)
     {
         Cube assumps = onlyTheseGates(gates);
-        return debugWithAssumptions(assumps, K_INF);
+        return debugWithAssumptions(assumps, 0, m_kmax);
     }
 
     Debugger::Result BMCDebugger::debugAtKAndBlock(unsigned k)
     {
-        Debugger::Result result = debugAtK(k);
+        return debugRangeAndBlock(k, k);
+    }
+
+    Debugger::Result
+    BMCDebugger::debugOverGatesAtKAndBlock(const std::vector<ID> & gates, unsigned k)
+    {
+        return debugOverGatesRangeAndBlock(gates, k, k);
+    }
+
+    Debugger::Result BMCDebugger::debugRangeAndBlock(unsigned k_min, unsigned k_max)
+    {
+        Debugger::Result result = debugRange(k_min, k_max);
 
         if (result.first)
         {
@@ -92,10 +116,10 @@ namespace PME {
         return result;
     }
 
-    Debugger::Result
-    BMCDebugger::debugOverGatesAtKAndBlock(const std::vector<ID> & gates, unsigned k)
+    Debugger::Result BMCDebugger::debugOverGatesRangeAndBlock(const std::vector<ID> & gates,
+                                                              unsigned k_min, unsigned k_max)
     {
-        Debugger::Result result = debugOverGatesAtK(gates, k);
+        Debugger::Result result = debugOverGatesRange(gates, k_min, k_max);
 
         if (result.first)
         {
@@ -108,10 +132,12 @@ namespace PME {
     Debugger::Result BMCDebugger::debug()
     {
         Cube assumps;
-        return debugWithAssumptions(assumps, K_INF);
+        return debugWithAssumptions(assumps, 0, m_kmax);
     }
 
-    Debugger::Result BMCDebugger::debugWithAssumptions(const Cube & assumps, unsigned k)
+    Debugger::Result BMCDebugger::debugWithAssumptions(const Cube & assumps,
+                                                       unsigned k_min,
+                                                       unsigned k_max)
     {
         Debugger::Result result;
 
@@ -124,17 +150,9 @@ namespace PME {
                                                       cardinality_assumps.end());
         }
 
+        // Solve
         SafetyResult bmc;
-        if (k == K_INF)
-        {
-            // Solve with limit of k_max time frames
-            bmc = m_solver.solve(m_kmax, local_assumps);
-        }
-        else
-        {
-            // Solve with exactly k time frames
-            bmc = m_solver.solveAtK(k, local_assumps);
-        }
+        bmc = m_solver.solveRange(k_min, k_max, local_assumps);
 
         if (bmc.result == UNSAFE)
         {

@@ -405,6 +405,77 @@ BOOST_AUTO_TEST_CASE(debug_at_k_bmc)
     BOOST_CHECK(!found);
 }
 
+BOOST_AUTO_TEST_CASE(debug_range_bmc)
+{
+    DebugFixture<BMCDebugger> f;
+
+    ID l0 = f.debug_tr->toInternal(f.l0);
+    ID l1 = f.debug_tr->toInternal(f.l1);
+    ID l2 = f.debug_tr->toInternal(f.l2);
+    ID l3 = f.debug_tr->toInternal(f.l3);
+
+    f.setInit(l0, ID_TRUE);
+    f.setInit(l1, ID_FALSE);
+    f.setInit(l2, ID_TRUE);
+    f.setInit(l3, ID_TRUE);
+
+    ID a0 = f.debug_tr->toInternal(f.a0);
+    ID a1 = f.debug_tr->toInternal(f.a1);
+    ID a2 = f.debug_tr->toInternal(f.a2);
+
+    f.prepareDebugger();
+    BMCDebugger * debugger = dynamic_cast<BMCDebugger *>(f.debugger.get());
+
+    // All zero initial state, 0 cardinality = SAFE
+    debugger->setCardinality(0);
+
+    bool found = false;
+    std::vector<ID> soln;
+
+    std::tie(found, soln) = debugger->debugRange(0, 0);
+    BOOST_CHECK(!found);
+
+    // N = 1, K = 0 => a2 is a solution
+    debugger->setCardinality(1);
+
+    std::tie(found, soln) = debugger->debugRangeAndBlock(0, 1);
+    BOOST_REQUIRE(found);
+    std::vector<ID> expected_soln = {a2};
+    BOOST_CHECK(soln == expected_soln);
+
+    // No more N = 1 solutions at K = 0
+    std::tie(found, soln) = debugger->debugRange(0, 0);
+    BOOST_CHECK(!found);
+
+    // N = 2, K = 0 => (a0, a1) is a solution (don't block it)
+    debugger->setCardinality(2);
+    std::tie(found, soln) = debugger->debugRange(0, 0);
+    BOOST_CHECK(found);
+    BOOST_CHECK(soln.size() == 2);
+    std::sort(soln.begin(), soln.end());
+    expected_soln = {a0, a1};
+    std::sort(expected_soln.begin(), expected_soln.end());
+    BOOST_CHECK(soln == expected_soln);
+
+    // N = 1, K = 1 => a0 is a solution
+    debugger->setCardinality(1);
+
+    expected_soln = {a0};
+    std::tie(found, soln) = debugger->debugRangeAndBlock(0, 1);
+    BOOST_CHECK(found);
+    BOOST_CHECK(soln == expected_soln);
+
+    // No more solutions
+    std::tie(found, soln) = debugger->debugRange(0, 3);
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = debugger->debugRange(4, 5);
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = debugger->debugRange(1, 4);
+    BOOST_CHECK(!found);
+}
+
 BOOST_AUTO_TEST_CASE(ic3debugger_lemma_access)
 {
     DebugFixture<IC3Debugger> f;

@@ -416,3 +416,57 @@ BOOST_AUTO_TEST_CASE(solve_at_k)
     BOOST_CHECK_EQUAL(result.cex.size(), 7);
 }
 
+BOOST_AUTO_TEST_CASE(solve_range)
+{
+    BMCFixture f;
+
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    f.setInit(l0, ID_FALSE);
+    f.setInit(l1, ID_TRUE);
+    f.setInit(l2, ID_TRUE);
+    f.setInit(l3, ID_FALSE);
+
+    f.prepareSolver();
+
+    // Safe for one cycle
+    SafetyResult result = f.solver->solveRange(0, 1);
+
+    // Unsafe at two
+    result = f.solver->solveRange(2, 2);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+
+    std::vector<Cube> expected_states;
+    expected_states.push_back({negate(l0), l1, l2, negate(l3)});
+    expected_states.push_back({negate(l0), negate(l1), l2, l3});
+    expected_states.push_back({l0, negate(l1), negate(l2), l3});
+
+    // Check the counter-example
+    SafetyCounterExample cex = result.cex;
+    BOOST_CHECK_EQUAL(cex.size(), expected_states.size());
+
+    for (size_t i = 0; i < expected_states.size(); ++i)
+    {
+        Cube actual, expected;
+        expected = expected_states[i];
+        actual = cex[i].state;
+        BOOST_CHECK(cex[i].inputs.empty());
+        std::sort(expected.begin(), expected.end());
+        std::sort(actual.begin(), actual.end());
+        BOOST_CHECK(expected == actual);
+    }
+
+    // Safe at 3,4,5,
+    result = f.solver->solveRange(3, 5);
+    BOOST_CHECK_EQUAL(result.result, UNKNOWN);
+
+    // Unsafe at 6
+    result = f.solver->solveRange(3, 6);
+    BOOST_CHECK_EQUAL(result.result, UNSAFE);
+    BOOST_CHECK_EQUAL(result.cex.size(), 7);
+}
+
+

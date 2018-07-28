@@ -48,13 +48,20 @@ namespace PME {
 
             virtual Result debugAtK(unsigned k);
             virtual Result debugOverGatesAtK(const std::vector<ID> & gates, unsigned k);
-            virtual Result debugAtKAndBlock(unsigned k);
-            virtual Result debugOverGatesAtKAndBlock(const std::vector<ID> & gates, unsigned k);
+            virtual Result debugRange(unsigned k_min, unsigned k_max);
+            virtual Result debugOverGatesRange(const std::vector<ID> & gates,
+                                               unsigned k_min, unsigned k_max);
+
+            Result debugAtKAndBlock(unsigned k);
+            Result debugOverGatesAtKAndBlock(const std::vector<ID> & gates, unsigned k);
+            Result debugRangeAndBlock(unsigned k_min, unsigned k_max);
+            Result debugOverGatesRangeAndBlock(const std::vector<ID> & gates,
+                                               unsigned k_min, unsigned k_max);
 
             void setKMax(unsigned k) { m_kmax = k; }
 
         private:
-            Result debugWithAssumptions(const Cube & assumps, unsigned k);
+            Result debugWithAssumptions(const Cube & assumps, unsigned k_min, unsigned k_max);
             std::vector<ID> extractSolution(const SafetyCounterExample & cex) const;
             Cube onlyTheseGates(const std::vector<ID> & gates) const;
 

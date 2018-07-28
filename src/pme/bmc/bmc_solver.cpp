@@ -65,7 +65,18 @@ namespace PME { namespace BMC {
 
     SafetyResult BMCSolver::solve(unsigned k_max, const Cube & assumps)
     {
-        for (unsigned k = 0; k <= k_max; ++k)
+        return solveRange(0, k_max, assumps);
+    }
+
+    SafetyResult BMCSolver::solveRange(unsigned k_min, unsigned k_max)
+    {
+        Cube assumps;
+        return solveRange(k_min, k_max, assumps);
+    }
+
+    SafetyResult BMCSolver::solveRange(unsigned k_min, unsigned k_max, const Cube & assumps)
+    {
+        for (unsigned k = k_min; k <= k_max; ++k)
         {
             SafetyResult kresult = solveAtK(k, assumps);
             if (kresult.result == UNSAFE)
