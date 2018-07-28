@@ -90,8 +90,8 @@ namespace PME
         switch (algorithm)
         {
             case PME_IVC_MARCO:
-                log(1) << "Starting MARCO" << std::endl;
-                throw std::logic_error("MARCO IVC not implemented");
+                log(1) << "Starting MARCOIVC" << std::endl;
+                throw std::logic_error("MARCOIVC not implemented");
                 break;
             case PME_IVC_CAIVC:
                 log(1) << "Starting CAIVC" << std::endl;
