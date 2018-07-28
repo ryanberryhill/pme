@@ -28,17 +28,20 @@ namespace PME {
 
     typedef std::vector<ID> CorrectionSet;
 
-    class CorrectionSetFinder
+    class MCSFinder
     {
         public:
-            CorrectionSetFinder(VariableManager & varman,
-                                DebugTransitionRelation & tr,
-                                GlobalState & gs);
+            typedef std::pair<bool, CorrectionSet> FindResult;
+            MCSFinder(VariableManager & varman,
+                      DebugTransitionRelation & tr,
+                      GlobalState & gs);
 
             bool moreCorrectionSets();
-            std::pair<bool, CorrectionSet> findAndBlock();
-            std::pair<bool, CorrectionSet> findAndBlockOverGates(const std::vector<ID> & gates);
+            FindResult findAndBlock();
+            FindResult findAndBlockOverGates(const std::vector<ID> & gates);
             void setCardinality(unsigned n);
+
+            void blockSolution(const CorrectionSet & corr);
 
         private:
             unsigned m_cardinality;
@@ -46,6 +49,25 @@ namespace PME {
             HybridDebugger m_solver_inf;
     };
 
+    class ApproximateMCSFinder
+    {
+        public:
+            typedef std::pair<bool, CorrectionSet> FindResult;
+            ApproximateMCSFinder(VariableManager & varman,
+                                 DebugTransitionRelation & tr,
+                                 GlobalState & gs);
+
+            FindResult findAndBlockOverGates(const std::vector<ID> & gates);
+            void blockSolution(const CorrectionSet & corr);
+
+        private:
+            FindResult findFallback(const std::vector<ID> & gates);
+
+            unsigned m_cardinality;
+            IC3Debugger m_fallback;
+            BMCDebugger m_solver;
+            GlobalState & m_gs;
+    };
 }
 
 #endif

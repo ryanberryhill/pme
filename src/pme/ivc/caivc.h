@@ -65,7 +65,7 @@ namespace PME {
 
             DebugTransitionRelation m_debug_tr;
             std::vector<ID> m_gates;
-            CorrectionSetFinder m_finder;
+            MCSFinder m_finder;
             MaxSATSolver m_solver;
             HybridDebugger m_ivc_checker;
     };

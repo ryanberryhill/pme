@@ -22,12 +22,13 @@
 #include "pme/ivc/correction_set_finder.h"
 
 #include <cassert>
+#include <limits>
 
 namespace PME {
 
-    CorrectionSetFinder::CorrectionSetFinder(VariableManager & varman,
-                                             DebugTransitionRelation & tr,
-                                             GlobalState & gs)
+    MCSFinder::MCSFinder(VariableManager & varman,
+                         DebugTransitionRelation & tr,
+                         GlobalState & gs)
         : m_cardinality(0),
           m_solver(varman, tr, gs),
           m_solver_inf(varman, tr, gs)
@@ -35,18 +36,25 @@ namespace PME {
         if (!gs.opts.caivc_use_bmc)
         {
             m_solver.setKMax(0);
+            m_solver_inf.setKMax(0);
         }
     }
 
-    bool CorrectionSetFinder::moreCorrectionSets()
+    void MCSFinder::setCardinality(unsigned n)
+    {
+        m_cardinality = n;
+        m_solver.setCardinality(n);
+    }
+
+    bool MCSFinder::moreCorrectionSets()
     {
         bool more;
         std::tie(more, std::ignore) = m_solver_inf.debug();
         return more;
     }
 
-    std::pair<bool, CorrectionSet>
-    CorrectionSetFinder::findAndBlockOverGates(const std::vector<ID> & gates)
+    MCSFinder::FindResult
+    MCSFinder::findAndBlockOverGates(const std::vector<ID> & gates)
     {
         bool found;
         CorrectionSet corr;
@@ -60,7 +68,8 @@ namespace PME {
         return std::make_pair(found, corr);
     }
 
-    std::pair<bool, CorrectionSet> CorrectionSetFinder::findAndBlock()
+    MCSFinder::FindResult
+    MCSFinder::findAndBlock()
     {
         bool found;
         CorrectionSet corr;
@@ -74,9 +83,91 @@ namespace PME {
         return std::make_pair(found, corr);
     }
 
-    void CorrectionSetFinder::setCardinality(unsigned n)
+    void MCSFinder::blockSolution(const CorrectionSet & corr)
     {
-        m_cardinality = n;
-        m_solver.setCardinality(n);
+        m_solver.blockSolution(corr);
+        m_solver_inf.blockSolution(corr);
     }
+
+    ApproximateMCSFinder::ApproximateMCSFinder(VariableManager & varman,
+                                               DebugTransitionRelation & tr,
+                                               GlobalState & gs)
+        : m_cardinality(0),
+          m_fallback(varman, tr, gs),
+          m_solver(varman, tr, gs),
+          m_gs(gs)
+    { }
+
+
+    ApproximateMCSFinder::FindResult
+    ApproximateMCSFinder::findAndBlockOverGates(const std::vector<ID> & gates)
+    {
+        bool found;
+        CorrectionSet corr;
+
+        // TODO investigate strategies for this process
+        unsigned k_max = m_gs.opts.caivc_ar_bmc_kmax;
+        unsigned n_max = gates.size();
+
+        assert(k_max < std::numeric_limits<unsigned>::max());
+        assert(n_max < std::numeric_limits<unsigned>::max());
+
+        // Start from n = 2 under the assumption that all n = 1 MCSes were
+        // already blocked
+        unsigned n = std::min(2u, n_max);
+        // Start k on the range [0, 4]
+        unsigned k_lo = 0, k_hi = std::min(4u, k_max);
+
+        bool n_cycle = true;
+        while (n <= n_max)
+        {
+            // Debug at cardinality n on [k_lo, k_hi]
+            m_solver.setCardinality(n);
+            std::tie(found, corr) = m_solver.debugOverGatesRangeAndBlock(gates, k_lo, k_hi);
+
+            // Return solution if we found one
+            if (found) { return std::make_pair(true, corr); }
+
+            // If not, we need to increase k or n
+            if (n_cycle || k_hi >= k_max)
+            {
+                n++;
+                k_lo = 0;
+            }
+            else
+            {
+                k_lo = k_hi + 1;
+                k_hi = std::min(k_hi * 2, k_max);
+            }
+
+            n_cycle = !n_cycle;
+        }
+
+        // We failed to find an MCS within our k_max parameter, fallback to IC3
+        FindResult fallback_result = findFallback(gates);
+
+        return fallback_result;
+    }
+
+    ApproximateMCSFinder::FindResult
+    ApproximateMCSFinder::findFallback(const std::vector<ID> & gates)
+    {
+        bool found;
+        CorrectionSet corr;
+
+        std::tie(found, corr) = m_fallback.debugAndBlockOverGates(gates);
+        if (found)
+        {
+            m_solver.blockSolution(corr);
+        }
+
+        return std::make_pair(found, corr);
+    }
+
+    void ApproximateMCSFinder::blockSolution(const CorrectionSet & corr)
+    {
+        m_fallback.blockSolution(corr);
+        m_solver.blockSolution(corr);
+    }
+
 }

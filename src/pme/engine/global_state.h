@@ -28,11 +28,18 @@ namespace PME
 {
     struct PMEOptions
     {
+        // Global
         bool simplify;
+        unsigned hybrid_debug_bmc_frames;
+
+        // CAMSIS
         bool camsis_abstraction_refinement;
+
+        // CAIVC
         bool caivc_use_bmc;
         bool caivc_abstraction_refinement;
-        unsigned hybrid_debug_bmc_frames;
+        unsigned caivc_ar_bmc_kmax;
+
         PMEOptions();
     };
 

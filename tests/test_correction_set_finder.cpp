@@ -37,7 +37,6 @@ struct CorrectionSetFixture
     VariableManager vars;
     GlobalState gs;
     std::unique_ptr<DebugTransitionRelation> tr;
-    std::unique_ptr<CorrectionSetFinder> finder;
 
     CorrectionSetFixture()
     {
@@ -81,7 +80,6 @@ struct CorrectionSetFixture
         aiger_add_output(aig, a6, "o0");
         o0 = a6;
         tr.reset(new DebugTransitionRelation(vars, aig));
-        finder.reset(new CorrectionSetFinder(vars, *tr, gs));
     }
 
     void setInit(ID latch, ID val)
@@ -96,7 +94,7 @@ struct CorrectionSetFixture
     }
 };
 
-BOOST_AUTO_TEST_CASE(correction_sets)
+BOOST_AUTO_TEST_CASE(mcs)
 {
     CorrectionSetFixture f;
 
@@ -108,7 +106,7 @@ BOOST_AUTO_TEST_CASE(correction_sets)
     ID a5 = f.tr->toInternal(f.a5);
     ID a6 = f.tr->toInternal(f.a6);
 
-    CorrectionSetFinder & finder = *f.finder;
+    MCSFinder finder(f.vars, *f.tr, f.gs);
 
     BOOST_REQUIRE(finder.moreCorrectionSets());
 
@@ -187,7 +185,7 @@ BOOST_AUTO_TEST_CASE(correction_sets)
     BOOST_REQUIRE(!finder.moreCorrectionSets());
 }
 
-BOOST_AUTO_TEST_CASE(correction_sets_over_gates)
+BOOST_AUTO_TEST_CASE(mcs_over_gates)
 {
     CorrectionSetFixture f;
 
@@ -201,7 +199,7 @@ BOOST_AUTO_TEST_CASE(correction_sets_over_gates)
 
     std::vector<ID> all = {a0, a1, a2, a3, a4, a5, a6};
 
-    CorrectionSetFinder & finder = *f.finder;
+    MCSFinder finder(f.vars, *f.tr, f.gs);
 
     BOOST_REQUIRE(finder.moreCorrectionSets());
 
@@ -248,4 +246,73 @@ BOOST_AUTO_TEST_CASE(correction_sets_over_gates)
     BOOST_CHECK(!found);
 }
 
+// Returns true if one element of all is contained within soln
+bool containsOneOf(CorrectionSet soln,
+                   const std::vector<CorrectionSet> all)
+{
+    std::sort(soln.begin(), soln.end());
+
+    for (const CorrectionSet & corr : all)
+    {
+        bool subset = std::includes(soln.begin(), soln.end(), corr.begin(), corr.end());
+        if (subset) { return true; }
+    }
+
+    return false;
+}
+
+BOOST_AUTO_TEST_CASE(approximate_mcs_over_gates)
+{
+    CorrectionSetFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    std::vector<ID> all = {a0, a1, a2, a3, a4, a5, a6};
+
+    ApproximateMCSFinder finder(f.vars, *f.tr, f.gs);
+
+    // block MCS {a6} as the approximate finder assumes size-1 MCSes are
+    // already blocked
+    finder.blockSolution({a6});
+
+    // Remaining MCSes are:
+    // {a4, a5}
+    // {a0, a1, a5}
+    // {a2, a3, a4}
+    // {a0, a1, a2, a3}
+    std::vector<CorrectionSet> all_mcs;
+    all_mcs.push_back({a4, a5});
+    all_mcs.push_back({a0, a1, a5});
+    all_mcs.push_back({a2, a3, a4});
+    all_mcs.push_back({a0, a1, a2, a3});
+
+    for (CorrectionSet & corr : all_mcs)
+    {
+        std::sort(corr.begin(), corr.end());
+    }
+
+    // Set an upper limit of 63 solutions (sum over i=1..6 of 6 choose i)
+    unsigned count = 0;
+    bool found = true;
+    while (found && count <= 63)
+    {
+        CorrectionSet corr;
+        std::tie(found, corr) = finder.findAndBlockOverGates(all);
+        if (found)
+        {
+            BOOST_CHECK(containsOneOf(corr, all_mcs));
+            count++;
+        }
+    }
+
+    // All solutions should've been found
+    std::tie(found, std::ignore) = finder.findAndBlockOverGates(all);
+    BOOST_CHECK(!found);
+}
 

@@ -27,10 +27,11 @@ namespace PME
 
     PMEOptions::PMEOptions() :
         simplify(true),
+        hybrid_debug_bmc_frames(10),
         camsis_abstraction_refinement(true),
         caivc_use_bmc(true),
         // TODO: enable AR
         caivc_abstraction_refinement(false),
-        hybrid_debug_bmc_frames(10)
+        caivc_ar_bmc_kmax(20)
     { }
 }
