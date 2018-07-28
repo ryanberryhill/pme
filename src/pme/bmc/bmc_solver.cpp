@@ -65,23 +65,42 @@ namespace PME { namespace BMC {
 
     SafetyResult BMCSolver::solve(unsigned k_max, const Cube & assumps)
     {
-        SafetyResult result;
-
         for (unsigned k = 0; k <= k_max; ++k)
         {
-            ID bad = prime(m_tr.bad(), k);
-
-            if (k >= m_numFrames) { unroll(k + 1); }
-
-            Cube kassumps = assumps;
-            kassumps.push_back({bad});
-            bool sat = m_solver.solve(kassumps);
-            if (sat)
+            SafetyResult kresult = solveAtK(k, assumps);
+            if (kresult.result == UNSAFE)
             {
-                result.result = UNSAFE;
-                result.cex = extractTrace(k);
-                return result;
+                return kresult;
             }
+        }
+
+        SafetyResult result;
+        result.result = UNKNOWN;
+        return result;
+    }
+
+    SafetyResult BMCSolver::solveAtK(unsigned k)
+    {
+        Cube assumps;
+        return solveAtK(k, assumps);
+    }
+
+    SafetyResult BMCSolver::solveAtK(unsigned k, const Cube & assumps)
+    {
+        SafetyResult result;
+
+        ID bad = prime(m_tr.bad(), k);
+
+        if (k >= m_numFrames) { unroll(k + 1); }
+
+        Cube kassumps = assumps;
+        kassumps.push_back({bad});
+        bool sat = m_solver.solve(kassumps);
+        if (sat)
+        {
+            result.result = UNSAFE;
+            result.cex = extractTrace(k);
+            return result;
         }
 
         result.result = UNKNOWN;
