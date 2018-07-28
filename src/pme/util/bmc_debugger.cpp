@@ -27,6 +27,7 @@
 namespace PME {
 
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
+    const unsigned K_INF = std::numeric_limits<unsigned>::max();
 
     BMCDebugger::BMCDebugger(VariableManager & varman,
                              const DebugTransitionRelation & tr,
@@ -61,19 +62,56 @@ namespace PME {
         m_cardinality = CARDINALITY_INF;
     }
 
+    Debugger::Result BMCDebugger::debugAtK(unsigned k)
+    {
+        Cube assumps;
+        return debugWithAssumptions(assumps, k);
+    }
+
+    Debugger::Result BMCDebugger::debugOverGatesAtK(const std::vector<ID> & gates, unsigned k)
+    {
+        Cube assumps = onlyTheseGates(gates);
+        return debugWithAssumptions(assumps, k);
+    }
+
     Debugger::Result BMCDebugger::debugOverGates(const std::vector<ID> & gates)
     {
         Cube assumps = onlyTheseGates(gates);
-        return debugWithAssumptions(assumps);
+        return debugWithAssumptions(assumps, K_INF);
+    }
+
+    Debugger::Result BMCDebugger::debugAtKAndBlock(unsigned k)
+    {
+        Debugger::Result result = debugAtK(k);
+
+        if (result.first)
+        {
+            blockSolution(result.second);
+        }
+
+        return result;
+    }
+
+    Debugger::Result
+    BMCDebugger::debugOverGatesAtKAndBlock(const std::vector<ID> & gates, unsigned k)
+    {
+        Debugger::Result result = debugOverGatesAtK(gates, k);
+
+        if (result.first)
+        {
+            blockSolution(result.second);
+        }
+
+        return result;
     }
 
     Debugger::Result BMCDebugger::debug()
     {
         Cube assumps;
-        return debugWithAssumptions(assumps);
+        return debugWithAssumptions(assumps, K_INF);
     }
 
-    Debugger::Result BMCDebugger::debugWithAssumptions(const Cube & assumps)
+    Debugger::Result BMCDebugger::debugWithAssumptions(const Cube & assumps, unsigned k)
     {
         Debugger::Result result;
 
@@ -86,8 +124,17 @@ namespace PME {
                                                       cardinality_assumps.end());
         }
 
-        // Solve with limit of k_max time frames
-        SafetyResult bmc = m_solver.solve(m_kmax, local_assumps);
+        SafetyResult bmc;
+        if (k == K_INF)
+        {
+            // Solve with limit of k_max time frames
+            bmc = m_solver.solve(m_kmax, local_assumps);
+        }
+        else
+        {
+            // Solve with exactly k time frames
+            bmc = m_solver.solveAtK(k, local_assumps);
+        }
 
         if (bmc.result == UNSAFE)
         {

@@ -67,15 +67,21 @@ struct DebugFixture
         // l3' = l2
         aiger_add_latch(aig, l3, l2, "l3");
 
-        // o0 = l3 & ~l2 & ~l1 & l0
-        aiger_add_and(aig, a0, l3, aiger_not(l2));
-        aiger_add_and(aig, a1, aiger_not(l1), l0);
+        // o0 = l3 & l2 & l1 & l0
+        aiger_add_and(aig, a0, aiger_not(l3), aiger_not(l2));
+        aiger_add_and(aig, a1, l1, l0);
         aiger_add_and(aig, a2, a1, a0);
         aiger_add_output(aig, a2, "o0");
         o0 = a2;
 
         gs.opts.simplify = simplify;
         debug_tr.reset(new DebugTransitionRelation(vars, aig));
+
+        setInit(debug_tr->toInternal(l0), ID_TRUE);
+        setInit(debug_tr->toInternal(l1), ID_FALSE);
+        setInit(debug_tr->toInternal(l2), ID_TRUE);
+        setInit(debug_tr->toInternal(l3), ID_FALSE);
+
         prepareDebugger();
     }
 
@@ -325,6 +331,78 @@ BOOST_AUTO_TEST_CASE(debug_over_gates_bmc)
 BOOST_AUTO_TEST_CASE(debug_over_gates_hybrid)
 {
     testDebugOverGates<HybridDebugger>();
+}
+
+BOOST_AUTO_TEST_CASE(debug_at_k_bmc)
+{
+    DebugFixture<BMCDebugger> f;
+
+    ID l0 = f.debug_tr->toInternal(f.l0);
+    ID l1 = f.debug_tr->toInternal(f.l1);
+    ID l2 = f.debug_tr->toInternal(f.l2);
+    ID l3 = f.debug_tr->toInternal(f.l3);
+
+    f.setInit(l0, ID_TRUE);
+    f.setInit(l1, ID_FALSE);
+    f.setInit(l2, ID_TRUE);
+    f.setInit(l3, ID_TRUE);
+
+    ID a0 = f.debug_tr->toInternal(f.a0);
+    ID a1 = f.debug_tr->toInternal(f.a1);
+    ID a2 = f.debug_tr->toInternal(f.a2);
+
+    f.prepareDebugger();
+    BMCDebugger * debugger = dynamic_cast<BMCDebugger *>(f.debugger.get());
+
+    // All zero initial state, 0 cardinality = SAFE
+    debugger->setCardinality(0);
+
+    bool found = false;
+    std::vector<ID> soln;
+
+    std::tie(found, soln) = debugger->debugAtK(0);
+    BOOST_CHECK(!found);
+
+    // N = 1, K = 0 => a2 is a solution
+    debugger->setCardinality(1);
+
+    std::tie(found, soln) = debugger->debugAtKAndBlock(0);
+    BOOST_REQUIRE(found);
+    std::vector<ID> expected_soln = {a2};
+    BOOST_CHECK(soln == expected_soln);
+
+    // No more N = 1 solutions at K = 0
+    std::tie(found, soln) = debugger->debugAtK(0);
+    BOOST_CHECK(!found);
+
+    // N = 2, K = 0 => (a0, a1) is a solution (don't block it)
+    debugger->setCardinality(2);
+    std::tie(found, soln) = debugger->debugAtK(0);
+    BOOST_CHECK(found);
+    BOOST_CHECK(soln.size() == 2);
+    std::sort(soln.begin(), soln.end());
+    expected_soln = {a0, a1};
+    std::sort(expected_soln.begin(), expected_soln.end());
+    BOOST_CHECK(soln == expected_soln);
+
+    // N = 1, K = 1 => a0 is a solution
+    debugger->setCardinality(1);
+
+    expected_soln = {a0};
+    std::tie(found, soln) = debugger->debugAtKAndBlock(1);
+    BOOST_CHECK(found);
+    BOOST_CHECK(soln == expected_soln);
+
+    // No more solutions at K = 1 or 2
+    std::tie(found, soln) = debugger->debugAtK(1);
+    BOOST_CHECK(!found);
+
+    std::tie(found, soln) = debugger->debugAtK(2);
+    BOOST_CHECK(!found);
+
+    // No more solutions elsewhere either
+    std::tie(found, soln) = debugger->debug();
+    BOOST_CHECK(!found);
 }
 
 BOOST_AUTO_TEST_CASE(ic3debugger_lemma_access)
