@@ -56,6 +56,8 @@ namespace PME {
             bool moreCorrectionSets();
             std::pair<bool, CorrectionSet> findCorrectionSet();
             CorrectionSet findCorrectionSetOverGates(const std::vector<ID> & gates);
+            CorrectionSet findApproxMCSOverGates(const std::vector<ID> & gates);
+            CorrectionSet findMCSOverGates(const std::vector<ID> & gates);
             std::pair<bool, IVC> findCandidateMIVC();
             std::pair<bool, IVC> findAndBlockCandidateMIVC();
             std::pair<bool, IVC> findCandidateMIVC(bool block);
@@ -66,6 +68,7 @@ namespace PME {
             DebugTransitionRelation m_debug_tr;
             std::vector<ID> m_gates;
             MCSFinder m_finder;
+            ApproximateMCSFinder m_approx_finder;
             MaxSATSolver m_solver;
             HybridDebugger m_ivc_checker;
     };

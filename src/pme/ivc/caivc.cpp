@@ -32,6 +32,7 @@ namespace PME {
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
           m_finder(varman, m_debug_tr, gs),
+          m_approx_finder(varman, m_debug_tr, gs),
           m_solver(varman),
           m_ivc_checker(varman, m_debug_tr, gs)
     {
@@ -160,6 +161,29 @@ namespace PME {
     {
         assert(!gates.empty());
 
+        if (opts().caivc_approx_mcs)
+        {
+            return findApproxMCSOverGates(gates);
+        }
+        else
+        {
+            return findMCSOverGates(gates);
+        }
+    }
+
+    CorrectionSet CAIVCFinder::findApproxMCSOverGates(const std::vector<ID> & gates)
+    {
+        bool found;
+        CorrectionSet corr;
+        std::tie(found, corr) = m_approx_finder.findAndBlockOverGates(gates);
+
+        // This should only be called when we know a correction set exists
+        assert(found);
+        return corr;
+    }
+
+    CorrectionSet CAIVCFinder::findMCSOverGates(const std::vector<ID> & gates)
+    {
         // Assuming we already found all cardinality 1 MCSes
         for (unsigned cardinality = 2; cardinality <= gates.size(); ++cardinality)
         {
@@ -172,6 +196,9 @@ namespace PME {
 
         // This should only be called when we know a correction set exists
         assert(false);
+
+        CorrectionSet empty;
+        return empty;
     }
 
     std::pair<bool, IVC> CAIVCFinder::findAndBlockCandidateMIVC()

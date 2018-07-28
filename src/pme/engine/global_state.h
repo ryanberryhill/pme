@@ -38,6 +38,7 @@ namespace PME
         // CAIVC
         bool caivc_use_bmc;
         bool caivc_abstraction_refinement;
+        bool caivc_approx_mcs;
         unsigned caivc_ar_bmc_kmax;
 
         PMEOptions();

@@ -30,8 +30,8 @@ namespace PME
         hybrid_debug_bmc_frames(10),
         camsis_abstraction_refinement(true),
         caivc_use_bmc(true),
-        // TODO: enable AR
-        caivc_abstraction_refinement(false),
+        caivc_abstraction_refinement(true),
+        caivc_approx_mcs(true),
         caivc_ar_bmc_kmax(20)
     { }
 }
