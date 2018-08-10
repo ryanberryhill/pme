@@ -431,24 +431,24 @@ void print_cex(void * pme, aiger * aig)
 // These need to be global so they can be used in the initializer for
 // long_opts in main() below
 int g_ic3 = 0, g_bmc = 0;
-int g_checkproof = 0, g_checkmin = 0;
+int g_checkproof = 0, g_checkmin = 0, g_checkmivc = 0;
 int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0;
 int g_caivc = 0, g_marcoivc = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
 
 int needs_proof_arg()
 {
-    return !(g_ic3 || g_bmc || g_caivc || g_marcoivc);
+    return !(g_ic3 || g_bmc || g_caivc || g_marcoivc || g_checkmivc);
 }
 
 int uses_proof()
 {
-    return !(g_bmc || g_caivc || g_marcoivc);
+    return !(g_bmc || g_caivc || g_marcoivc || g_checkmivc);
 }
 
 int ic3_should_be_quiet()
 {
-    return (g_caivc || g_marcoivc);
+    return (g_caivc || g_marcoivc || g_checkmivc);
 }
 
 int main(int argc, char ** argv)
@@ -464,20 +464,21 @@ int main(int argc, char ** argv)
     char failure = 0;
 
     static struct option long_opts[] = {
-            {"ic3",             no_argument,        &g_ic3,        1 },
-            {"bmc",             required_argument,  &g_bmc,        1 },
-            {"check",           no_argument,        &g_checkproof, 1 },
-            {"check-minimal",   no_argument,        &g_checkmin,   1 },
-            {"save-proofs",     required_argument,  &g_saveproofs, 1 },
-            {"save-ivcs",       required_argument,  &g_saveivcs,   1 },
-            {"marco",           no_argument,        &g_marco,      1 },
-            {"camsis",          no_argument,        &g_camsis,     1 },
-            {"sisi",            no_argument,        &g_sisi,       1 },
-            {"bfmin",           no_argument,        &g_bfmin,      1 },
-            {"caivc",           no_argument,        &g_caivc,      1 },
-            {"marco-ivc",       no_argument,        &g_marcoivc,   1 },
-            {"help",            no_argument,        0,            'h'},
-            {0,                 0,                  0,             0 }
+            {"ic3",                 no_argument,        &g_ic3,        1 },
+            {"bmc",                 required_argument,  &g_bmc,        1 },
+            {"check",               no_argument,        &g_checkproof, 1 },
+            {"check-minimal",       no_argument,        &g_checkmin,   1 },
+            {"check-minimal-ivc",   no_argument,        &g_checkmivc,  1 },
+            {"save-proofs",         required_argument,  &g_saveproofs, 1 },
+            {"save-ivcs",           required_argument,  &g_saveivcs,   1 },
+            {"marco",               no_argument,        &g_marco,      1 },
+            {"camsis",              no_argument,        &g_camsis,     1 },
+            {"sisi",                no_argument,        &g_sisi,       1 },
+            {"bfmin",               no_argument,        &g_bfmin,      1 },
+            {"caivc",               no_argument,        &g_caivc,      1 },
+            {"marco-ivc",           no_argument,        &g_marcoivc,   1 },
+            {"help",                no_argument,        0,            'h'},
+            {0,                     0,                  0,             0 }
     };
 
     // Parse flags
@@ -725,13 +726,13 @@ int main(int argc, char ** argv)
         void * min_proof = cpme_get_proof(pme, 0);
         size_t min_size = cpme_proof_num_clauses(min_proof);
 
-        cpme_free_proof(min_proof);
+        cpme_free_proof(min_proof); min_proof = NULL;
         assert(min_size <= proof_size);
 
         if (min_size < proof_size)
         {
             print(1, "The proof (size %lu) is non-minimal. "
-                   "A proof with %lu clauses was found.\n", proof_size, min_size);
+                     "A proof with %lu clauses was found.\n", proof_size, min_size);
             failure = 1; goto cleanup;
         }
         else
@@ -739,6 +740,47 @@ int main(int argc, char ** argv)
             print(1, "The proof (size %lu) is minimal.\n", proof_size);
             goto cleanup;
         }
+    }
+
+    if (g_checkmivc)
+    {
+        // TODO: Use a different algorithm like the brute force MSIS one
+        int caivc_ok = cpme_run_caivc(pme);
+        if (caivc_ok < 0)
+        {
+            fprintf(stderr, "Error checking IVC minimality\n");
+            failure = 1; goto cleanup;
+        }
+
+        size_t ivc_size = aig->num_ands;
+
+        size_t num_ivcs = cpme_num_ivcs(pme);
+
+        if (num_ivcs == 0)
+        {
+            fprintf(stderr, "Error checking IVC minimality\n");
+            failure = 1; goto cleanup;
+        }
+
+        void * min_ivc = cpme_get_ivc(pme, 0);
+        size_t min_size = cpme_ivc_num_gates(min_ivc);
+
+        cpme_free_ivc(min_ivc); min_ivc = NULL;
+        assert(min_size <= ivc_size);
+
+        if (min_size < ivc_size)
+        {
+            print(1, "The IVC (size %lu) is non-minimal. "
+                     "An IVC with %lu gates was found.\n", ivc_size, min_size);
+            failure = 1; goto cleanup;
+        }
+        else
+        {
+            assert(num_ivcs == 1);
+            print(1, "The IVC (size %lu) is minimal.\n", ivc_size);
+            goto cleanup;
+        }
+
     }
 
     if (g_bfmin)

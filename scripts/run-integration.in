@@ -16,6 +16,7 @@ tests_failed=0
 run_bmc=0
 run_ic3=0
 run_min=0
+run_ivc=0
 limited_run=0
 
 POSITIONAL=()
@@ -42,6 +43,11 @@ while [[ $# -gt 0 ]] ; do
         run_min=1
         shift
         ;;
+        --ivc)
+        limited_run=1
+        run_ivc=1
+        shift
+        ;;
         *)    # unknown option
         POSITIONAL+=("$1")
         shift
@@ -49,6 +55,72 @@ while [[ $# -gt 0 ]] ; do
     esac
 done
 set -- "${POSITIONAL[@]}" #
+
+function ivc_integration() {
+    name=$1; shift
+    errors=0
+
+    for aig_file in ivc-examples/*.aig ; do
+        prefix=${aig_file%.*}
+        aig_name=${prefix##*/}
+        aig_tmpdir=$tmpdir/$name/$aig_name
+        ivc_tmpdir=$aig_tmpdir/ivcs
+
+        mkdir -p $aig_tmpdir
+        mkdir -p $ivc_tmpdir
+
+        logfile=$aig_tmpdir/pme.log
+        checksafe_logfile=$aig_tmpdir/checksafe.log
+        checkmin_logfile=$aig_tmpdir/checksafe.log
+
+        $VALGRIND \
+        $PME $@ \
+        --save-ivcs $ivc_tmpdir/ivc_integration $aig_file \
+        > $logfile  2>&1
+
+        if (($? != 0)) ; then
+            echo "Error running PME (IVC) on $pme_file: see $logfile for details"
+            errors=$((errors+1))
+        fi
+
+        # Check all generated IVCs are safe and minimal
+        for ivc_file in $ivc_tmpdir/*.aig ; do
+            if [ ! -f "$ivc_file" ] ; then
+                echo "No IVCs generated for $aig_file"
+                errors=$((errors+1))
+                continue
+            fi
+
+            $PME --ic3 $ivc_file > $checksafe_logfile 2>&1
+
+            if (($? != 0)) ; then
+                echo "Error checking IVC $ivc_file: see $checksafe_logfile for details"
+                errors=$((errors+1))
+                continue
+            fi
+
+            grep -q "^0$" $checksafe_logfile
+            if (( $? != 0 )) ; then
+                echo "Expected IVC $ivc_file to be safe but it was not, see $checksafe_logfile"
+                errors=$((errors+1))
+                continue
+            fi
+
+            $PME --check-minimal-ivc $ivc_file > $checkmin_logfile 2>&1
+            if (($? != 0)) ; then
+                echo "Expected IVC $ivc_file to be minimal but it was not: see $checkmin_logfile"
+                errors=$((errors+1))
+                continue
+            fi
+        done
+    done
+
+    if ((errors > 0)) ; then
+        return 1
+    else
+        return 0
+    fi
+}
 
 function minimize_integration() {
     name=$1 ; shift
@@ -363,6 +435,22 @@ function run_bmc_test() {
     fi
 }
 
+function run_ivc_test() {
+    name=$1 ; shift
+    args=$@
+
+    echo -n "Running test $name: "
+    ivc_integration $name $args > $tmpdir/$name.log
+
+    if [ $? -eq 0 ] ; then
+        echo passed
+        tests_passed=$((tests_passed+1))
+    else
+        echo failed
+        tests_failed=$((tests_failed+1))
+    fi
+}
+
 if ((limited_run == 0 || run_min == 1)) ; then
     run_msis_test BRUTEFORCE --bfmin
     run_msis_test SISI --sisi
@@ -376,6 +464,10 @@ fi
 
 if ((limited_run == 0 || run_ic3 == 1)) ; then
     run_ic3_test IC3 --ic3
+fi
+
+if ((limited_run == 0 || run_ivc == 1)) ;  then
+    run_ivc_test CAIVC --caivc
 fi
 
 echo PASS: $tests_passed

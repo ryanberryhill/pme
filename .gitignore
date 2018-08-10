@@ -30,6 +30,7 @@ test_*
 *.tar.gz
 *.log
 scripts/make-golden
+scripts/make-golden-ivcs
 scripts/pme-canonicalize
 scripts/run-integration
 

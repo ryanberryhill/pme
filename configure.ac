@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([1.14 foreign subdir-objects -Wall -Werror])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([scripts/pme-canonicalize], [chmod +x scripts/pme-canonicalize])
 AC_CONFIG_FILES([scripts/make-golden], [chmod +x scripts/make-golden])
+AC_CONFIG_FILES([scripts/make-golden-ivcs], [chmod +x scripts/make-golden-ivcs])
 AC_CONFIG_FILES([scripts/run-integration], [chmod +x scripts/run-integration])
 AC_CONFIG_SUBDIRS([src/sat/solvers/glucose src/sat/solvers/minisat])
 

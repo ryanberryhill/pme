@@ -9,7 +9,7 @@ AM_CFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
 
 bin_SCRIPTS = scripts/pme-canonicalize
-noinst_SCRIPTS = scripts/run-integration scripts/make-golden
+noinst_SCRIPTS = scripts/run-integration scripts/make-golden scripts/make-golden-ivcs
 
 noinst_LIBRARIES = libpme.a libsat.a
 

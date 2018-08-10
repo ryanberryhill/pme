@@ -1,0 +1,60 @@
+#!/bin/bash
+
+PME="./pme"
+
+if (($# < 1)) ; then
+    echo USAGE $0 AIGFILE
+    exit 1
+fi
+
+aig_file=$1
+aig_ident=${aig_file%.*}
+dstdir=${aig_ident}.ivcs
+aig_ident=${aig_ident##*/}
+tmpdir=$(mktemp -d)
+mkdir $tmpdir/ivcs
+dst_pattern=${tmpdir}/ivcs/${aig_ident}
+
+if [ -d $dstdir ] ; then
+    echo $dstdir already exits, refusing to run
+    exit 1
+fi
+
+echo Working in $tmpdir
+
+$PME --caivc --save-ivcs $dst_pattern $aig_file
+
+echo Checking IVCs
+
+unsafe=0
+non_minimal=0
+
+for ivc in $tmpdir/ivcs/*.aig ; do
+    $PME --ic3 $ivc | tail -n1 | grep 0 > /dev/null
+    if (($? != 0)) ; then
+        echo $ivc is not safe
+        unsafe=$((unsafe+1))
+        continue
+    fi
+
+    $PME --check-minimal-ivc $ivc
+    if (($? != 0)) ; then
+        echo $ivc is not minimal
+        non_minimal=$((non_minimal+1))
+        continue
+    fi
+done
+
+if (($unsafe > 0)) || (($non_minimal > 0)) ; then
+    echo $non_proof non-proofs found
+    echo $non_minimal non-minimal proofs found
+    echo Terminating
+    exit 1
+fi
+
+echo Copying IVCs to $dstdir
+mkdir $dstdir
+mv $tmpdir/ivcs/* $dstdir/
+
+rm -rf $tmpdir
+
