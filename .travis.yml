@@ -5,7 +5,7 @@ sudo: required
 script:
     - mkdir $TMPDIR
     - autoreconf -fvi
-    - ./configure --enable-valgrind && make && make check && make check-valgrind && scripts/run-integration && travis_wait scripts/run-integration --valgrind
+    - ./configure --enable-valgrind && make && make check && make check-valgrind && scripts/run-integration 
 
 matrix:
   include:
