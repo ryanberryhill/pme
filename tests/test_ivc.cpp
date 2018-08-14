@@ -24,6 +24,7 @@
 #include "pme/engine/global_state.h"
 #include "pme/ivc/ivc.h"
 #include "pme/ivc/caivc.h"
+#include "pme/ivc/marco_ivc.h"
 
 #define BOOST_TEST_MODULE IVCTest
 #define BOOST_TEST_DYN_LINK
@@ -161,5 +162,10 @@ void runIVCTest()
 BOOST_AUTO_TEST_CASE(basic_ivc_caivc)
 {
     runIVCTest<CAIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(basic_ivc_marco)
+{
+    runIVCTest<MARCOIVCFinder>();
 }
 

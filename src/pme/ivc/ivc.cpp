@@ -26,7 +26,7 @@
 namespace PME {
 
     IVCFinder::IVCFinder(VariableManager & varman,
-                         TransitionRelation & tr,
+                         const TransitionRelation & tr,
                          GlobalState & gs)
         : m_vars(varman),
           m_tr(tr),

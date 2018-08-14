@@ -92,7 +92,9 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ivc/correction_set_finder.h \
                    src/pme/ivc/correction_set_finder.cpp \
                    src/pme/ivc/caivc.h \
-                   src/pme/ivc/caivc.cpp 
+                   src/pme/ivc/caivc.cpp \
+				   src/pme/ivc/marco_ivc.h \
+				   src/pme/ivc/marco_ivc.cpp
 
 libpme_a_LIBADD = $(SAT_LIBS)
 

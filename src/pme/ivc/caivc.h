@@ -36,7 +36,7 @@ namespace PME {
     {
         public:
             CAIVCFinder(VariableManager & varman,
-                        TransitionRelation & tr,
+                        const TransitionRelation & tr,
                         GlobalState & gs);
             virtual void findIVCs() override;
 

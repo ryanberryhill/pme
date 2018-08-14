@@ -97,6 +97,8 @@ namespace PME
 
             virtual ClauseVec initState() const;
 
+            size_t numGates() const { return m_gates.size(); }
+
         private:
             VariableManager & m_vars;
             ID m_bad;

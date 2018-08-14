@@ -156,7 +156,7 @@ namespace PME { namespace IC3 {
     {
         std::vector<ID> latches(tr().begin_latches(), tr().end_latches());
         Cube result = extract(latches);
-        assert(!result.empty());
+        assert(!result.empty() || latches.empty());
         return result;
     }
 

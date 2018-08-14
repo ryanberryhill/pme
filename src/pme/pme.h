@@ -40,6 +40,7 @@ typedef enum
     LOG_IC3,
     LOG_IVC,
     LOG_CAIVC,
+    LOG_MARCOIVC,
     LOG_INVALID,
     NUM_LOG_CHANNELS = LOG_INVALID
 } LogChannelID;

@@ -26,7 +26,7 @@
 namespace PME {
 
     CAIVCFinder::CAIVCFinder(VariableManager & varman,
-                             TransitionRelation & tr,
+                             const TransitionRelation & tr,
                              GlobalState & gs)
         : IVCFinder(varman, tr, gs),
           m_debug_tr(tr),

@@ -19,54 +19,45 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef IVC_H_INCLUDED
-#define IVC_H_INCLUDED
+#ifndef MARCO_IVC_INCLUDED
+#define MARCO_IVC_INCLUDED
 
-#include "pme/engine/global_state.h"
-#include "pme/engine/variable_manager.h"
+#include "pme/ivc/ivc.h"
+#include "pme/util/maxsat_solver.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
 
 namespace PME {
-
-    // A vector of IDs corresponding to the LHS of AndGates
-    typedef std::vector<ID> IVC;
-
-    class IVCFinder
-    {
+    class MARCOIVCFinder : public IVCFinder {
         public:
-            IVCFinder(VariableManager & varman,
-                      const TransitionRelation & tr,
-                      GlobalState & gs);
-
-            virtual ~IVCFinder() { }
-
-            virtual void findIVCs() = 0;
-
-            size_t numMIVCs() const;
-            const IVC & getMIVC(size_t i) const;
-            bool minimumIVCKnown() const;
-            const IVC & getMinimumIVC() const;
-
+            MARCOIVCFinder(VariableManager & varman,
+                           const TransitionRelation & tr,
+                           GlobalState & gs);
+            virtual void findIVCs() override;
         protected:
-            void addMIVC(const IVC & ivc);
-            void setMinimumIVC(const IVC & ivc);
-
-            virtual std::ostream & log(int verbosity) const;
-            std::ostream & log(LogChannelID channel, int verbosity) const;
-
-            GlobalState & gs() { return m_gs; }
-            const PMEOptions & opts() const { return m_gs.opts; }
-            const TransitionRelation & tr() const { return m_tr; }
-            VariableManager & vars() { return m_vars; }
-
+            virtual std::ostream & log(int verbosity) const override;
         private:
-            VariableManager & m_vars;
-            const TransitionRelation & m_tr;
-            GlobalState & m_gs;
+            typedef std::vector<ID> Seed;
+            typedef std::pair<bool, Seed> UnexploredResult;
 
-            std::vector<IVC> m_mivcs;
-            IVC m_minimum_ivc;
+            UnexploredResult getUnexplored();
+            void recordMIVC(const Seed & mivc);
+            bool isSafe(const Seed & seed);
+            void grow(Seed & seed);
+            void shrink(Seed & seed);
+            void blockUp(const Seed & seed);
+            void blockDown(const Seed & seed);
+
+            void initSolvers();
+            ID debugVarOf(ID gate) const;
+
+            id_iterator begin_gates() const { return m_debug_tr.begin_gate_ids(); }
+            id_iterator end_gates() const { return m_debug_tr.end_gate_ids(); }
+
+            MaxSATSolver m_seedSolver;
+            DebugTransitionRelation m_debug_tr;
+            Seed m_smallestIVC;
+            std::vector<ID> m_gates;
     };
 }
 
