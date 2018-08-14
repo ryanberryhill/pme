@@ -79,7 +79,7 @@ function ivc_integration() {
         > $logfile  2>&1
 
         if (($? != 0)) ; then
-            echo "Error running PME (IVC) on $pme_file: see $logfile for details"
+            echo "Error running PME (IVC) on $aig_file: see $logfile for details"
             errors=$((errors+1))
         fi
 

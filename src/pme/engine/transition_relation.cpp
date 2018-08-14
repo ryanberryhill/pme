@@ -150,7 +150,8 @@ namespace PME
         {
             if (m_latches.count(id) == 0 && m_gates.count(id) == 0)
             {
-                m_inputIDs.push_back(id);
+                ID stripped = strip(id);
+                m_inputIDs.push_back(stripped);
             }
         }
     }
