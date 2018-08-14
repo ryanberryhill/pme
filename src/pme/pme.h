@@ -100,6 +100,7 @@ int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
 int cpme_run_caivc(void * pme);
+int cpme_run_marcoivc(void * pme);
 
 int cpme_run_ic3(void * pme);
 int cpme_run_bmc(void * pme, unsigned k_max);

@@ -853,8 +853,19 @@ int main(int argc, char ** argv)
 
     if (g_marcoivc)
     {
-        fprintf(stderr, "MARCO-IVC is not implemented\n");
-        failure = 1; goto cleanup;
+        int marcoivc_ok = cpme_run_marcoivc(pme);
+        if (marcoivc_ok < 0)
+        {
+            fprintf(stderr, "Error running MARCO-IVC\n");
+            failure = 1; goto cleanup;
+        }
+
+        report_ivc_run(pme, "MARCOIVC");
+
+        if (g_saveivcs)
+        {
+            save_ivcs(aig, pme, "marcoivc");
+        }
     }
 
     if (g_caivc)

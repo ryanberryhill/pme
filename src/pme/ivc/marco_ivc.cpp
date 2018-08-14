@@ -64,8 +64,8 @@ namespace PME {
             {
                 log(3) << "Found a non-IVC seed of size " << seed.size() << std::endl;
                 grow(seed);
-                log(1) << "MNIC of size " << seed.size() << std::endl;
-                log(3) << "MNIC: " << seed << std::endl;
+                log(1) << "MNVC of size " << seed.size() << std::endl;
+                log(3) << "MNVC: " << seed << std::endl;
                 blockDown(seed);
             }
         }

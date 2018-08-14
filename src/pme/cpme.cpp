@@ -370,6 +370,22 @@ int cpme_run_caivc(void * pme)
     }
 }
 
+int cpme_run_marcoivc(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->findIVCs(PME_IVC_MARCO);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 int cpme_run_ic3(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

@@ -27,6 +27,7 @@
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
 #include "pme/ivc/caivc.h"
+#include "pme/ivc/marco_ivc.h"
 #include "pme/ic3/ic3.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/bmc/bmc_solver.h"
@@ -91,7 +92,7 @@ namespace PME
         {
             case PME_IVC_MARCO:
                 log(1) << "Starting MARCOIVC" << std::endl;
-                throw std::logic_error("MARCOIVC not implemented");
+                m_ivc_finder.reset(new MARCOIVCFinder(m_vars, m_tr, m_gs));
                 break;
             case PME_IVC_CAIVC:
                 log(1) << "Starting CAIVC" << std::endl;
