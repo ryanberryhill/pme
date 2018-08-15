@@ -528,3 +528,30 @@ unsigned cpme_proof_lit(void * proof, size_t cls, size_t n)
     return clause.at(n);
 }
 
+void cpme_print_stats(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+    eng->printStats();
+}
+
+const char * cpme_set_option(void * pme, const char * option)
+{
+    static std::string error_msg;
+
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+
+    try
+    {
+        eng->parseOption(option);
+    }
+    catch (std::exception& e)
+    {
+        error_msg = e.what();
+        return error_msg.c_str();
+    }
+
+    return NULL;
+}
+

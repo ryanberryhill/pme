@@ -105,6 +105,9 @@ int cpme_run_marcoivc(void * pme);
 int cpme_run_ic3(void * pme);
 int cpme_run_bmc(void * pme, unsigned k_max);
 
+void cpme_print_stats(void * pme);
+const char * cpme_set_option(void * pme, const char * option);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

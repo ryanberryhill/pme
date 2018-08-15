@@ -35,6 +35,10 @@ int g_verbosity = 0;
 
 #define print(v, ...) if (g_verbosity >= v) { printf(__VA_ARGS__); }
 
+#define MAX_PME_OPTS 256
+unsigned g_pme_opt_index = 0;
+char * g_pme_opts[MAX_PME_OPTS] = {NULL};
+
 void print_usage(char ** argv)
 {
     const char * name = argv[0];
@@ -435,6 +439,7 @@ int g_checkproof = 0, g_checkmin = 0, g_checkmivc = 0;
 int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0;
 int g_caivc = 0, g_marcoivc = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
+int g_printstats = 0;
 
 int needs_proof_arg()
 {
@@ -453,7 +458,7 @@ int ic3_should_be_quiet()
 
 int main(int argc, char ** argv)
 {
-    const char * opts = "hv";
+    const char * opts = "ho:v";
     char * aig_path = NULL;
     char * proof_path = NULL;
     void * proof = NULL;
@@ -462,6 +467,7 @@ int main(int argc, char ** argv)
     int option_index = 0;
     unsigned bmc_kmax = 0;
     char failure = 0;
+    aiger * aig = NULL;
 
     static struct option long_opts[] = {
             {"ic3",                 no_argument,        &g_ic3,        1 },
@@ -477,6 +483,8 @@ int main(int argc, char ** argv)
             {"bfmin",               no_argument,        &g_bfmin,      1 },
             {"caivc",               no_argument,        &g_caivc,      1 },
             {"marco-ivc",           no_argument,        &g_marcoivc,   1 },
+            {"stats",               no_argument,        &g_printstats, 1 },
+            {"opt",                 required_argument,  0,            'o' },
             {"help",                no_argument,        0,            'h'},
             {0,                     0,                  0,             0 }
     };
@@ -492,13 +500,13 @@ int main(int argc, char ** argv)
                     if (g_saveivcs)
                     {
                         fprintf(stderr, "--save-ivcs and save-proofs cannot be given together\n");
-                        return EXIT_FAILURE;
+                        failure = 1; goto cleanup;
                     }
 
                     if (strlen(optarg) >= sizeof(g_save_path))
                     {
                         fprintf(stderr, "argument to save-proofs is too long\n");
-                        return EXIT_FAILURE;
+                        failure = 1; goto cleanup;
                     }
                     else
                     {
@@ -510,13 +518,13 @@ int main(int argc, char ** argv)
                     if (g_saveproofs)
                     {
                         fprintf(stderr, "--save-ivcs and save-proofs cannot be given together\n");
-                        return EXIT_FAILURE;
+                        failure = 1; goto cleanup;
                     }
 
                     if (strlen(optarg) >= sizeof(g_save_path))
                     {
                         fprintf(stderr, "argument to save-ivcs is too long\n");
-                        return EXIT_FAILURE;
+                        failure = 1; goto cleanup;
                     }
                     else
                     {
@@ -532,19 +540,32 @@ int main(int argc, char ** argv)
                     {
                         fprintf(stderr, "--bmc argument %s not understood\n", optarg);
                         print_usage(argv);
-                        return EXIT_FAILURE;
+                        failure = 1; goto cleanup;
                     }
                 }
                 break;
             case 'v':
                 g_verbosity++;
                 break;
+            case 'o':
+                if (g_pme_opt_index < MAX_PME_OPTS)
+                {
+                    g_pme_opts[g_pme_opt_index] = strdup(optarg);
+                    g_pme_opt_index++;
+                }
+                else
+                {
+                    fprintf(stderr, "Specified --opt too many times (max is %d)\n",
+                                    MAX_PME_OPTS);
+                    failure = 1; goto cleanup;
+                }
+                break;
             case 'h':
                 print_usage(argv);
-                return 0;
+                goto cleanup;
             default:
                 print_usage(argv);
-                return EXIT_FAILURE;
+                failure = 1; goto cleanup;
         }
     }
 
@@ -563,7 +584,7 @@ int main(int argc, char ** argv)
     else
     {
         print_usage(argv);
-        return EXIT_FAILURE;
+        failure = 1; goto cleanup;
     }
 
     print(2, "pme version %s\n", cpme_version());
@@ -577,14 +598,14 @@ int main(int argc, char ** argv)
     if (access(aig_path, R_OK) == -1)
     {
         perror("Cannot open AIG for reading");
-        return EXIT_FAILURE;
+        failure = 1; goto cleanup;
     }
 
     // Check if the proof file is readable
     if (proof_path && access(proof_path, R_OK) == -1)
     {
         perror("Cannot open proof for reading");
-        return EXIT_FAILURE;
+        failure = 1; goto cleanup;
     }
 
     // Open the AIG file
@@ -592,10 +613,10 @@ int main(int argc, char ** argv)
     if (aig_file == NULL)
     {
         perror("Failed to open AIG");
-        return EXIT_FAILURE;
+        failure = 1; goto cleanup;
     }
 
-    aiger * aig = aiger_init();
+    aig = aiger_init();
 
     // Read the AIG file
     const char * msg = aiger_read_from_file(aig, aig_file);
@@ -627,6 +648,17 @@ int main(int argc, char ** argv)
     // Initialize the PME library
     pme = cpme_init(aig, proof);
     assert(pme);
+
+    // Set PME internal options if any were given
+    for (size_t i = 0; i < g_pme_opt_index; ++i)
+    {
+        const char * error_msg = cpme_set_option(pme, g_pme_opts[i]);
+        if (error_msg != NULL)
+        {
+            fprintf(stderr, "%s\n", error_msg);
+            failure = 1; goto cleanup;
+        }
+    }
 
     // Do things in the PME library
     cpme_log_to_stdout(pme);
@@ -885,7 +917,22 @@ int main(int argc, char ** argv)
         }
     }
 
+    if (g_printstats)
+    {
+        cpme_print_stats(pme);
+    }
+
 cleanup:
+    // Clean up stored PME options
+    if (g_pme_opt_index > 0)
+    {
+        for (size_t i = 0; i < g_pme_opt_index; ++i)
+        {
+            assert(g_pme_opts[i] != NULL);
+            free(g_pme_opts[i]);
+            g_pme_opts[i] = NULL;
+        }
+    }
     // Clean up the proof
     if (proof) { cpme_free_proof(proof); proof = NULL; }
     // Clean up the AIG

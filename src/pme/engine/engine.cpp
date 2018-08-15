@@ -274,9 +274,19 @@ namespace PME
         m_gs.logger.setVerbosity(channel, v);
     }
 
+    void Engine::printStats() const
+    {
+        m_gs.stats.printAll(log(0));
+    }
+
     std::ostream & Engine::log(int v) const
     {
         return m_gs.logger.log(LOG_PME, v);
+    }
+
+    void Engine::parseOption(const std::string& option)
+    {
+        m_gs.opts.parseOption(option);
     }
 }
 

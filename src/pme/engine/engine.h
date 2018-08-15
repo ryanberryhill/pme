@@ -75,6 +75,10 @@ namespace PME
             void setVerbosity(int v);
             void setChannelVerbosity(LogChannelID channel, int v);
 
+            void printStats() const;
+
+            void parseOption(const std::string& option);
+
         private:
             VariableManager m_vars;
             TransitionRelation m_tr;

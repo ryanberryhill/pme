@@ -23,6 +23,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/safety.h \
                    src/pme/engine/engine.h \
                    src/pme/engine/engine.cpp \
+                   src/pme/engine/options.h \
+                   src/pme/engine/options.cpp \
                    src/pme/engine/transition_relation.h \
                    src/pme/engine/transition_relation.cpp \
                    src/pme/engine/debug_transition_relation.h \
@@ -93,8 +95,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ivc/correction_set_finder.cpp \
                    src/pme/ivc/caivc.h \
                    src/pme/ivc/caivc.cpp \
-				   src/pme/ivc/marco_ivc.h \
-				   src/pme/ivc/marco_ivc.cpp
+                   src/pme/ivc/marco_ivc.h \
+                   src/pme/ivc/marco_ivc.cpp
 
 libpme_a_LIBADD = $(SAT_LIBS)
 

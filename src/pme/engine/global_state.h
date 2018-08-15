@@ -23,25 +23,20 @@
 #define GLOBAL_STATE_H_INCLUDED
 
 #include "pme/engine/logger.h"
+#include "pme/engine/options.h"
 
 namespace PME
 {
-    struct PMEOptions
+    struct PMEStats
     {
-        // Global
-        bool simplify;
-        unsigned hybrid_debug_bmc_frames;
+        // IVCs
+        size_t num_mivcs_found;
+        size_t smallest_mivc_size;
+        size_t largest_mivc_size;
 
-        // CAMSIS
-        bool camsis_abstraction_refinement;
+        void printAll(std::ostream & os) const;
 
-        // CAIVC
-        bool caivc_use_bmc;
-        bool caivc_abstraction_refinement;
-        bool caivc_approx_mcs;
-        unsigned caivc_ar_bmc_kmax;
-
-        PMEOptions();
+        PMEStats();
     };
 
     struct GlobalState
@@ -49,7 +44,9 @@ namespace PME
         // The logger is mutable because changing it should not be considered
         // as conceptually changing the state of any object with a reference to
         // this GlobalState. i.e., const functions should be able to log
+        // Same goes for statistics
         mutable Logger logger;
+        mutable PMEStats stats;
         PMEOptions opts;
     };
 

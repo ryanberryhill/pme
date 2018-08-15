@@ -25,13 +25,16 @@ namespace PME
 {
     GlobalState g_null_gs;
 
-    PMEOptions::PMEOptions() :
-        simplify(true),
-        hybrid_debug_bmc_frames(10),
-        camsis_abstraction_refinement(true),
-        caivc_use_bmc(true),
-        caivc_abstraction_refinement(true),
-        caivc_approx_mcs(true),
-        caivc_ar_bmc_kmax(20)
+    PMEStats::PMEStats() :
+        num_mivcs_found(0),
+        smallest_mivc_size(0),
+        largest_mivc_size(0)
     { }
+
+    void PMEStats::printAll(std::ostream & os) const
+    {
+        os << "MIVCs Found: " << num_mivcs_found << std::endl;
+        os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
+        os << "Largest MIVC:" << largest_mivc_size << std::endl;
+    }
 }

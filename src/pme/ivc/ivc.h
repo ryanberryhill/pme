@@ -57,6 +57,7 @@ namespace PME {
 
             GlobalState & gs() { return m_gs; }
             const PMEOptions & opts() const { return m_gs.opts; }
+            PMEStats & stats() const { return m_gs.stats; }
             const TransitionRelation & tr() const { return m_tr; }
             VariableManager & vars() { return m_vars; }
 
