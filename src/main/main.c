@@ -439,7 +439,7 @@ int g_checkproof = 0, g_checkmin = 0, g_checkmivc = 0;
 int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0;
 int g_caivc = 0, g_marcoivc = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
-int g_printstats = 0;
+int g_printstats = 0, g_nocex = 0;
 
 int needs_proof_arg()
 {
@@ -484,7 +484,8 @@ int main(int argc, char ** argv)
             {"caivc",               no_argument,        &g_caivc,      1 },
             {"marco-ivc",           no_argument,        &g_marcoivc,   1 },
             {"stats",               no_argument,        &g_printstats, 1 },
-            {"opt",                 required_argument,  0,            'o' },
+            {"no-cex",              no_argument,        &g_nocex,      1 },
+            {"opt",                 required_argument,  0,            'o'},
             {"help",                no_argument,        0,            'h'},
             {0,                     0,                  0,             0 }
     };
@@ -679,7 +680,8 @@ int main(int argc, char ** argv)
         }
         else if (safe == 0)
         {
-            print_cex(pme, aig);
+            if (g_nocex) { print(0, "1\n"); }
+            else { print_cex(pme, aig); }
             goto cleanup;
         }
         else
@@ -705,7 +707,8 @@ int main(int argc, char ** argv)
         }
         else if (safe == 0)
         {
-            print_cex(pme, aig);
+            if (g_nocex) { print(0, "1\n"); }
+            else { print_cex(pme, aig); }
             goto cleanup;
         }
 
