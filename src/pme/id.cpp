@@ -48,6 +48,10 @@ namespace PME
     ID prime(ID id, size_t n)
     {
         assert(n <= MAX_PRIMES);
+
+        // Don't prime true or false
+        if (id < MIN_ID) { return id; }
+
         return id | (n << PRIME_SHIFT);
     }
 

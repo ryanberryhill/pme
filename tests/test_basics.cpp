@@ -84,3 +84,9 @@ BOOST_AUTO_TEST_CASE(subsumption)
     BOOST_CHECK(!subsumes(b, a));
 }
 
+BOOST_AUTO_TEST_CASE(true_prime_false_prime)
+{
+    BOOST_CHECK(prime(ID_TRUE) == ID_TRUE);
+    BOOST_CHECK(prime(ID_FALSE) == ID_FALSE);
+}
+
