@@ -44,6 +44,15 @@ namespace PME {
 
     void MARCOIVCFinder::findIVCs()
     {
+        // Check for constant output
+        if (tr().bad() == ID_FALSE)
+        {
+            log(3) << "Output is a literal 0" << std::endl;
+            Seed empty;
+            recordMIVC(empty);
+            return;
+        }
+
         while (true)
         {
             bool sat;

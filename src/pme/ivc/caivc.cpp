@@ -51,7 +51,15 @@ namespace PME {
     {
         log(2) << "Starting CAIVC (there are " << m_gates.size() << " gates)" << std::endl;
 
-        if (opts().caivc_abstraction_refinement)
+        // Check for constant output
+        if (tr().bad() == ID_FALSE)
+        {
+            log(3) << "Output is a literal 0" << std::endl;
+            IVC empty;
+            addMIVC(empty);
+            logMIVC(empty);
+        }
+        else if (opts().caivc_abstraction_refinement)
         {
             abstractionRefinementFindIVCs();
         }
