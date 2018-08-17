@@ -248,4 +248,10 @@ namespace PME
 
         return true;
     }
+
+    ModelValue ConsecutionChecker::getAssignment(ID lit) const
+    {
+        assert(m_solver.isSAT());
+        return m_solver.getAssignment(lit);
+    }
 }

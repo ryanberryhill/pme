@@ -63,6 +63,8 @@ namespace PME
 
             const Clause & clauseOf(ClauseID id) const;
 
+            ModelValue getAssignment(ID lit) const;
+
         private:
             std::string actName(ClauseID id) const;
             void initSolver();

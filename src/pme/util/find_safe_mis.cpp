@@ -22,6 +22,7 @@
 #include "pme/util/find_safe_mis.h"
 
 #include <algorithm>
+#include <cassert>
 
 namespace PME
 {
@@ -55,6 +56,42 @@ namespace PME
         return findSafeMIS(solver, vec, nec);
     }
 
+    // Remove from vec every clause for which the current SAT assignent to
+    // solver is a witness to non-inductiveness. That is, if a literal in ~c'
+    // is satisfied.  return false, indicating the result is not a safe
+    // inductive invariant.  Otherwise, return true indicating that we don't
+    // know yet.
+    bool removeSATClauses(ConsecutionChecker & solver, ClauseIDVec & vec, const ClauseIDVec & nec)
+    {
+        for (auto it = vec.begin(); it != vec.end(); )
+        {
+            ClauseID id = *it;
+            const Clause & cls = solver.clauseOf(id);
+
+            bool negcp_sat = true;
+            for (ID lit : cls)
+            {
+                assert(nprimes(lit) == 0);
+                // The corresponding literal of ~c'
+                ID nplit = negate(prime(lit));
+                if (solver.getAssignment(nplit) == SAT::FALSE)
+                {
+                    negcp_sat = false;
+                    break;
+                }
+            }
+
+            // Remove the clause if it's not supported
+            if (negcp_sat) { it = vec.erase(it); }
+            else { ++it; }
+
+            // If it was in NEC, indicate there is no safe MIS
+            if (negcp_sat && contains(nec, id)) { return false; }
+        }
+
+        return true;
+    }
+
     bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, const ClauseIDVec & nec)
     {
         // Given a potentially non-inductive seed, find the a maximal inductive
@@ -71,23 +108,31 @@ namespace PME
         // Remove all clauses that are non-inductive
         // TODO simple optimization: remove clauses that are satisfied
         // by the current assignment
+        std::sort(vec.begin(), vec.end());
         bool removed = true;
         while (removed)
         {
             removed = false;
 
-            for (size_t i = 0; i < vec.size(); )
+            for (auto it = vec.begin(); it != vec.end(); )
             {
-                ClauseID id = vec.at(i);
+                ClauseID id = *it;
                 if (!solver.solve(vec, id))
                 {
                     if (contains(nec, id)) { return false; }
                     removed = true;
-                    vec.erase(vec.begin() + i);
+                    it = vec.erase(it);
+
+                    // Remove all clauses satisfied by the assignment
+                    bool maybe_proof = removeSATClauses(solver, vec, nec);
+                    if (!maybe_proof) { return false; }
+                    // Point it to the first element greater than id
+                    // (under the assumption that vec is sorted)
+                    it = std::lower_bound(vec.begin(), vec.end(), id);
                 }
                 else
                 {
-                    ++i;
+                    ++it;
                 }
             }
         }
