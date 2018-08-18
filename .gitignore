@@ -7,6 +7,7 @@ config.h.in
 config.log
 config.status
 .deps/
+aclocal.m4
 src/sat/solvers/glucose/Makefile
 src/sat/solvers/glucose/config.log
 src/sat/solvers/glucose/config.status
