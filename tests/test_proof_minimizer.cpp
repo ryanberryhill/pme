@@ -25,6 +25,7 @@
 #include "pme/minimization/camsis.h"
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
+#include "pme/minimization/simple.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -394,5 +395,19 @@ BOOST_AUTO_TEST_CASE(brute_force_minimizer_nontrivial)
     NonTrivialProofFixture f;
     BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
     test_findminimal(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(simple_minimizer_trivial)
+{
+    TrivialProofFixture f;
+    SimpleMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    test_shrink(minimizer, f);
+}
+
+BOOST_AUTO_TEST_CASE(simple_minimizer_nontrivial)
+{
+    NonTrivialProofFixture f;
+    SimpleMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    test_shrink(minimizer, f);
 }
 

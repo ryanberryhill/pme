@@ -75,6 +75,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/minimization/sisi.cpp \
                    src/pme/minimization/minimization.h \
                    src/pme/minimization/minimization.cpp \
+                   src/pme/minimization/simple.h \
+                   src/pme/minimization/simple.cpp \
                    src/pme/ic3/ic3.h \
                    src/pme/ic3/ic3.cpp \
                    src/pme/ic3/ic3_solver.h \

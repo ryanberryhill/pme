@@ -124,12 +124,17 @@ function ivc_integration() {
 
 function minimize_integration() {
     name=$1 ; shift
-    all_msis_arg=$1
+    mode_arg=$1
     all_msis=0
-    if [ "$all_msis_arg" == "--all" ] ; then
+    minimal=1
+    if [ "$mode_arg" == "--all" ] ; then
         all_msis=1
         shift
+    elif [ "$mode_arg" == "--non-minimal" ] ; then
+        minimal=0
+        shift
     fi
+
     errors=0
     for aig_file in examples/proofs/*.aig; do
         prefix=${aig_file%.*}
@@ -162,7 +167,9 @@ function minimize_integration() {
             minimized_dir=$pme_file.minimized
             golden_missing=0
             minimize_integration_missing=0
-            if [ -d $minimized_dir ] ; then
+
+            # We can only check golden results if we're doing full minimization
+            if [ -d $minimized_dir ] && [ "$minimal" == 1 ] ; then
                 echo Checking golden result for $pme_file versus $minimized_dir
 
                 # Always check that the proof we found is in the golden result
@@ -214,6 +221,8 @@ function minimize_integration() {
             # Skip if the pattern only matches literally *.pme, which means
             # no proofs were generated.
             [ -f "$proof_file" ] || break
+
+            echo "Checking $proof_file is a proof"
             $PME --check $aig_file $proof_file > /dev/null 2>&1
             if (($? != 0)) ; then
                 non_proof=$((non_proof+1))
@@ -221,11 +230,14 @@ function minimize_integration() {
                 continue
             fi
 
-            $PME --check-minimal $aig_file $proof_file > /dev/null 2>&1
-            if (($? != 0)) ; then
-                non_minimal=$((non_minimal+1))
-                echo $proof_file is non-minimal
-                continue
+            if [ "$minimal" == 1 ] ; then
+                echo "Checking $proof_file for minimality"
+                $PME --check-minimal $aig_file $proof_file > /dev/null 2>&1
+                if (($? != 0)) ; then
+                    non_minimal=$((non_minimal+1))
+                    echo $proof_file is non-minimal
+                    continue
+                fi
             fi
 
             good_proof=$((good_proof+1))
@@ -397,9 +409,13 @@ function run_msis_test() {
     run_test $@
 }
 
+function run_shrink_proof_test() {
+    name=$1 ; shift
+    run_test $name --non-minimal $@
+}
+
 function run_all_msis_test() {
     name=$1 ; shift
-    args=$@
     run_test $name --all $@
 }
 
@@ -456,6 +472,7 @@ if ((limited_run == 0 || run_min == 1)) ; then
     run_msis_test SISI --sisi
     run_all_msis_test MARCO --marco
     run_all_msis_test CAMSIS --camsis
+    run_shrink_proof_test SIMPLEMIN --simplemin
 fi
 
 if ((limited_run == 0 || run_bmc == 1)) ; then

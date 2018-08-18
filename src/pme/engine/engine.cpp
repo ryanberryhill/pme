@@ -26,6 +26,7 @@
 #include "pme/minimization/camsis.h"
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
+#include "pme/minimization/simple.h"
 #include "pme/ivc/caivc.h"
 #include "pme/ivc/marco_ivc.h"
 #include "pme/ic3/ic3.h"
@@ -76,6 +77,10 @@ namespace PME
             case PME_MINIMIZATION_BRUTEFORCE:
                 log(1) << "Starting BFMIN" << std::endl;
                 m_minimizer.reset(new BruteForceMinimizer(m_vars, m_tr, m_proof, m_gs));
+                break;
+            case PME_MINIMIZATION_SIMPLE:
+                log(1) << "Starting SIMPLEMIN" << std::endl;
+                m_minimizer.reset(new SimpleMinimizer(m_vars, m_tr, m_proof, m_gs));
                 break;
             default:
                 throw std::logic_error("Unknown minimization algorithm");

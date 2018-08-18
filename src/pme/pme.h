@@ -37,6 +37,7 @@ typedef enum
     LOG_CAMSIS,
     LOG_SISI,
     LOG_BFMIN,
+    LOG_SIMPLEMIN,
     LOG_IC3,
     LOG_IVC,
     LOG_CAIVC,
@@ -50,7 +51,8 @@ typedef enum
     PME_MINIMIZATION_MARCO,
     PME_MINIMIZATION_CAMSIS,
     PME_MINIMIZATION_SISI,
-    PME_MINIMIZATION_BRUTEFORCE
+    PME_MINIMIZATION_BRUTEFORCE,
+    PME_MINIMIZATION_SIMPLE,
 } PMEMinimizationAlgorithm;
 
 typedef enum
@@ -99,6 +101,7 @@ int cpme_run_marco(void * pme);
 int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
+int cpme_run_simplemin(void * pme);
 int cpme_run_caivc(void * pme);
 int cpme_run_marcoivc(void * pme);
 

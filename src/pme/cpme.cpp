@@ -354,6 +354,22 @@ int cpme_run_bfmin(void * pme)
     }
 }
 
+int cpme_run_simplemin(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->minimize(PME_MINIMIZATION_SIMPLE);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 int cpme_run_caivc(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

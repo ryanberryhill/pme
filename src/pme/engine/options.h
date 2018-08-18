@@ -60,12 +60,20 @@ namespace PME {
             // below, so the order is important here
             std::unordered_map<std::string, OptionParser> m_option_parsers;
         public:
-            // Global
+            // --- Global ---
+
             PMEOption<bool> simplify;
             PMEOption<unsigned> hybrid_debug_bmc_frames;
 
+            // --- Proof Minimization ---
+
+            // Simple Minimizer
+            PMEOption<bool> simple_min_use_min_supp;
+
             // CAMSIS
             PMEOption<bool> camsis_abstraction_refinement;
+
+            // --- IVC Extraction ---
 
             // CAIVC
             PMEOption<bool> caivc_use_bmc;

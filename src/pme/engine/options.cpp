@@ -65,6 +65,7 @@ namespace PME {
     PMEOptions::PMEOptions() :
         simplify(*this, true, "simplify"),
         hybrid_debug_bmc_frames(*this, 10, "hybrid_debug_bmc_frames"),
+        simple_min_use_min_supp(*this, true, "simple_min_use_min_supp"),
         camsis_abstraction_refinement(*this, true, "camsis_ar"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
