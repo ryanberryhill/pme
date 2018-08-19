@@ -19,44 +19,23 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MARCO_IVC_INCLUDED
-#define MARCO_IVC_INCLUDED
+#ifndef IVC_BF_INCLUDED
+#define IVC_BF_INCLUDED
 
 #include "pme/ivc/ivc.h"
-#include "pme/util/maxsat_solver.h"
-#include "pme/engine/transition_relation.h"
-#include "pme/engine/debug_transition_relation.h"
 
 namespace PME {
-    class MARCOIVCFinder : public IVCFinder {
+    class IVCBFFinder : public IVCFinder
+    {
         public:
-            MARCOIVCFinder(VariableManager & varman,
-                           const TransitionRelation & tr,
-                           GlobalState & gs);
+            IVCBFFinder(VariableManager & varman,
+                        const TransitionRelation & tr,
+                        GlobalState & gs);
             virtual void findIVCs() override;
+            void shrink(Seed & seed);
+            bool isSafe(const Seed & seed);
         protected:
             virtual std::ostream & log(int verbosity) const override;
-        private:
-            typedef std::pair<bool, Seed> UnexploredResult;
-
-            UnexploredResult getUnexplored();
-            void recordMIVC(const Seed & mivc);
-            bool isSafe(const Seed & seed);
-            void grow(Seed & seed);
-            void shrink(Seed & seed);
-            void blockUp(const Seed & seed);
-            void blockDown(const Seed & seed);
-
-            void initSolvers();
-            ID debugVarOf(ID gate) const;
-
-            id_iterator begin_gates() const { return m_debug_tr.begin_gate_ids(); }
-            id_iterator end_gates() const { return m_debug_tr.end_gate_ids(); }
-
-            MaxSATSolver m_seedSolver;
-            DebugTransitionRelation m_debug_tr;
-            Seed m_smallestIVC;
-            std::vector<ID> m_gates;
     };
 }
 

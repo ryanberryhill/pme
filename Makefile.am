@@ -97,6 +97,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ivc/correction_set_finder.cpp \
                    src/pme/ivc/caivc.h \
                    src/pme/ivc/caivc.cpp \
+                   src/pme/ivc/ivc_bf.h \
+                   src/pme/ivc/ivc_bf.cpp \
                    src/pme/ivc/marco_ivc.h \
                    src/pme/ivc/marco_ivc.cpp
 

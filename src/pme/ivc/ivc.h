@@ -31,6 +31,7 @@ namespace PME {
 
     // A vector of IDs corresponding to the LHS of AndGates
     typedef std::vector<ID> IVC;
+    typedef std::vector<ID> Seed;
 
     class IVCFinder
     {

@@ -25,6 +25,7 @@
 #include "pme/ivc/ivc.h"
 #include "pme/ivc/caivc.h"
 #include "pme/ivc/marco_ivc.h"
+#include "pme/ivc/ivc_bf.h"
 
 #define BOOST_TEST_MODULE IVCTest
 #define BOOST_TEST_DYN_LINK
@@ -110,7 +111,7 @@ void sortIVCs(std::vector<IVC> & ivcs)
 }
 
 template<class T>
-void runIVCTest()
+void runIVCTest(bool find_all)
 {
     IVCFixture f;
 
@@ -122,7 +123,6 @@ void runIVCTest()
     ID a5 = f.tr->toInternal(f.a5);
     ID a6 = f.tr->toInternal(f.a6);
 
-    std::vector<IVC> actual;
     std::vector<IVC> mivcs = { {a0, a4, a6},
                                {a1, a4, a6},
                                {a2, a5, a6},
@@ -132,10 +132,14 @@ void runIVCTest()
     T finder(f.vars, *f.tr, f.gs);
     finder.findIVCs();
 
-    BOOST_CHECK_EQUAL(finder.numMIVCs(), mivcs.size());
-    BOOST_REQUIRE(finder.minimumIVCKnown());
-    IVC min_ivc = finder.getMinimumIVC();
-    std::sort(min_ivc.begin(), min_ivc.end());
+    IVC min_ivc;
+    if (find_all)
+    {
+        BOOST_CHECK_EQUAL(finder.numMIVCs(), mivcs.size());
+        BOOST_REQUIRE(finder.minimumIVCKnown());
+        min_ivc = finder.getMinimumIVC();
+        std::sort(min_ivc.begin(), min_ivc.end());
+    }
 
     bool min_found = false;
 
@@ -143,7 +147,12 @@ void runIVCTest()
     for (size_t i = 0; i < finder.numMIVCs(); ++i)
     {
         IVC mivc = finder.getMIVC(i);
-        actual.push_back(mivc);
+
+        std::sort(mivc.begin(), mivc.end());
+
+        auto it = std::find(mivcs.begin(), mivcs.end(), mivc);
+        BOOST_CHECK(it != mivcs.end());
+
         min_size = std::min(min_size, mivc.size());
 
         if (mivc == min_ivc)
@@ -152,20 +161,37 @@ void runIVCTest()
         }
     }
 
-    BOOST_CHECK(min_found);
-    BOOST_CHECK_EQUAL(finder.getMinimumIVC().size(), min_size);
+    if (find_all)
+    {
+        BOOST_CHECK(min_found);
+        BOOST_CHECK_EQUAL(finder.getMinimumIVC().size(), min_size);
+    }
+}
 
-    sortIVCs(actual);
-    BOOST_CHECK(actual == mivcs);
+template<class T>
+void runAllMIVCTest()
+{
+    runIVCTest<T>(true);
+}
+
+template<class T>
+void runMIVCTest()
+{
+    runIVCTest<T>(false);
 }
 
 BOOST_AUTO_TEST_CASE(basic_ivc_caivc)
 {
-    runIVCTest<CAIVCFinder>();
+    runAllMIVCTest<CAIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(basic_ivc_marco)
 {
-    runIVCTest<MARCOIVCFinder>();
+    runAllMIVCTest<MARCOIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(basic_ivc_ivcbf)
+{
+    runMIVCTest<IVCBFFinder>();
 }
 

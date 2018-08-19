@@ -29,6 +29,7 @@
 #include "pme/minimization/simple.h"
 #include "pme/ivc/caivc.h"
 #include "pme/ivc/marco_ivc.h"
+#include "pme/ivc/ivc_bf.h"
 #include "pme/ic3/ic3.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/bmc/bmc_solver.h"
@@ -102,6 +103,14 @@ namespace PME
             case PME_IVC_CAIVC:
                 log(1) << "Starting CAIVC" << std::endl;
                 m_ivc_finder.reset(new CAIVCFinder(m_vars, m_tr, m_gs));
+                break;
+            case PME_IVC_BF:
+                log(1) << "Starting IVC_BF" << std::endl;
+                m_ivc_finder.reset(new IVCBFFinder(m_vars, m_tr, m_gs));
+                break;
+            case PME_IVC_UCBF:
+                log(1) << "Starting IVC_UCBF" << std::endl;
+                throw std::logic_error("IVC_UCBF not yet implemented");
                 break;
             default:
                 throw std::logic_error("Unknown IVC algorithm");

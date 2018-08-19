@@ -486,6 +486,9 @@ fi
 if ((limited_run == 0 || run_ivc == 1)) ;  then
     run_ivc_test CAIVC --caivc
     run_ivc_test MARCOIVC --marco-ivc
+    # No golden IVCs, so we don't need to do anything different for
+    # non-all IVC tests (the test just checks they are safe and minimal)
+    run_ivc_test IVCBF --ivcbf
 fi
 
 echo PASS: $tests_passed

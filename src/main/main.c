@@ -437,23 +437,23 @@ void print_cex(void * pme, aiger * aig)
 int g_ic3 = 0, g_bmc = 0;
 int g_checkproof = 0, g_checkmin = 0, g_checkmivc = 0;
 int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_simplemin = 0;
-int g_caivc = 0, g_marcoivc = 0;
+int g_caivc = 0, g_marcoivc = 0, g_ivcbf = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
 int g_printstats = 0, g_nocex = 0;
 
 int needs_proof_arg()
 {
-    return !(g_ic3 || g_bmc || g_caivc || g_marcoivc || g_checkmivc);
+    return !(g_ic3 || g_bmc || g_caivc || g_marcoivc || g_ivcbf || g_checkmivc);
 }
 
 int uses_proof()
 {
-    return !(g_bmc || g_caivc || g_marcoivc || g_checkmivc);
+    return !(g_bmc || g_caivc || g_marcoivc || g_ivcbf || g_checkmivc);
 }
 
 int ic3_should_be_quiet()
 {
-    return (g_caivc || g_marcoivc || g_checkmivc);
+    return (g_caivc || g_marcoivc || g_ivcbf || g_checkmivc);
 }
 
 int main(int argc, char ** argv)
@@ -484,6 +484,7 @@ int main(int argc, char ** argv)
             {"simplemin",           no_argument,        &g_simplemin,  1 },
             {"caivc",               no_argument,        &g_caivc,      1 },
             {"marco-ivc",           no_argument,        &g_marcoivc,   1 },
+            {"ivcbf",               no_argument,        &g_ivcbf,      1 },
             {"stats",               no_argument,        &g_printstats, 1 },
             {"no-cex",              no_argument,        &g_nocex,      1 },
             {"opt",                 required_argument,  0,            'o'},
@@ -918,6 +919,23 @@ int main(int argc, char ** argv)
         if (g_saveivcs)
         {
             save_ivcs(aig, pme, "marcoivc");
+        }
+    }
+
+    if (g_ivcbf)
+    {
+        int ivcbf_ok = cpme_run_ivcbf(pme);
+        if (ivcbf_ok < 0)
+        {
+            fprintf(stderr, "Error running IVC_BF\n");
+            failure = 1; goto cleanup;
+        }
+
+        report_ivc_run(pme, "IVC_BF");
+
+        if (g_saveivcs)
+        {
+            save_ivcs(aig, pme, "ivcbf");
         }
     }
 
