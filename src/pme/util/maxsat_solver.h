@@ -53,7 +53,6 @@ namespace PME
             CardinalityConstraint m_cardinality;
             SATAdaptor m_solver;
             bool m_sat;
-            bool m_dirty;
             std::multiset<ID> m_optimizationSet;
             std::map<Cube, unsigned> m_lastCardinality;
     };

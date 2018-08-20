@@ -107,7 +107,6 @@ namespace PME
 
         }
 
-        m_dirty = false;
         m_sat = sat;
         recordCardinality(assumps_sorted, cardinality);
 
