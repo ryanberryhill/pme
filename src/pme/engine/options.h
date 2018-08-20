@@ -84,6 +84,8 @@ namespace PME {
             // IVC_UCBF
             PMEOption<bool> ivc_ucbf_use_core;
             PMEOption<bool> ivc_ucbf_use_mus;
+            PMEOption<bool> ivc_ucbf_use_simple_min;
+            PMEOption<bool> ivc_ucbf_use_sisi;
 
             PMEOptions();
 

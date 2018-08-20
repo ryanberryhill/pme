@@ -20,6 +20,8 @@
  */
 
 #include "pme/ivc/ivc_ucbf.h"
+#include "pme/minimization/simple.h"
+#include "pme/minimization/sisi.h"
 #include "pme/util/mus_finder.h"
 #include "pme/util/cardinality_constraint.h"
 #include "pme/util/simplify_tr.h"
@@ -62,7 +64,30 @@ namespace PME {
 
     void IVCUCBFFinder::shrink(Seed & seed, const SafetyProof & proof)
     {
-        // TODO: optionally shrink proof before using it here
+        // Optionally shrink the proof
+        SafetyProof shrunk_proof;
+        if (opts().ivc_ucbf_use_simple_min)
+        {
+            SimpleMinimizer pmin(vars(), tr(), proof, gs());
+            pmin.minimize();
+            assert(pmin.numProofs() == 1);
+            shrunk_proof = pmin.getProof(0);
+        }
+        else if (opts().ivc_ucbf_use_sisi)
+        {
+            SISIMinimizer pmin(vars(), tr(), proof, gs());
+            pmin.minimize();
+            assert(pmin.numProofs() == 1);
+            shrunk_proof = pmin.getProof(0);
+        }
+        else
+        {
+            shrunk_proof = proof;
+        }
+
+        log(2) << "Shrunk proof from " << proof.size()
+               << " clauses down to " << shrunk_proof.size()
+               << std::endl;
 
         // Inv & Tr & ~Inv'
         // Inv and ~Inv' are hard clauses.
@@ -73,10 +98,10 @@ namespace PME {
         MUSFinderWrapper finder(vars(), gs());
 
         // Inv
-        finder.addHardClauses(proof.begin(), proof.end());
+        finder.addHardClauses(shrunk_proof.begin(), shrunk_proof.end());
 
         // ~Inv'
-        ClauseVec neg_invp = negatePrimeAndCNFize(proof);
+        ClauseVec neg_invp = negatePrimeAndCNFize(shrunk_proof);
         finder.addHardClauses(neg_invp.begin(), neg_invp.end());
 
         // Tr
