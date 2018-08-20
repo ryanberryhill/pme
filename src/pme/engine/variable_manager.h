@@ -66,6 +66,7 @@ namespace PME
 
             std::string stringOf(ID id) const;
             std::string stringOf(const std::vector<ID> vec, std::string sep = " ") const;
+            std::string stringOf(const std::vector<std::vector<ID>> vec) const;
 
         private:
 

@@ -157,5 +157,15 @@ namespace PME
         }
         return ss.str();
     }
+
+    std::string VariableManager::stringOf(const std::vector<std::vector<ID>> vec) const
+    {
+        std::ostringstream ss;
+        for (const std::vector<ID> & cls : vec)
+        {
+            ss << "(" << stringOf(cls, " ") << ")" << std::endl;
+        }
+        return ss.str();
+    }
 }
 
