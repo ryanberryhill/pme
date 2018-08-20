@@ -19,6 +19,9 @@
  * IN THE SOFTWARE.
  */
 
+// MARCO for IVCs was first presented in Efficient generation of all minimal
+// inductive validity cores by Ghassabani et. al.
+
 #ifndef MARCO_IVC_INCLUDED
 #define MARCO_IVC_INCLUDED
 

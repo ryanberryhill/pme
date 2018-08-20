@@ -26,6 +26,7 @@
 #include "pme/ivc/caivc.h"
 #include "pme/ivc/marco_ivc.h"
 #include "pme/ivc/ivc_bf.h"
+#include "pme/ivc/ivc_ucbf.h"
 
 #define BOOST_TEST_MODULE IVCTest
 #define BOOST_TEST_DYN_LINK
@@ -190,8 +191,13 @@ BOOST_AUTO_TEST_CASE(basic_ivc_marco)
     runAllMIVCTest<MARCOIVCFinder>();
 }
 
-BOOST_AUTO_TEST_CASE(basic_ivc_ivcbf)
+BOOST_AUTO_TEST_CASE(basic_ivc_ivc_bf)
 {
     runMIVCTest<IVCBFFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(basic_ivc_ivc_ucbf)
+{
+    runMIVCTest<IVCUCBFFinder>();
 }
 

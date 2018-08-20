@@ -70,7 +70,9 @@ namespace PME {
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
-        caivc_ar_bmc_kmax(*this, 20, "caivc_ar_bmc_kmax")
+        caivc_ar_bmc_kmax(*this, 20, "caivc_ar_bmc_kmax"),
+        ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
+        ivc_ucbf_use_mus(*this, true, "ivc_ucbf_use_mus")
     { }
 
     template<typename T>

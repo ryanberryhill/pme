@@ -81,6 +81,10 @@ namespace PME {
             PMEOption<bool> caivc_approx_mcs;
             PMEOption<unsigned> caivc_ar_bmc_kmax;
 
+            // IVC_UCBF
+            PMEOption<bool> ivc_ucbf_use_core;
+            PMEOption<bool> ivc_ucbf_use_mus;
+
             PMEOptions();
 
             template<typename T>

@@ -51,6 +51,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/ivc_checker.cpp \
                    src/pme/util/maxsat_solver.h \
                    src/pme/util/maxsat_solver.cpp \
+                   src/pme/util/mus_finder.h \
+                   src/pme/util/mus_finder.cpp \
                    src/pme/util/find_safe_mis.h \
                    src/pme/util/find_safe_mis.cpp \
                    src/pme/util/find_minimal_support.h \
@@ -99,6 +101,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ivc/caivc.cpp \
                    src/pme/ivc/ivc_bf.h \
                    src/pme/ivc/ivc_bf.cpp \
+                   src/pme/ivc/ivc_ucbf.h \
+                   src/pme/ivc/ivc_ucbf.cpp \
                    src/pme/ivc/marco_ivc.h \
                    src/pme/ivc/marco_ivc.cpp
 
@@ -153,6 +157,7 @@ TESTS = test_sat_adaptor \
         test_consecution_checker \
         test_find_safe_mis \
         test_find_minimal_support \
+        test_mus_finder \
         test_logger \
         test_clause_database \
         test_collapse_set_finder \
@@ -208,6 +213,9 @@ test_find_safe_mis_LDADD = $(PME_TEST_LIBS)
 
 test_find_minimal_support_SOURCES = tests/test_find_minimal_support.cpp  
 test_find_minimal_support_LDADD = $(PME_TEST_LIBS)
+
+test_mus_finder_SOURCES = tests/test_mus_finder.cpp  
+test_mus_finder_LDADD = $(PME_TEST_LIBS)
 
 test_logger_SOURCES = tests/test_logger.cpp
 test_logger_LDADD = $(PME_TEST_LIBS)

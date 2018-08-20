@@ -489,6 +489,7 @@ if ((limited_run == 0 || run_ivc == 1)) ;  then
     # No golden IVCs, so we don't need to do anything different for
     # non-all IVC tests (the test just checks they are safe and minimal)
     run_ivc_test IVCBF --ivcbf
+    run_ivc_test IVCUCBF --ivcucbf
 fi
 
 echo PASS: $tests_passed

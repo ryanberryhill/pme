@@ -19,30 +19,34 @@
  * IN THE SOFTWARE.
  */
 
-// IVC_BF is presented in Efficient generation of inductive validity cores for
+// IVC_UCBF is presented in Efficient generation of inductive validity cores for
 // safety properties by Ghassabani et. al.
 
-#ifndef IVC_BF_INCLUDED
-#define IVC_BF_INCLUDED
+#ifndef IVC_UCBF_INCLUDED
+#define IVC_UCBF_INCLUDED
 
-#include "pme/safety.h"
 #include "pme/ivc/ivc.h"
+#include "pme/ivc/ivc_bf.h"
 
 namespace PME {
-    class IVCBFFinder : public IVCFinder
+    class IVCUCBFFinder : public IVCFinder
     {
         public:
-            IVCBFFinder(VariableManager & varman,
-                        const TransitionRelation & tr,
-                        GlobalState & gs);
+            IVCUCBFFinder(VariableManager & varman,
+                          const TransitionRelation & tr,
+                          GlobalState & gs);
             virtual void findIVCs() override;
             void shrink(Seed & seed);
+            void shrink(Seed & seed, const SafetyProof & proof);
             bool isSafe(const Seed & seed);
             bool isSafe(const Seed & seed, SafetyProof & proof);
         protected:
             virtual std::ostream & log(int verbosity) const override;
+        private:
+            ClauseVec negatePrimeAndCNFize(const ClauseVec & vec);
+            IVCBFFinder m_ivcbf;
+            DebugTransitionRelation m_debugTR;
     };
 }
 
 #endif
-

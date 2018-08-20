@@ -418,6 +418,22 @@ int cpme_run_ivcbf(void * pme)
     }
 }
 
+int cpme_run_ivcucbf(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->findIVCs(PME_IVC_UCBF);
+        return 0;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+}
+
 int cpme_run_ic3(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

@@ -56,13 +56,28 @@ namespace PME {
 
     bool IVCBFFinder::isSafe(const Seed & seed)
     {
+        SafetyProof proof;
+        return isSafe(seed, proof);
+    }
+
+    bool IVCBFFinder::isSafe(const Seed & seed, SafetyProof & proof)
+    {
         // TODO: incremental debugging-based version
         // TODO: non-incremental hybrid BMC/IC3 version
         TransitionRelation partial(tr(), seed);
         IC3::IC3Solver ic3(vars(), partial, gs());
 
         SafetyResult safe = ic3.prove();
-        return (safe.result == SAFE);
+
+        if (safe.result == SAFE)
+        {
+            proof = safe.proof;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     void IVCBFFinder::findIVCs()

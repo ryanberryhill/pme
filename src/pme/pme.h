@@ -43,7 +43,7 @@ typedef enum
     LOG_CAIVC,
     LOG_MARCOIVC,
     LOG_IVCBF,
-    LOG_IVCUC,
+    LOG_IVCUCBF,
     LOG_INVALID,
     NUM_LOG_CHANNELS = LOG_INVALID
 } LogChannelID;
@@ -109,6 +109,7 @@ int cpme_run_simplemin(void * pme);
 int cpme_run_caivc(void * pme);
 int cpme_run_marcoivc(void * pme);
 int cpme_run_ivcbf(void * pme);
+int cpme_run_ivcucbf(void * pme);
 
 int cpme_run_ic3(void * pme);
 int cpme_run_bmc(void * pme, unsigned k_max);
