@@ -71,6 +71,7 @@ namespace PME {
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
         caivc_ar_bmc_kmax(*this, 20, "caivc_ar_bmc_kmax"),
+        marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),
         ivc_ucbf_use_simple_min(*this, true, "ivc_ucbf_use_simple_min"),

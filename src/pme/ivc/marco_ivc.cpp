@@ -20,6 +20,8 @@
  */
 
 #include "pme/ivc/marco_ivc.h"
+#include "pme/ivc/ivc_bf.h"
+#include "pme/ivc/ivc_ucbf.h"
 #include "pme/ic3/ic3_solver.h"
 
 #include <cassert>
@@ -145,21 +147,15 @@ namespace PME {
 
     void MARCOIVCFinder::shrink(Seed & seed)
     {
-        // Shrink is implemented in the obvious way. Try to remove a gate
-        // and see if it's still safe. If unsafe, put the gate back.
-        // TODO: incremental version, possibly in conjunction with isSafe
-        for (size_t i = 0; i < seed.size(); )
+        if (opts().marcoivc_use_ivcucbf)
         {
-            Seed seed_copy = seed;
-            seed_copy.erase(seed_copy.begin() + i);
-            if (isSafe(seed_copy))
-            {
-                seed.erase(seed.begin() + i);
-            }
-            else
-            {
-                ++i;
-            }
+            IVCUCBFFinder ivc_ucbf(vars(), tr(), gs());
+            ivc_ucbf.shrink(seed);
+        }
+        else
+        {
+            IVCBFFinder ivc_bf(vars(), tr(), gs());
+            ivc_bf.shrink(seed);
         }
     }
 

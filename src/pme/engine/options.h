@@ -81,6 +81,9 @@ namespace PME {
             PMEOption<bool> caivc_approx_mcs;
             PMEOption<unsigned> caivc_ar_bmc_kmax;
 
+            // MARCO-IVC
+            PMEOption<bool> marcoivc_use_ivcucbf;
+
             // IVC_UCBF
             PMEOption<bool> ivc_ucbf_use_core;
             PMEOption<bool> ivc_ucbf_use_mus;
