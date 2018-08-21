@@ -64,14 +64,14 @@ namespace PME {
 
     PMEOptions::PMEOptions() :
         simplify(*this, true, "simplify"),
-        hybrid_debug_bmc_frames(*this, 10, "hybrid_debug_bmc_frames"),
+        hybrid_ic3_bmc_kmax(*this, 8, "hybrid_ic3_bmc_kmax"),
         simple_min_use_min_supp(*this, true, "simple_min_use_min_supp"),
         camsis_abstraction_refinement(*this, true, "camsis_ar"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
         caivc_check_with_debug(*this, false, "caivc_check_with_debug"),
-        caivc_ar_bmc_kmax(*this, 20, "caivc_ar_bmc_kmax"),
+        caivc_ar_bmc_kmax(*this, 8, "caivc_ar_bmc_kmax"),
         marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),

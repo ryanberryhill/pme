@@ -30,7 +30,7 @@ namespace PME {
           m_ic3(varman, tr, gs),
           m_kmax(0)
     {
-        setKMax(gs.opts.hybrid_debug_bmc_frames);
+        setKMax(gs.opts.hybrid_ic3_bmc_kmax);
     }
 
     void HybridDebugger::setCardinality(unsigned n)

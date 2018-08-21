@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(safe)
     BOOST_CHECK(pc.checkProof());
 }
 
-BOOST_AUTO_TEST_CASE(trivual_unsafe)
+BOOST_AUTO_TEST_CASE(trivial_unsafe)
 {
     IC3Fixture f;
 

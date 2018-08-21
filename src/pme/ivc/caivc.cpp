@@ -20,6 +20,7 @@
  */
 
 #include "pme/ivc/caivc.h"
+#include "pme/util/hybrid_safety_checker.h"
 
 #include <cassert>
 
@@ -269,12 +270,11 @@ namespace PME {
         }
         else
         {
-            // TODO: use BMC first
             // Construct the candidate IVC and see if it's safe
             TransitionRelation partial(tr(), candidate);
-            IC3::IC3Solver ic3(vars(), partial, gs());
+            HybridSafetyChecker checker(vars(), partial, gs());
 
-            SafetyResult safe = ic3.prove();
+            SafetyResult safe = checker.prove();
             return (safe.result == SAFE);
         }
     }

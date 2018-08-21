@@ -67,6 +67,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/bmc_debugger.cpp \
                    src/pme/util/hybrid_debugger.h \
                    src/pme/util/hybrid_debugger.cpp \
+                   src/pme/util/hybrid_safety_checker.h \
+                   src/pme/util/hybrid_safety_checker.cpp \
 				   src/pme/util/timer.h \
 				   src/pme/util/timer.cpp \
                    src/pme/minimization/marco.h \
@@ -172,7 +174,8 @@ TESTS = test_sat_adaptor \
         test_basics \
         test_correction_set_finder \
         test_ivc \
-        test_ivc_checker
+        test_ivc_checker \
+        test_hybrid_safety_checker
 
 check_PROGRAMS = $(TESTS)
 
@@ -257,6 +260,9 @@ test_ivc_checker_LDADD = $(PME_TEST_LIBS)
 
 test_correction_set_finder_SOURCES = tests/test_correction_set_finder.cpp
 test_correction_set_finder_LDADD = $(PME_TEST_LIBS)
+
+test_hybrid_safety_checker_SOURCES = tests/test_hybrid_safety_checker.cpp
+test_hybrid_safety_checker_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

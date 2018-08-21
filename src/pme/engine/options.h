@@ -63,7 +63,7 @@ namespace PME {
             // --- Global ---
 
             PMEOption<bool> simplify;
-            PMEOption<unsigned> hybrid_debug_bmc_frames;
+            PMEOption<unsigned> hybrid_ic3_bmc_kmax;
 
             // --- Proof Minimization ---
 
