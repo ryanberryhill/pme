@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <getopt.h>
 #include <limits.h>
+#include <signal.h>
 
 #include "pme/pme.h"
 #include "aiger/aiger.h"
@@ -456,18 +457,34 @@ int ic3_should_be_quiet()
     return (g_caivc || g_marcoivc || g_ivcbf || g_ivcucbf || g_checkmivc);
 }
 
+// I don't think this scheme for printing out stats on a failure is truly safe
+// but it's good enough for now.
+void * g_pme = NULL;
+void term_int_handler(const int sig) {
+    (void)(sig);
+    exit(EXIT_FAILURE);
+}
+
+void exit_stats()
+{
+    if (g_printstats && g_pme)
+    {
+        cpme_print_stats(g_pme);
+    }
+}
+
 int main(int argc, char ** argv)
 {
     const char * opts = "ho:v";
     char * aig_path = NULL;
     char * proof_path = NULL;
     void * proof = NULL;
-    void * pme = NULL;
     int option = 0;
     int option_index = 0;
     unsigned bmc_kmax = 0;
     char failure = 0;
     aiger * aig = NULL;
+    void * pme = NULL;
 
     static struct option long_opts[] = {
             {"ic3",                 no_argument,        &g_ic3,        1 },
@@ -591,6 +608,28 @@ int main(int argc, char ** argv)
         failure = 1; goto cleanup;
     }
 
+    // Set up exit handler to print stats on exit, signal handlers to call
+    // exit on SIGTERM or SIGINT
+    atexit(exit_stats);
+    struct sigaction sa;
+    sa.sa_handler = term_int_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    int sigint_ok = sigaction(SIGINT, &sa, NULL);
+    if (sigint_ok < 0)
+    {
+        perror("Failed to setup SIGINT handler");
+        failure = 1; goto cleanup;
+    }
+
+    int sigterm_ok = sigaction(SIGTERM, &sa, NULL);
+    if (sigterm_ok < 0)
+    {
+        perror("Failed to setup SIGTERM handler");
+        failure = 1; goto cleanup;
+    }
+
     print(2, "pme version %s\n", cpme_version());
     print(2, "Input AIG: %s\n", aig_path);
     if (proof_path)
@@ -652,6 +691,10 @@ int main(int argc, char ** argv)
     // Initialize the PME library
     pme = cpme_init(aig, proof);
     assert(pme);
+
+    // External pointer to the same PME instance, used by the atexit
+    // handler to print stats
+    g_pme = pme;
 
     // Set PME internal options if any were given
     for (size_t i = 0; i < g_pme_opt_index; ++i)
@@ -980,6 +1023,10 @@ int main(int argc, char ** argv)
     }
 
 cleanup:
+    // NULL out the outside pointer to PME, which is used by the atexit handler
+    // to print out stats in cases where we get terminated.
+    g_pme = NULL;
+
     // Clean up stored PME options
     if (g_pme_opt_index > 0)
     {
