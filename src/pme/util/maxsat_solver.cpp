@@ -48,7 +48,7 @@ namespace PME
     void MaxSATSolver::addForOptimization(ID lit)
     {
         m_lastCardinality.clear();
-        m_cardinality.addInput(lit);
+        m_cardinality.addInput(negate(lit));
         m_optimizationSet.insert(lit);
     }
 
@@ -59,7 +59,7 @@ namespace PME
         auto it = m_lastCardinality.find(assumps);
         if (it == m_lastCardinality.end())
         {
-            return m_optimizationSet.size();
+            return 0;
         }
         else
         {
@@ -86,23 +86,28 @@ namespace PME
 
         unsigned cardinality = lastCardinality(assumps_sorted);
 
-        m_cardinality.setCardinality(cardinality + 1);
-        m_solver.addClauses(m_cardinality.CNFize());
-
         bool sat = false;
 
         // Do a linear search for the maximum cardinality that is SAT
+        // Instead of maximizing the number of lits set to 1, we minimize
+        // the number set to 0.
         while (!sat)
         {
-            Cube solver_assumps = m_cardinality.assumeGEq(cardinality);
+            m_cardinality.setCardinality(cardinality + 1);
+            m_solver.addClauses(m_cardinality.CNFize());
+
+            Cube solver_assumps = m_cardinality.assumeLEq(cardinality);
             solver_assumps.insert(solver_assumps.end(), assumps.begin(), assumps.end());
 
             sat = m_solver.solve(solver_assumps);
 
             if (!sat)
             {
-                if (cardinality > 0) { cardinality--; }
-                else if (cardinality == 0) { break; }
+                if (cardinality < m_optimizationSet.size())
+                {
+                    cardinality++;
+                }
+                else { break; }
             }
 
         }
