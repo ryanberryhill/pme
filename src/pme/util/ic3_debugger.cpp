@@ -19,6 +19,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "pme/ic3/ic3.h"
 #include "pme/util/ic3_debugger.h"
 
 #include <limits>
@@ -110,6 +111,7 @@ namespace PME {
         for (const Clause & cls : m_blockingClauses)
         {
             m_ic3.restrictInitialStates(cls);
+            m_ic3.addClausalLemma(cls, IC3::LEVEL_INF);
         }
     }
 
@@ -139,6 +141,9 @@ namespace PME {
         // Restrict to only these gates
         ClauseVec restrict = onlyTheseGates(gates);
         m_ic3.restrictInitialStates(restrict);
+        // Add the clause to F_inf. NOTE: we assume that this is taken away
+        // by initialStatesExpanded below.
+        m_ic3.addClausalLemmas(restrict, IC3::LEVEL_INF);
         m_ic3.initialStatesRestricted();
 
         // Debug
@@ -200,6 +205,10 @@ namespace PME {
 
         m_blockingClauses.push_back(block);
         m_ic3.restrictInitialStates(block);
+        // Note: we assume the lemma we add below is taken away when we
+        // take away the restriction on the initial states (such as by
+        // calling initialStatesExpanded).
+        m_ic3.addClausalLemma(block, IC3::LEVEL_INF);
         m_ic3.initialStatesRestricted();
     }
 

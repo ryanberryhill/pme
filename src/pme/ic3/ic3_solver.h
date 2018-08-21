@@ -118,6 +118,8 @@ namespace PME { namespace IC3 {
             void initialStatesRestricted();
 
             LemmaID addLemma(const Cube & c, unsigned level);
+            LemmaID addClausalLemma(const Clause & c, unsigned level);
+            void addClausalLemmas(const ClauseVec & c, unsigned level);
 
             std::vector<Cube> getFrameCubes(unsigned n) const;
             unsigned numFrames() const;

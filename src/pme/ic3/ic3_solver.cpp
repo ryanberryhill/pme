@@ -629,6 +629,20 @@ namespace PME { namespace IC3 {
         assert(m_trace.numFrames() == level);
     }
 
+    LemmaID IC3Solver::addClausalLemma(const Clause & c, unsigned level)
+    {
+        Cube cube = negateVec(c);
+        return addLemma(cube, level);
+    }
+
+    void IC3Solver::addClausalLemmas(const ClauseVec & c, unsigned level)
+    {
+        for (const Clause & cls : c)
+        {
+            addClausalLemma(cls, level);
+        }
+    }
+
     LemmaID IC3Solver::addLemma(const Cube & c, unsigned level)
     {
         // TODO consider updating lifting solver
