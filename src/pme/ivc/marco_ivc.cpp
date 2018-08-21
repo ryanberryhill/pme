@@ -44,7 +44,7 @@ namespace PME {
         return IVCFinder::log(LOG_MARCOIVC, verbosity);
     }
 
-    void MARCOIVCFinder::findIVCs()
+    void MARCOIVCFinder::doFindIVCs()
     {
         // Check for constant output
         if (tr().bad() == ID_FALSE)

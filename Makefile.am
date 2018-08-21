@@ -67,6 +67,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/bmc_debugger.cpp \
                    src/pme/util/hybrid_debugger.h \
                    src/pme/util/hybrid_debugger.cpp \
+				   src/pme/util/timer.h \
+				   src/pme/util/timer.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \

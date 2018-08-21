@@ -38,7 +38,7 @@ namespace PME {
             CAIVCFinder(VariableManager & varman,
                         const TransitionRelation & tr,
                         GlobalState & gs);
-            virtual void findIVCs() override;
+            virtual void doFindIVCs() override;
 
         protected:
             virtual std::ostream & log(int verbosity) const override;

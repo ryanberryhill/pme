@@ -34,6 +34,7 @@
 #include "pme/ic3/ic3.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/bmc/bmc_solver.h"
+#include "pme/util/timer.h"
 
 extern "C" {
 #include "aiger/aiger.h"
@@ -62,6 +63,7 @@ namespace PME
 
     void Engine::minimize(PMEMinimizationAlgorithm algorithm)
     {
+        AutoTimer timer(m_gs.stats.runtime);
         switch (algorithm)
         {
             case PME_MINIMIZATION_MARCO:
@@ -95,6 +97,7 @@ namespace PME
 
     void Engine::findIVCs(PMEIVCAlgorithm algorithm)
     {
+        AutoTimer timer(m_gs.stats.runtime);
         switch (algorithm)
         {
             case PME_IVC_MARCO:
@@ -124,6 +127,7 @@ namespace PME
 
     bool Engine::runIC3()
     {
+        AutoTimer timer(m_gs.stats.runtime);
         IC3::IC3Solver solver(m_vars, m_tr, m_gs);
         SafetyResult result = solver.prove();
 
@@ -143,6 +147,7 @@ namespace PME
 
     bool Engine::runBMC(unsigned k_max)
     {
+        AutoTimer timer(m_gs.stats.runtime);
         BMC::BMCSolver solver(m_vars, m_tr, m_gs);
         SafetyResult result = solver.solve(k_max);
 

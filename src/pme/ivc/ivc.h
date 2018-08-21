@@ -26,6 +26,7 @@
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
+#include "pme/util/timer.h"
 
 namespace PME {
 
@@ -42,7 +43,8 @@ namespace PME {
 
             virtual ~IVCFinder() { }
 
-            virtual void findIVCs() = 0;
+            void findIVCs();
+            virtual void doFindIVCs() = 0;
 
             size_t numMIVCs() const;
             const IVC & getMIVC(size_t i) const;
@@ -63,6 +65,7 @@ namespace PME {
             VariableManager & vars() { return m_vars; }
 
         private:
+            Timer m_timer;
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
             GlobalState & m_gs;

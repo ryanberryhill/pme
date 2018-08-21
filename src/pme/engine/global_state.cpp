@@ -26,6 +26,7 @@ namespace PME
     GlobalState g_null_gs;
 
     PMEStats::PMEStats() :
+        runtime(0.0),
         num_mivcs_found(0),
         smallest_mivc_size(0),
         largest_mivc_size(0)
@@ -35,6 +36,7 @@ namespace PME
     {
         os << "MIVCs Found: " << num_mivcs_found << std::endl;
         os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
-        os << "Largest MIVC:" << largest_mivc_size << std::endl;
+        os << "Largest MIVC: " << largest_mivc_size << std::endl;
+        os << "Runtime in seconds: " << runtime << std::endl;
     }
 }

@@ -19,34 +19,33 @@
  * IN THE SOFTWARE.
  */
 
-// IVC_UCBF is presented in Efficient generation of inductive validity cores for
-// safety properties by Ghassabani et. al.
+#ifndef TIMER_H_INCLUDED
+#define TIMER_H_INCLUDED
 
-#ifndef IVC_UCBF_INCLUDED
-#define IVC_UCBF_INCLUDED
-
-#include "pme/ivc/ivc.h"
-#include "pme/ivc/ivc_bf.h"
+#include <chrono>
 
 namespace PME {
-    class IVCUCBFFinder : public IVCFinder
+    class Timer
     {
         public:
-            IVCUCBFFinder(VariableManager & varman,
-                          const TransitionRelation & tr,
-                          GlobalState & gs);
-            virtual void doFindIVCs() override;
-            void shrink(Seed & seed);
-            void shrink(Seed & seed, const SafetyProof & proof);
-            bool isSafe(const Seed & seed);
-            bool isSafe(const Seed & seed, SafetyProof & proof);
-        protected:
-            virtual std::ostream & log(int verbosity) const override;
+            void start();
+            double elapsed() const;
+
         private:
-            ClauseVec negatePrimeAndCNFize(const ClauseVec & vec);
-            IVCBFFinder m_ivcbf;
-            DebugTransitionRelation m_debugTR;
+            typedef std::chrono::system_clock Clock;
+            decltype(Clock::now()) m_start;
+    };
+
+    class AutoTimer
+    {
+        public:
+            AutoTimer(double & dst);
+            ~AutoTimer();
+        private:
+            double & m_dst;
+            Timer m_timer;
     };
 }
 
 #endif
+

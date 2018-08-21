@@ -80,7 +80,7 @@ namespace PME {
         }
     }
 
-    void IVCBFFinder::findIVCs()
+    void IVCBFFinder::doFindIVCs()
     {
         Seed seed(tr().begin_gate_ids(), tr().end_gate_ids());
         shrink(seed);

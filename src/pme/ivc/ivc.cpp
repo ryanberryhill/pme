@@ -43,6 +43,12 @@ namespace PME {
         return m_gs.logger.log(channel, verbosity);
     }
 
+    void IVCFinder::findIVCs()
+    {
+        m_timer.start();
+        doFindIVCs();
+    }
+
     size_t IVCFinder::numMIVCs() const
     {
         return m_mivcs.size();
@@ -66,6 +72,9 @@ namespace PME {
 
     void IVCFinder::addMIVC(const IVC & ivc)
     {
+        double time = m_timer.elapsed();
+        log(1) << "IVC #" << m_mivcs.size() + 1 << " found, time: " << time << std::endl;
+
         m_mivcs.push_back(ivc);
         stats().num_mivcs_found++;
         stats().largest_mivc_size = std::max(stats().largest_mivc_size, ivc.size());

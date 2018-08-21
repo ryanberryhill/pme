@@ -35,7 +35,7 @@ namespace PME {
             IVCBFFinder(VariableManager & varman,
                         const TransitionRelation & tr,
                         GlobalState & gs);
-            virtual void findIVCs() override;
+            virtual void doFindIVCs() override;
             void shrink(Seed & seed);
             bool isSafe(const Seed & seed);
             bool isSafe(const Seed & seed, SafetyProof & proof);

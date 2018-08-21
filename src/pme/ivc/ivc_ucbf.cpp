@@ -151,7 +151,7 @@ namespace PME {
         seed = core;
     }
 
-    void IVCUCBFFinder::findIVCs()
+    void IVCUCBFFinder::doFindIVCs()
     {
         Seed seed(tr().begin_gate_ids(), tr().end_gate_ids());
         shrink(seed);

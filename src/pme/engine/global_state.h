@@ -29,6 +29,9 @@ namespace PME
 {
     struct PMEStats
     {
+        // Global
+        double runtime;
+
         // IVCs
         size_t num_mivcs_found;
         size_t smallest_mivc_size;

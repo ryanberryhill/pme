@@ -47,7 +47,7 @@ namespace PME {
         return IVCFinder::log(LOG_CAIVC, verbosity);
     }
 
-    void CAIVCFinder::findIVCs()
+    void CAIVCFinder::doFindIVCs()
     {
         log(2) << "Starting CAIVC (there are " << m_gates.size() << " gates)" << std::endl;
 
@@ -72,17 +72,23 @@ namespace PME {
     void CAIVCFinder::abstractionRefinementFindIVCs()
     {
         // Find all cardinality 1 MCSes
-        m_finder.setCardinality(1);
-        while (true)
+        double prep_time = 0.0;
         {
-            bool found;
-            CorrectionSet corr;
-            std::tie(found, corr) = findCorrectionSet();
-            if (!found) { break; }
+            AutoTimer timer(prep_time);
 
-            logMCS(corr);
-            m_solver.addClause(corr);
+            m_finder.setCardinality(1);
+            while (true)
+            {
+                bool found;
+                CorrectionSet corr;
+                std::tie(found, corr) = findCorrectionSet();
+                if (!found) { break; }
+
+                logMCS(corr);
+                m_solver.addClause(corr);
+            }
         }
+        log(1) << "Preparation time: " << prep_time << std::endl;
 
         // Repeatedly find candidate MIVCs. If the candidate is not safe, then
         // find a new MCS consiting only of clauses outside the candidate.
@@ -120,27 +126,32 @@ namespace PME {
     {
         unsigned cardinality = 1;
 
-        unsigned count = 0;
-        do {
-            m_finder.setCardinality(cardinality);
+        double prep_time = 0.0;
+        {
+            AutoTimer timer(prep_time);
+            unsigned count = 0;
+            do {
+                m_finder.setCardinality(cardinality);
 
-            while (true)
-            {
-                bool found;
-                CorrectionSet corr;
-                std::tie(found, corr) = findCorrectionSet();
-                if (!found) { break; }
+                while (true)
+                {
+                    bool found;
+                    CorrectionSet corr;
+                    std::tie(found, corr) = findCorrectionSet();
+                    if (!found) { break; }
 
-                count++;
-                logMCS(corr);
-                m_solver.addClause(corr);
-            }
+                    count++;
+                    logMCS(corr);
+                    m_solver.addClause(corr);
+                }
 
-            cardinality++;
+                cardinality++;
 
-        } while (moreCorrectionSets());
+            } while (moreCorrectionSets());
+            log(2) << "Done finding correction sets (" << count << " found)" << std::endl;
+        }
 
-        log(2) << "Done finding correction sets (" << count << " found)" << std::endl;
+        log(1) << "Preparation time: " << prep_time << std::endl;
 
         while (true)
         {
