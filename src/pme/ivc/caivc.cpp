@@ -254,17 +254,29 @@ namespace PME {
 
     bool CAIVCFinder::isIVC(const IVC & candidate)
     {
-        // Debug over the gates not in candidate with unlimited cardinality
-        // (i.e., all non-candidate gates are removed)
-        // TODO: we don't get very much incrementality at all here (indeed,
-        // none in IC3, only whatever we get in BMC)
+        if (opts().caivc_check_with_debug)
+        {
+            // Debug over the gates not in candidate with unlimited cardinality
+            // (i.e., all non-candidate gates are removed)
+            // TODO: we don't get very much incrementality at all here (indeed,
+            // none in IC3, only whatever we get in BMC)
+            std::vector<ID> neg = negateGateSet(candidate);
 
-        std::vector<ID> neg = negateGateSet(candidate);
+            bool unsafe;
+            std::tie(unsafe, std::ignore) = m_ivc_checker.debugOverGates(neg);
 
-        bool unsafe;
-        std::tie(unsafe, std::ignore) = m_ivc_checker.debugOverGates(neg);
+            return !unsafe;
+        }
+        else
+        {
+            // TODO: use BMC first
+            // Construct the candidate IVC and see if it's safe
+            TransitionRelation partial(tr(), candidate);
+            IC3::IC3Solver ic3(vars(), partial, gs());
 
-        return !unsafe;
+            SafetyResult safe = ic3.prove();
+            return (safe.result == SAFE);
+        }
     }
 
     IVC CAIVCFinder::extractIVC() const
