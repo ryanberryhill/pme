@@ -29,17 +29,15 @@
 
 namespace PME {
     IVCChecker::IVCChecker(VariableManager & varman,
-                           TransitionRelation & tr,
-                           GlobalState & gs)
+                           TransitionRelation & tr)
        : m_vars(varman),
-         m_tr(tr),
-         m_gs(gs)
+         m_tr(tr)
     { }
 
     bool IVCChecker::checkSafe(const IVC & ivc)
     {
         TransitionRelation partial(m_tr, ivc);
-        IC3::IC3Solver solver(m_vars, partial, m_gs);
+        IC3::IC3Solver solver(m_vars, partial);
         SafetyResult result = solver.prove();
         assert(result.result != UNKNOWN);
         return result.result == SAFE;
@@ -49,7 +47,7 @@ namespace PME {
     {
         TransitionRelation partial(m_tr, ivc);
         DebugTransitionRelation debug_tr(partial);
-        IC3Debugger debugger(m_vars, debug_tr, m_gs);
+        IC3Debugger debugger(m_vars, debug_tr);
         debugger.setCardinality(1);
 
         unsigned soln_count = 0;

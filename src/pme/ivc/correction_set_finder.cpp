@@ -27,13 +27,12 @@
 namespace PME {
 
     MCSFinder::MCSFinder(VariableManager & varman,
-                         DebugTransitionRelation & tr,
-                         GlobalState & gs)
+                         DebugTransitionRelation & tr)
         : m_cardinality(0),
-          m_solver(varman, tr, gs),
-          m_solver_inf(varman, tr, gs)
+          m_solver(varman, tr),
+          m_solver_inf(varman, tr)
     {
-        if (!gs.opts.caivc_use_bmc)
+        if (!GlobalState::options().caivc_use_bmc)
         {
             m_solver.setKMax(0);
             m_solver_inf.setKMax(0);
@@ -90,12 +89,10 @@ namespace PME {
     }
 
     ApproximateMCSFinder::ApproximateMCSFinder(VariableManager & varman,
-                                               DebugTransitionRelation & tr,
-                                               GlobalState & gs)
+                                               DebugTransitionRelation & tr)
         : m_cardinality(0),
-          m_fallback(varman, tr, gs),
-          m_solver(varman, tr, gs),
-          m_gs(gs)
+          m_fallback(varman, tr),
+          m_solver(varman, tr)
     { }
 
 
@@ -106,7 +103,7 @@ namespace PME {
         CorrectionSet corr;
 
         // TODO investigate strategies for this process
-        unsigned k_max = m_gs.opts.caivc_ar_bmc_kmax;
+        unsigned k_max = GlobalState::options().caivc_ar_bmc_kmax;
         unsigned n_max = gates.size();
 
         assert(k_max < std::numeric_limits<unsigned>::max());

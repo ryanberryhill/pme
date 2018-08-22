@@ -39,7 +39,6 @@ struct IVCFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<IVCChecker> checker;
-    GlobalState gs;
 
     IVCFixture()
     {
@@ -85,7 +84,7 @@ struct IVCFixture
         aiger_add_output(aig, a6, "o0");
         o0 = a6;
         tr.reset(new TransitionRelation(vars, aig));
-        checker.reset(new IVCChecker(vars, *tr, gs));
+        checker.reset(new IVCChecker(vars, *tr));
     }
 
     void setInit(ID latch, ID val)

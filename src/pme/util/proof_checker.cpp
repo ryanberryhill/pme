@@ -26,17 +26,15 @@ namespace PME
 {
     ProofChecker::ProofChecker(
                     const TransitionRelation & tr,
-                    const ClauseVec & proof,
-                    GlobalState & gs)
+                    const ClauseVec & proof)
         : m_tr(tr),
-          m_proof(proof),
-          m_gs(gs)
+          m_proof(proof)
     {
         // Unroll 2 frames so we get primed constraints
         ClauseVec unrolled = m_tr.unroll(2);
 
         ClauseVec simp, simp_init;
-        if (m_gs.opts.simplify)
+        if (GlobalState::options().simplify)
         {
             // Simplify
             simp = simplifyTR(m_tr);
@@ -54,7 +52,7 @@ namespace PME
 
         // Set up initSolver with initial states and simplified clauses
         ClauseVec init = m_tr.initState();
-        if (m_gs.opts.simplify)
+        if (GlobalState::options().simplify)
         {
             SATAdaptor simpSolver(MINISATSIMP);
             simpSolver.addClauses(unrolled);

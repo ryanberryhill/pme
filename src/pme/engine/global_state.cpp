@@ -23,10 +23,16 @@
 
 namespace PME
 {
-    GlobalState g_null_gs;
-
     PMEStats::PMEStats() :
         runtime(0.0),
+        ic3_calls(0),
+        ic3_runtime(0.0),
+        bmc_calls(0),
+        bmc_runtime(0.0),
+        maxsat_calls(0),
+        maxsat_runtime(0.0),
+        sat_calls(0),
+        sat_runtime(0.0),
         num_mivcs_found(0),
         smallest_mivc_size(0),
         largest_mivc_size(0)
@@ -34,9 +40,45 @@ namespace PME
 
     void PMEStats::printAll(std::ostream & os) const
     {
+        os << "+-------------------+" << std::endl;
+        os << "|       STATS       |" << std::endl;
+        os << "+-------------------+" << std::endl;
+
+        // Global
+        os << "Runtime in seconds: " << runtime << std::endl;
+        os << "IC3 Calls: " << ic3_calls << std::endl;
+        os << "IC3 Runtime: " << ic3_runtime << std::endl;
+        os << "BMC Calls: " << bmc_calls << std::endl;
+        os << "BMC Runtime: " << bmc_runtime << std::endl;
+        os << "MaxSAT Calls: " << maxsat_calls << std::endl;
+        os << "MaxSAT Runtime: " << maxsat_runtime << std::endl;
+        os << "SAT Calls: " << sat_calls << std::endl;
+        os << "SAT Runtime: " << sat_runtime << std::endl;
+
+        // IVCs
         os << "MIVCs Found: " << num_mivcs_found << std::endl;
         os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
         os << "Largest MIVC: " << largest_mivc_size << std::endl;
-        os << "Runtime in seconds: " << runtime << std::endl;
+    }
+
+    GlobalState& GlobalState::instance()
+    {
+        static GlobalState gs;
+        return gs;
+    }
+
+    PMEOptions& GlobalState::options()
+    {
+        return instance().m_opts;
+    }
+
+    PMEStats& GlobalState::stats()
+    {
+        return instance().m_stats;
+    }
+
+    Logger& GlobalState::logger()
+    {
+        return instance().m_logger;
     }
 }

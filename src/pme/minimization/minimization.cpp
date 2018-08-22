@@ -38,19 +38,16 @@ namespace PME
 
     DummyMinimizer::DummyMinimizer(VariableManager & vars,
                                    const TransitionRelation & tr,
-                                   const ClauseVec & proof,
-                                   GlobalState & gs)
-        : ProofMinimizer(vars, tr, proof, gs)
+                                   const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof)
     { }
 
     ProofMinimizer::ProofMinimizer(VariableManager & vars,
                                    const TransitionRelation & tr,
-                                   const ClauseVec & proof,
-                                   GlobalState & gs)
+                                   const ClauseVec & proof)
         : m_tr(tr),
           m_vars(vars),
-          m_proof(proof),
-          m_gs(gs)
+          m_proof(proof)
     {
         addPropertyIfMissing();
     }
@@ -62,7 +59,7 @@ namespace PME
 
     std::ostream & ProofMinimizer::log(LogChannelID channel, int verbosity) const
     {
-        return m_gs.logger.log(channel, verbosity);
+        return GlobalState::logger().log(channel, verbosity);
     }
 
     void ProofMinimizer::addPropertyIfMissing()

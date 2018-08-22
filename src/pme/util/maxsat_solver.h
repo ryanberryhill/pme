@@ -25,6 +25,7 @@
 #include "pme/pme.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/sat_adaptor.h"
+#include "pme/engine/global_state.h"
 #include "pme/util/cardinality_constraint.h"
 
 #include <set>

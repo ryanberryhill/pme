@@ -29,15 +29,13 @@ namespace PME {
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
 
     BMCDebugger::BMCDebugger(VariableManager & varman,
-                             const DebugTransitionRelation & tr,
-                             GlobalState & gs)
+                             const DebugTransitionRelation & tr)
         : m_vars(varman),
           m_tr(tr),
-          m_gs(gs),
           m_kmax(4),
           m_cardinality(CARDINALITY_INF),
           m_cardinalityConstraint(varman),
-          m_solver(varman, tr, gs)
+          m_solver(varman, tr)
     {
        clearCardinality();
        m_debug_latches.insert(m_tr.begin_debug_latches(),

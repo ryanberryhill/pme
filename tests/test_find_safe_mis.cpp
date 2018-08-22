@@ -67,7 +67,7 @@ struct MISFixture
         o0 = a0;
 
         tr.reset(new TransitionRelation(vars, aig));
-        checker.reset(new ConsecutionChecker(vars, *tr, g_null_gs));
+        checker.reset(new ConsecutionChecker(vars, *tr));
 
         // Add the property clause as ID 0
         checker->addClause(0, tr->propertyClause());

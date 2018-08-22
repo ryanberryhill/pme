@@ -38,7 +38,7 @@ struct MUSFixture
     std::unordered_map<MUSGroupID, std::vector<Clause>> m_groups;
     std::vector<Clause> m_hardClauses;
 
-    MUSFixture() : finder(vars, g_null_gs)
+    MUSFixture() : finder(vars)
     { }
 
     void addHardClauses(const ClauseVec& clauses)
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(group_mus)
 BOOST_AUTO_TEST_CASE(wrapper)
 {
     VariableManager vars;
-    MUSFinderWrapper finder(vars, g_null_gs);
+    MUSFinderWrapper finder(vars);
 
     ID a = vars.getNewID();
     ID b = vars.getNewID();

@@ -36,9 +36,8 @@ namespace PME { namespace IC3 {
 
     FrameSolver::FrameSolver(VariableManager & varman,
                              const TransitionRelation & tr,
-                             const InductiveTrace & trace,
-                             GlobalState & gs)
-        : TransitionRelationSolver(varman, tr, gs),
+                             const InductiveTrace & trace)
+        : TransitionRelationSolver(varman, tr),
           m_trace(trace),
           m_solverInited(false)
     { }

@@ -58,8 +58,7 @@ namespace PME { namespace IC3 {
             typedef std::tuple<bool, Cube, Cube> IntersectionResult;
             FrameSolver(VariableManager & varman,
                         const TransitionRelation & tr,
-                        const InductiveTrace & trace,
-                        GlobalState & gs);
+                        const InductiveTrace & trace);
 
             void renewSAT();
             void addLemma(LemmaID id);

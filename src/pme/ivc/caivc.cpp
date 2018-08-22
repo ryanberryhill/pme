@@ -27,15 +27,14 @@
 namespace PME {
 
     CAIVCFinder::CAIVCFinder(VariableManager & varman,
-                             const TransitionRelation & tr,
-                             GlobalState & gs)
-        : IVCFinder(varman, tr, gs),
+                             const TransitionRelation & tr)
+        : IVCFinder(varman, tr),
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
-          m_finder(varman, m_debug_tr, gs),
-          m_approx_finder(varman, m_debug_tr, gs),
+          m_finder(varman, m_debug_tr),
+          m_approx_finder(varman, m_debug_tr),
           m_solver(varman),
-          m_ivc_checker(varman, m_debug_tr, gs)
+          m_ivc_checker(varman, m_debug_tr)
     {
         for (ID gate : m_gates)
         {
@@ -272,7 +271,7 @@ namespace PME {
         {
             // Construct the candidate IVC and see if it's safe
             TransitionRelation partial(tr(), candidate);
-            HybridSafetyChecker checker(vars(), partial, gs());
+            HybridSafetyChecker checker(vars(), partial);
 
             SafetyResult safe = checker.prove();
             return (safe.result == SAFE);

@@ -30,15 +30,13 @@ namespace PME {
     {
         public:
             HybridSafetyChecker(VariableManager & varman,
-                                const TransitionRelation & tr,
-                                GlobalState & gs);
+                                const TransitionRelation & tr);
             void setKMax(unsigned k);
             SafetyResult prove();
         private:
             unsigned m_kmax;
             IC3::IC3Solver m_ic3;
             BMC::BMCSolver m_bmc;
-            GlobalState & m_gs;
     };
 }
 

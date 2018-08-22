@@ -28,12 +28,10 @@
 namespace PME
 {
     ConsecutionChecker::ConsecutionChecker(VariableManager & varman,
-                                           const TransitionRelation & tr,
-                                           GlobalState & gs)
+                                           const TransitionRelation & tr)
         : m_vars(varman),
           m_tr(tr),
-          m_solverInited(false),
-          m_gs(gs)
+          m_solverInited(false)
     { }
 
     void ConsecutionChecker::addClause(ClauseID id, const Clause & cls)
@@ -198,7 +196,7 @@ namespace PME
             unrolled.push_back(cls);
         }
 
-        if (m_gs.opts.simplify)
+        if (GlobalState::options().simplify)
         {
             SATAdaptor simpSolver(MINISATSIMP);
 

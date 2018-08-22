@@ -24,13 +24,12 @@
 namespace PME {
 
     HybridDebugger::HybridDebugger(VariableManager & varman,
-                                   const DebugTransitionRelation & tr,
-                                   GlobalState & gs)
-        : m_bmc(varman, tr, gs),
-          m_ic3(varman, tr, gs),
+                                   const DebugTransitionRelation & tr)
+        : m_bmc(varman, tr),
+          m_ic3(varman, tr),
           m_kmax(0)
     {
-        setKMax(gs.opts.hybrid_ic3_bmc_kmax);
+        setKMax(GlobalState::options().hybrid_ic3_bmc_kmax);
     }
 
     void HybridDebugger::setCardinality(unsigned n)

@@ -36,8 +36,7 @@ namespace PME { namespace IC3 {
     class TransitionRelationSolver {
         public:
             TransitionRelationSolver(VariableManager & varman,
-                                     const TransitionRelation & tr,
-                                     GlobalState & gs);
+                                     const TransitionRelation & tr);
 
             void renewSAT();
 
@@ -46,7 +45,6 @@ namespace PME { namespace IC3 {
             const SATAdaptor & csolver() const { return m_solver; }
             const TransitionRelation & tr() const { return m_tr; }
             VariableManager & vars() { return m_vars; }
-            GlobalState & gs() { return m_gs; }
 
         private:
             void computeSimplifiedTR();
@@ -54,7 +52,6 @@ namespace PME { namespace IC3 {
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            GlobalState & m_gs;
 
             SATAdaptor m_solver;
             std::vector<Clause> m_unrolled;

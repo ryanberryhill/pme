@@ -42,7 +42,6 @@ struct IVCFixture
     ExternalID l0, l1, l2, l3, a0, a1, a2, a3, a4, a5, a6, o0;
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
-    GlobalState gs;
 
     IVCFixture()
     {
@@ -130,7 +129,7 @@ void runIVCTest(bool find_all)
                                {a3, a5, a6} };
     sortIVCs(mivcs);
 
-    T finder(f.vars, *f.tr, f.gs);
+    T finder(f.vars, *f.tr);
     finder.findIVCs();
 
     IVC min_ivc;

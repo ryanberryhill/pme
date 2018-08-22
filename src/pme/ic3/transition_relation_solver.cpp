@@ -47,11 +47,9 @@ namespace PME { namespace IC3 {
 
     TransitionRelationSolver::TransitionRelationSolver(
                              VariableManager & varman,
-                             const TransitionRelation & tr,
-                             GlobalState & gs)
+                             const TransitionRelation & tr)
         : m_vars(varman),
-          m_tr(tr),
-          m_gs(gs)
+          m_tr(tr)
     { }
 
     void TransitionRelationSolver::renewSAT()
@@ -75,7 +73,7 @@ namespace PME { namespace IC3 {
     {
         m_unrolled.clear();
 
-        if (m_gs.opts.simplify)
+        if (GlobalState::options().simplify)
         {
             m_unrolled = simplifyTR(m_tr);
         }

@@ -34,8 +34,7 @@ namespace PME {
     class MARCOIVCFinder : public IVCFinder {
         public:
             MARCOIVCFinder(VariableManager & varman,
-                           const TransitionRelation & tr,
-                           GlobalState & gs);
+                           const TransitionRelation & tr);
             virtual void doFindIVCs() override;
         protected:
             virtual std::ostream & log(int verbosity) const override;

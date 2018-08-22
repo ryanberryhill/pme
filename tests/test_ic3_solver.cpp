@@ -44,9 +44,8 @@ struct IC3Fixture
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<DebugTransitionRelation> debug_tr;
     std::unique_ptr<IC3Solver> solver;
-    GlobalState gs;
 
-    IC3Fixture(bool simplify = true)
+    IC3Fixture()
     {
         aig = aiger_init();
 
@@ -77,7 +76,6 @@ struct IC3Fixture
         aiger_add_output(aig, a2, "o0");
         o0 = a2;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
         debug_tr.reset(new DebugTransitionRelation(vars, aig));
         prepareSolver();
@@ -90,7 +88,7 @@ struct IC3Fixture
 
     void prepareSolver(TransitionRelation & tr_to_use)
     {
-        solver.reset(new IC3Solver(vars, tr_to_use, gs));
+        solver.reset(new IC3Solver(vars, tr_to_use));
     }
 
     void prepareSolver()
@@ -124,7 +122,7 @@ BOOST_AUTO_TEST_CASE(safe)
     SafetyResult result = f.solver->prove();
     BOOST_CHECK_EQUAL(result.result, SAFE);
 
-    ProofChecker pc(*f.tr, result.proof, f.gs);
+    ProofChecker pc(*f.tr, result.proof);
     BOOST_CHECK(pc.checkProof());
 }
 

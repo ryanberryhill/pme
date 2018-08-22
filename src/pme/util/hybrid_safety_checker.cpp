@@ -25,12 +25,10 @@
 
 namespace PME {
     HybridSafetyChecker::HybridSafetyChecker(VariableManager & varman,
-                                             const TransitionRelation & tr,
-                                             GlobalState & gs)
-        : m_kmax(gs.opts.hybrid_ic3_bmc_kmax),
-          m_ic3(varman, tr, gs),
-          m_bmc(varman, tr, gs),
-          m_gs(gs)
+                                             const TransitionRelation & tr)
+        : m_kmax(GlobalState::options().hybrid_ic3_bmc_kmax),
+          m_ic3(varman, tr),
+          m_bmc(varman, tr)
     { }
 
     void HybridSafetyChecker::setKMax(unsigned k)

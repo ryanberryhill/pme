@@ -36,8 +36,7 @@ namespace PME
         public:
             ProofMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
-                           const ClauseVec & proof,
-                           GlobalState & gs);
+                           const ClauseVec & proof);
             virtual ~ProofMinimizer() { }
 
             virtual void minimize() = 0;
@@ -64,7 +63,7 @@ namespace PME
             virtual std::ostream & log(int verbosity) const;
             std::ostream & log(LogChannelID channel, int verbosity) const;
 
-            const PMEOptions & opts() const { return m_gs.opts; }
+            const PMEOptions & opts() const { return GlobalState::options(); }
 
         private:
             void addPropertyIfMissing();
@@ -74,7 +73,6 @@ namespace PME
             ClauseID m_property;
             std::vector<std::vector<ClauseID>> m_minimalProofs;
             std::vector<ClauseID> m_minimumProof;
-            GlobalState & m_gs;
     };
 
     class DummyMinimizer : public ProofMinimizer
@@ -82,8 +80,7 @@ namespace PME
         public:
             DummyMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
-                           const ClauseVec & proof,
-                           GlobalState & gs);
+                           const ClauseVec & proof);
             void minimize() override;
     };
 }

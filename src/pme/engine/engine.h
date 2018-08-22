@@ -86,7 +86,6 @@ namespace PME
             SafetyCounterExample m_cex;
             std::unique_ptr<ProofMinimizer> m_minimizer;
             std::unique_ptr<IVCFinder> m_ivc_finder;
-            GlobalState m_gs;
 
             std::ostream & log(int v) const;
             void removeProperty(ClauseVec & proof) const;

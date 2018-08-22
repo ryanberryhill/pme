@@ -20,6 +20,7 @@
  */
 
 #include "pme/ic3/ic3_solver.h"
+#include "pme/util/timer.h"
 
 #include <algorithm>
 #include <sstream>
@@ -87,11 +88,9 @@ namespace PME { namespace IC3 {
     }
 
     IC3Solver::IC3Solver(VariableManager & varman,
-                         const TransitionRelation & tr,
-                         GlobalState & gs)
+                         const TransitionRelation & tr)
         : m_vars(varman),
           m_tr(tr),
-          m_gs(gs),
           m_cons(nullptr),
           m_lift(nullptr)
     {
@@ -121,8 +120,8 @@ namespace PME { namespace IC3 {
 
     void IC3Solver::resetSAT()
     {
-        m_cons.reset(new FrameSolver(m_vars, m_tr, m_trace, m_gs));
-        m_lift.reset(new UNSATCoreLifter(m_vars, m_tr, m_trace, m_gs));
+        m_cons.reset(new FrameSolver(m_vars, m_tr, m_trace));
+        m_lift.reset(new UNSATCoreLifter(m_vars, m_tr, m_trace));
     }
 
     void IC3Solver::initialize()
@@ -187,7 +186,7 @@ namespace PME { namespace IC3 {
 
     std::ostream & IC3Solver::log(int verbosity) const
     {
-        return m_gs.logger.log(LOG_IC3, verbosity);
+        return GlobalState::logger().log(LOG_IC3, verbosity);
     }
 
     SafetyResult IC3Solver::prove()
@@ -198,6 +197,8 @@ namespace PME { namespace IC3 {
 
     SafetyResult IC3Solver::prove(const Cube & target)
     {
+        GlobalState::stats().ic3_calls++;
+        AutoTimer timer(GlobalState::stats().ic3_runtime);
         SafetyResult result;
 
         bool blocked;

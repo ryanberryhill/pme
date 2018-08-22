@@ -28,11 +28,10 @@ namespace PME
 {
     CAMSISMinimizer::CAMSISMinimizer(VariableManager & vars,
                                      const TransitionRelation & tr,
-                                     const ClauseVec & proof,
-                                     GlobalState & gs)
-        : ProofMinimizer(vars, tr, proof, gs),
-          m_cons(vars, tr, gs),
-          m_collapseFinder(vars, tr, gs),
+                                     const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof),
+          m_cons(vars, tr),
+          m_collapseFinder(vars, tr),
           m_solver(vars)
     {
         // Set up collapse set finder and consecution checker and clause-select

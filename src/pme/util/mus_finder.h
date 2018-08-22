@@ -33,7 +33,7 @@ namespace PME {
     class MUSFinder
     {
         public:
-            MUSFinder(VariableManager & vars, GlobalState & gs);
+            MUSFinder(VariableManager & vars);
 
             void addHardClause(const Clause & cls);
             template<typename Iterator>
@@ -70,7 +70,7 @@ namespace PME {
     class MUSFinderWrapper
     {
         public:
-            MUSFinderWrapper(VariableManager & vars, GlobalState & gs);
+            MUSFinderWrapper(VariableManager & vars);
 
             void addHardClause(const Clause & cls) { m_finder.addHardClause(cls); }
 

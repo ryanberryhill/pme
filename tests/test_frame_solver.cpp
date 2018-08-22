@@ -39,9 +39,8 @@ struct FrameSolverFixture
     InductiveTrace trace;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<FrameSolver> solver;
-    GlobalState gs;
 
-    FrameSolverFixture(bool simplify = true)
+    FrameSolverFixture()
     {
         aig = aiger_init();
 
@@ -66,9 +65,8 @@ struct FrameSolverFixture
         aiger_add_output(aig, l3, "o0");
         o0 = l3;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        solver.reset(new FrameSolver(vars, *tr, trace, gs));
+        solver.reset(new FrameSolver(vars, *tr, trace));
     }
 
     ~FrameSolverFixture()

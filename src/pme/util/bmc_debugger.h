@@ -36,8 +36,7 @@ namespace PME {
     {
         public:
             BMCDebugger(VariableManager & varman,
-                        const DebugTransitionRelation & tr,
-                        GlobalState & gs);
+                        const DebugTransitionRelation & tr);
 
             virtual void setCardinality(unsigned n) override;
             virtual void clearCardinality() override;
@@ -67,7 +66,6 @@ namespace PME {
 
             VariableManager & m_vars;
             const DebugTransitionRelation & m_tr;
-            GlobalState & m_gs;
 
             unsigned m_kmax;
             unsigned m_cardinality;

@@ -28,11 +28,9 @@ namespace PME
 {
 
     CollapseSetFinder::CollapseSetFinder(VariableManager & varman,
-                                         const TransitionRelation & tr,
-                                         GlobalState & gs)
+                                         const TransitionRelation & tr)
         : m_vars(varman),
           m_tr(tr),
-          m_gs(gs),
           m_solver(varman),
           m_solverInited(false)
     { }
@@ -85,7 +83,7 @@ namespace PME
             unrolled.push_back(cls);
         }
 
-        if (m_gs.opts.simplify)
+        if (GlobalState::options().simplify)
         {
             SATAdaptor simpSolver(MINISATSIMP);
 

@@ -33,8 +33,7 @@ namespace PME {
     {
         public:
             IVCUCBFFinder(VariableManager & varman,
-                          const TransitionRelation & tr,
-                          GlobalState & gs);
+                          const TransitionRelation & tr);
             virtual void doFindIVCs() override;
             void shrink(Seed & seed);
             void shrink(Seed & seed, const SafetyProof & proof);

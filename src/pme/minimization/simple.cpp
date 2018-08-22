@@ -30,10 +30,9 @@
 namespace PME {
     SimpleMinimizer::SimpleMinimizer(VariableManager & vars,
                                      const TransitionRelation & tr,
-                                     const ClauseVec & proof,
-                                     GlobalState & gs)
-        : ProofMinimizer(vars, tr, proof, gs),
-          m_solver(vars, tr, gs)
+                                     const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof),
+          m_solver(vars, tr)
     {
         initSolver();
     }

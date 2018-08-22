@@ -34,9 +34,8 @@ struct ConsecutionFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<ConsecutionChecker> checker;
-    GlobalState gs;
 
-    ConsecutionFixture(bool simplify = true)
+    ConsecutionFixture()
     {
         aig = aiger_init();
 
@@ -61,9 +60,8 @@ struct ConsecutionFixture
         aiger_add_output(aig, l3, "o0");
         o0 = l3;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        checker.reset(new ConsecutionChecker(vars, *tr, gs));
+        checker.reset(new ConsecutionChecker(vars, *tr));
     }
 
     ~ConsecutionFixture()
@@ -177,7 +175,7 @@ BOOST_AUTO_TEST_CASE(test_nonincremental)
 
 BOOST_AUTO_TEST_CASE(test_nosimplify)
 {
-    ConsecutionFixture f(false);
+    ConsecutionFixture f;
 
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);

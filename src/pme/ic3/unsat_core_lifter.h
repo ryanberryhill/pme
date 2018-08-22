@@ -53,8 +53,7 @@ namespace PME { namespace IC3 {
         public:
             UNSATCoreLifter(VariableManager & varman,
                             const TransitionRelation & tr,
-                            const InductiveTrace & trace,
-                            GlobalState & gs);
+                            const InductiveTrace & trace);
 
             void renewSAT();
             void addLemma(LemmaID id);

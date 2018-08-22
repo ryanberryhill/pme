@@ -39,8 +39,7 @@ namespace PME
         public:
             CAMSISMinimizer(VariableManager & vars,
                             const TransitionRelation & tr,
-                            const ClauseVec & proof,
-                            GlobalState & gs);
+                            const ClauseVec & proof);
             void minimize() override;
         protected:
             std::ostream & log(int verbosity) const override;

@@ -38,8 +38,7 @@ namespace PME {
     {
         public:
             IVCFinder(VariableManager & varman,
-                      const TransitionRelation & tr,
-                      GlobalState & gs);
+                      const TransitionRelation & tr);
 
             virtual ~IVCFinder() { }
 
@@ -58,9 +57,8 @@ namespace PME {
             virtual std::ostream & log(int verbosity) const;
             std::ostream & log(LogChannelID channel, int verbosity) const;
 
-            GlobalState & gs() { return m_gs; }
-            const PMEOptions & opts() const { return m_gs.opts; }
-            PMEStats & stats() const { return m_gs.stats; }
+            const PMEOptions & opts() const { return GlobalState::options(); }
+            PMEStats & stats() const { return GlobalState::stats(); }
             const TransitionRelation & tr() const { return m_tr; }
             VariableManager & vars() { return m_vars; }
 
@@ -68,7 +66,6 @@ namespace PME {
             Timer m_timer;
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            GlobalState & m_gs;
 
             std::vector<IVC> m_mivcs;
             IVC m_minimum_ivc;

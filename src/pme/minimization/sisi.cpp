@@ -168,10 +168,9 @@ namespace PME
 
     SISIMinimizer::SISIMinimizer(VariableManager & vars,
                                  const TransitionRelation & tr,
-                                 const ClauseVec & proof,
-                                 GlobalState & gs)
-        : ProofMinimizer(vars, tr, proof, gs),
-          m_indSolver(vars, tr, gs),
+                                 const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof),
+          m_indSolver(vars, tr),
           m_sisi(m_indSolver)
     {
         initSolver();

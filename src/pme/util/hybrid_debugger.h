@@ -35,8 +35,7 @@ namespace PME {
     {
         public:
             HybridDebugger(VariableManager & varman,
-                           const DebugTransitionRelation & tr,
-                           GlobalState & gs);
+                           const DebugTransitionRelation & tr);
 
             // Debugging functions
             virtual void setCardinality(unsigned n) override;

@@ -37,9 +37,8 @@ struct SafetyFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<HybridSafetyChecker> checker;
-    GlobalState gs;
 
-    SafetyFixture(bool simplify = true)
+    SafetyFixture()
     {
         aig = aiger_init();
 
@@ -70,7 +69,6 @@ struct SafetyFixture
         aiger_add_output(aig, a2, "o0");
         o0 = a2;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
         prepareChecker();
     }
@@ -82,7 +80,7 @@ struct SafetyFixture
 
     void prepareChecker()
     {
-        checker.reset(new HybridSafetyChecker(vars, *tr, gs));
+        checker.reset(new HybridSafetyChecker(vars, *tr));
     }
 
     ~SafetyFixture()
@@ -111,7 +109,7 @@ BOOST_AUTO_TEST_CASE(safe)
     SafetyResult result = f.checker->prove();
     BOOST_CHECK_EQUAL(result.result, SAFE);
 
-    ProofChecker pc(*f.tr, result.proof, f.gs);
+    ProofChecker pc(*f.tr, result.proof);
     BOOST_CHECK(pc.checkProof());
 }
 

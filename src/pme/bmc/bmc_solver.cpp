@@ -20,17 +20,16 @@
  */
 
 #include "pme/bmc/bmc_solver.h"
+#include "pme/util/timer.h"
 
 #include <cassert>
 
 namespace PME { namespace BMC {
 
     BMCSolver::BMCSolver(VariableManager & varman,
-                         const TransitionRelation & tr,
-                         GlobalState & gs)
+                         const TransitionRelation & tr)
         : m_vars(varman),
           m_tr(tr),
-          m_gs(gs),
           m_numFrames(0),
           m_solverInited(false)
     { }
@@ -98,6 +97,8 @@ namespace PME { namespace BMC {
 
     SafetyResult BMCSolver::solveAtK(unsigned k, const Cube & assumps)
     {
+        GlobalState::stats().bmc_calls++;
+        AutoTimer timer(GlobalState::stats().bmc_runtime);
         SafetyResult result;
 
         ID bad = prime(m_tr.bad(), k);

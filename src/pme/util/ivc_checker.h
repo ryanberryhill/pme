@@ -33,8 +33,7 @@ namespace PME {
     {
         public:
             IVCChecker(VariableManager & varman,
-                       TransitionRelation & tr,
-                       GlobalState & gs);
+                       TransitionRelation & tr);
 
             bool checkSafe(const IVC & ivc);
             bool checkMinimal(const IVC & ivc);
@@ -43,7 +42,6 @@ namespace PME {
         private:
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            GlobalState & m_gs;
     };
 }
 

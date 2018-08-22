@@ -35,7 +35,6 @@ struct CorrectionSetFixture
     aiger * aig;
     ExternalID l0, l1, l2, l3, a0, a1, a2, a3, a4, a5, a6, o0;
     VariableManager vars;
-    GlobalState gs;
     std::unique_ptr<DebugTransitionRelation> tr;
 
     CorrectionSetFixture()
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(mcs)
     ID a5 = f.tr->toInternal(f.a5);
     ID a6 = f.tr->toInternal(f.a6);
 
-    MCSFinder finder(f.vars, *f.tr, f.gs);
+    MCSFinder finder(f.vars, *f.tr);
 
     BOOST_REQUIRE(finder.moreCorrectionSets());
 
@@ -199,7 +198,7 @@ BOOST_AUTO_TEST_CASE(mcs_over_gates)
 
     std::vector<ID> all = {a0, a1, a2, a3, a4, a5, a6};
 
-    MCSFinder finder(f.vars, *f.tr, f.gs);
+    MCSFinder finder(f.vars, *f.tr);
 
     BOOST_REQUIRE(finder.moreCorrectionSets());
 
@@ -275,7 +274,7 @@ BOOST_AUTO_TEST_CASE(approximate_mcs_over_gates)
 
     std::vector<ID> all = {a0, a1, a2, a3, a4, a5, a6};
 
-    ApproximateMCSFinder finder(f.vars, *f.tr, f.gs);
+    ApproximateMCSFinder finder(f.vars, *f.tr);
 
     // block MCS {a6} as the approximate finder assumes size-1 MCSes are
     // already blocked

@@ -29,11 +29,10 @@ namespace PME
 {
     MARCOMinimizer::MARCOMinimizer(VariableManager & vars,
                                    const TransitionRelation & tr,
-                                   const ClauseVec & proof,
-                                   GlobalState & gs)
-        : ProofMinimizer(vars, tr, proof, gs),
+                                   const ClauseVec & proof)
+        : ProofMinimizer(vars, tr, proof),
           m_seedSolver(vars),
-          m_indSolver(vars, tr, gs)
+          m_indSolver(vars, tr)
     {
         initSolvers();
     }

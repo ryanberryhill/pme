@@ -26,11 +26,9 @@
 namespace PME {
 
     IVCFinder::IVCFinder(VariableManager & varman,
-                         const TransitionRelation & tr,
-                         GlobalState & gs)
+                         const TransitionRelation & tr)
         : m_vars(varman),
-          m_tr(tr),
-          m_gs(gs)
+          m_tr(tr)
     { }
 
     std::ostream & IVCFinder::log(int verbosity) const
@@ -40,7 +38,7 @@ namespace PME {
 
     std::ostream & IVCFinder::log(LogChannelID channel, int verbosity) const
     {
-        return m_gs.logger.log(channel, verbosity);
+        return GlobalState::logger().log(channel, verbosity);
     }
 
     void IVCFinder::findIVCs()

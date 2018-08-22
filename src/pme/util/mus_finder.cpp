@@ -34,7 +34,7 @@ namespace PME {
         return ss.str();
     }
 
-    MUSFinder::MUSFinder(VariableManager & vars, GlobalState & gs)
+    MUSFinder::MUSFinder(VariableManager & vars)
         : m_vars(vars),
           m_nextGroup(0)
     { }
@@ -174,8 +174,8 @@ namespace PME {
         return external;
     }
 
-    MUSFinderWrapper::MUSFinderWrapper(VariableManager & vars, GlobalState & gs)
-        : m_finder(vars, gs)
+    MUSFinderWrapper::MUSFinderWrapper(VariableManager & vars)
+        : m_finder(vars)
     { }
 
     void MUSFinderWrapper::addSoftClause(ID external_group, const Clause & cls)

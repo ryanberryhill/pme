@@ -59,8 +59,7 @@ namespace PME
         public:
             SISIMinimizer(VariableManager & vars,
                           const TransitionRelation & tr,
-                          const ClauseVec & proof,
-                          GlobalState & gs);
+                          const ClauseVec & proof);
             void minimize() override;
 
         protected:

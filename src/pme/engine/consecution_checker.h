@@ -36,8 +36,7 @@ namespace PME
     {
         public:
             ConsecutionChecker(VariableManager & varman,
-                               const TransitionRelation & tr,
-                               GlobalState & gs);
+                               const TransitionRelation & tr);
             void addClause(ClauseID id, const Clause & cls);
 
             bool isInductive(const std::vector<ClauseID> & frame);
@@ -77,7 +76,6 @@ namespace PME
             const TransitionRelation & m_tr;
             bool m_solverInited;
             SATAdaptor m_solver;
-            GlobalState & m_gs;
             ClauseDatabase m_clausedb;
     };
 }

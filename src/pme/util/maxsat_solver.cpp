@@ -20,6 +20,8 @@
  */
 
 #include "pme/util/maxsat_solver.h"
+#include "pme/util/timer.h"
+
 #include <cassert>
 #include <algorithm>
 
@@ -81,6 +83,9 @@ namespace PME
 
     bool MaxSATSolver::solve(const Cube & assumps)
     {
+        GlobalState::stats().maxsat_calls++;
+        AutoTimer timer(GlobalState::stats().maxsat_runtime);
+
         Cube assumps_sorted = assumps;
         std::sort(assumps_sorted.begin(), assumps_sorted.end());
 

@@ -39,9 +39,8 @@ struct LifterFixture
     InductiveTrace trace;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<UNSATCoreLifter> lifter;
-    GlobalState gs;
 
-    LifterFixture(bool simplify = true)
+    LifterFixture()
     {
         aig = aiger_init();
 
@@ -66,9 +65,8 @@ struct LifterFixture
         aiger_add_output(aig, l3, "o0");
         o0 = l3;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        lifter.reset(new UNSATCoreLifter(vars, *tr, trace, gs));
+        lifter.reset(new UNSATCoreLifter(vars, *tr, trace));
     }
 
     ~LifterFixture()

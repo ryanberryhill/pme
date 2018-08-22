@@ -36,8 +36,7 @@ namespace PME
     {
         public:
             CollapseSetFinder(VariableManager & varman,
-                              const TransitionRelation & tr,
-                              GlobalState & gs);
+                              const TransitionRelation & tr);
             void initSolver();
             void addClause(ClauseID id, const Clause & cls);
             bool findAndBlock(ClauseID id, CollapseSet & collapse);
@@ -54,7 +53,6 @@ namespace PME
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            GlobalState & m_gs;
             DualActivationClauseDatabase m_clausedb;
             MaxSATSolver m_solver;
             bool m_solverInited;

@@ -24,9 +24,8 @@
 
 namespace PME {
     IVCBFFinder::IVCBFFinder(VariableManager & varman,
-                             const TransitionRelation & tr,
-                             GlobalState & gs)
-        : IVCFinder(varman, tr, gs)
+                             const TransitionRelation & tr)
+        : IVCFinder(varman, tr)
     { }
 
     std::ostream & IVCBFFinder::log(int verbosity) const
@@ -65,7 +64,7 @@ namespace PME {
         // TODO: incremental debugging-based version
         // TODO: non-incremental hybrid BMC/IC3 version
         TransitionRelation partial(tr(), seed);
-        IC3::IC3Solver ic3(vars(), partial, gs());
+        IC3::IC3Solver ic3(vars(), partial);
 
         SafetyResult safe = ic3.prove();
 

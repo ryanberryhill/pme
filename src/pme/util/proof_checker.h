@@ -32,8 +32,7 @@ namespace PME
     {
         public:
             ProofChecker(const TransitionRelation & tr,
-                         const ClauseVec & proof,
-                         GlobalState & gs);
+                         const ClauseVec & proof);
             bool checkInduction();
             bool checkInitiation();
             bool checkSafety();
@@ -44,7 +43,6 @@ namespace PME
             SATAdaptor m_indSolver, m_initSolver;
             const TransitionRelation & m_tr;
             const ClauseVec & m_proof;
-            GlobalState & m_gs;
     };
 }
 

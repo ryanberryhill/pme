@@ -35,9 +35,8 @@ struct SimpleCollapseFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<CollapseSetFinder> finder;
-    GlobalState gs;
 
-    SimpleCollapseFixture(bool simplify = true)
+    SimpleCollapseFixture()
     {
         aig = aiger_init();
 
@@ -62,9 +61,8 @@ struct SimpleCollapseFixture
         aiger_add_output(aig, l3, "o0");
         o0 = l3;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        finder.reset(new CollapseSetFinder(vars, *tr, gs));
+        finder.reset(new CollapseSetFinder(vars, *tr));
     }
 
     ~SimpleCollapseFixture()
@@ -81,9 +79,8 @@ struct CollapseFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<CollapseSetFinder> finder;
-    GlobalState gs;
 
-    CollapseFixture(bool simplify = true)
+    CollapseFixture()
     {
         aig = aiger_init();
 
@@ -104,9 +101,8 @@ struct CollapseFixture
         aiger_add_output(aig, 0, "o0");
         o0 = 0;
 
-        gs.opts.simplify = simplify;
         tr.reset(new TransitionRelation(vars, aig));
-        finder.reset(new CollapseSetFinder(vars, *tr, gs));
+        finder.reset(new CollapseSetFinder(vars, *tr));
     }
 
     ~CollapseFixture()
@@ -118,7 +114,7 @@ struct CollapseFixture
 
 BOOST_AUTO_TEST_CASE(simple_find)
 {
-    SimpleCollapseFixture f(false);
+    SimpleCollapseFixture f;
     ID l0 = f.tr->toInternal(f.l0);
     ID l1 = f.tr->toInternal(f.l1);
     ID l2 = f.tr->toInternal(f.l2);
@@ -130,7 +126,7 @@ BOOST_AUTO_TEST_CASE(simple_find)
     Clause c3 = {negate(l3)};
 
     ClauseVec proof = {c0, c1, c2, c3};
-    ProofChecker pc(*f.tr, proof, g_null_gs);
+    ProofChecker pc(*f.tr, proof);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);
@@ -171,7 +167,7 @@ BOOST_AUTO_TEST_CASE(simple_find_and_block)
     Clause c3 = {negate(l3)};
 
     ClauseVec proof = {c0, c1, c2, c3};
-    ProofChecker pc(*f.tr, proof, g_null_gs);
+    ProofChecker pc(*f.tr, proof);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);
@@ -217,7 +213,7 @@ BOOST_AUTO_TEST_CASE(multiple_collapse_sets)
 
     ClauseVec proof = {c0, c1, c2, c3};
 
-    ProofChecker pc(*f.tr, proof, g_null_gs);
+    ProofChecker pc(*f.tr, proof);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);
@@ -263,7 +259,7 @@ BOOST_AUTO_TEST_CASE(repeated_collapse_sets)
 
     ClauseVec proof = {c0, c1, c2, c3};
 
-    ProofChecker pc(*f.tr, proof, g_null_gs);
+    ProofChecker pc(*f.tr, proof);
     BOOST_REQUIRE(pc.checkInduction());
 
     f.finder->addClause(0, c0);

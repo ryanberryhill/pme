@@ -37,8 +37,7 @@ namespace PME {
     {
         public:
             IC3Debugger(VariableManager & varman,
-                        const DebugTransitionRelation & tr,
-                        GlobalState & gs);
+                        const DebugTransitionRelation & tr);
 
             virtual void setCardinality(unsigned n) override;
             virtual void clearCardinality() override;
@@ -61,7 +60,6 @@ namespace PME {
 
             const DebugTransitionRelation & m_debug_tr;
             IC3::IC3Solver m_ic3;
-            GlobalState & m_gs;
             unsigned m_cardinality;
             CardinalityConstraint m_cardinalityConstraint;
             std::set<ID> m_debug_latches;

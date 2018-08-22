@@ -88,9 +88,8 @@ struct InductionFixture
     }
 };
 
-void check_proof_test(bool simp)
+void check_proof_test()
 {
-    GlobalState gs;
     InductionFixture f;
     ClauseVec proof;
 
@@ -101,8 +100,7 @@ void check_proof_test(bool simp)
     proof.push_back({negate(l1)});
     proof.push_back({negate(l2)});
 
-    gs.opts.simplify = simp;
-    ProofChecker ind0(*f.tr, proof, gs);
+    ProofChecker ind0(*f.tr, proof);
 
     BOOST_CHECK(ind0.checkInduction());
     BOOST_CHECK(ind0.checkInitiation());
@@ -112,7 +110,7 @@ void check_proof_test(bool simp)
 
     // Add ~Bad and ensure it still works
     proof.push_back({negate(f.tr->bad())});
-    ProofChecker ind0_negbad(*f.tr, proof, gs);
+    ProofChecker ind0_negbad(*f.tr, proof);
 
     BOOST_CHECK(ind0_negbad.checkInduction());
     BOOST_CHECK(ind0_negbad.checkInitiation());
@@ -123,7 +121,7 @@ void check_proof_test(bool simp)
     // Non-proof due to non-induction
     ClauseVec nonproof;
     nonproof.push_back({negate(l2)});
-    ProofChecker ind1(*f.tr, nonproof, gs);
+    ProofChecker ind1(*f.tr, nonproof);
     BOOST_CHECK(!ind1.checkInduction());
     BOOST_CHECK(ind1.checkInitiation());
     BOOST_CHECK(ind1.checkSafety());
@@ -134,7 +132,7 @@ void check_proof_test(bool simp)
     nonproof.clear();
     nonproof.push_back({negate(l2)});
     nonproof.push_back({l1});
-    ProofChecker ind2(*f.tr, nonproof, gs);
+    ProofChecker ind2(*f.tr, nonproof);
     BOOST_CHECK(!ind2.checkInduction());
     BOOST_CHECK(!ind2.checkInitiation());
     BOOST_CHECK(ind2.checkSafety());
@@ -143,7 +141,7 @@ void check_proof_test(bool simp)
 
     // Empty proof is inductive and initiated but not safe
     nonproof.clear();
-    ProofChecker ind3(*f.tr, nonproof, gs);
+    ProofChecker ind3(*f.tr, nonproof);
     BOOST_CHECK(ind3.checkInduction());
     BOOST_CHECK(ind3.checkInitiation());
     BOOST_CHECK(!ind3.checkSafety());
@@ -151,14 +149,9 @@ void check_proof_test(bool simp)
     BOOST_CHECK(!ind3.checkProof());
 }
 
-BOOST_AUTO_TEST_CASE(check_proof_nosimplify)
-{
-    check_proof_test(false);
-}
-
 BOOST_AUTO_TEST_CASE(check_proof_simplify)
 {
-    check_proof_test(true);
+    check_proof_test();
 }
 
 BOOST_AUTO_TEST_CASE(constraints)
@@ -171,7 +164,7 @@ BOOST_AUTO_TEST_CASE(constraints)
     // Proof = (~l2)
     proof.push_back({negate(l2)});
 
-    ProofChecker ind0(*f.tr, proof, g_null_gs);
+    ProofChecker ind0(*f.tr, proof);
 
     BOOST_CHECK(ind0.checkInduction());
     BOOST_CHECK(ind0.checkInitiation());

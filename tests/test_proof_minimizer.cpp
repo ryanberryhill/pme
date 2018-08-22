@@ -254,7 +254,7 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
         }
 
         // Check that the result is a proof
-        ProofChecker pc(f.tr(), minproof, g_null_gs);
+        ProofChecker pc(f.tr(), minproof);
         BOOST_CHECK(pc.checkProof());
 
         // if minimal is true, check that the result is a minimal proof
@@ -266,7 +266,7 @@ void test_minimize(ProofMinimizer & minimizer, MinimizationFixture & f, bool min
                 ClauseVec test_proof;
                 std::remove_copy(minproof.begin(), minproof.end(),
                                  std::back_inserter(test_proof), cls);
-                ProofChecker pc_fail(f.tr(), test_proof, g_null_gs);
+                ProofChecker pc_fail(f.tr(), test_proof);
                 BOOST_CHECK(!pc_fail.checkProof());
             }
         }
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(should_add_negbad)
     BOOST_REQUIRE(found);
 
     // Everything should still work
-    DummyMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    DummyMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_shrink(minimizer, f);
 }
 
@@ -322,10 +322,10 @@ BOOST_AUTO_TEST_CASE(dummy_minimizer_trivial)
     // This test will be the only one to check that the proof in the fixture is
     // actually a proof
     TrivialProofFixture f;
-    ProofChecker pc(f.tr(), f.proof(), g_null_gs);
+    ProofChecker pc(f.tr(), f.proof());
     BOOST_REQUIRE(pc.checkProof());
 
-    DummyMinimizer dm(f.vars, f.tr(), f.proof(), g_null_gs);
+    DummyMinimizer dm(f.vars, f.tr(), f.proof());
     test_shrink(dm, f);
 }
 
@@ -334,80 +334,80 @@ BOOST_AUTO_TEST_CASE(dummy_minimizer_nontrivial)
     // This test will be the only one to check that the proof in the fixture is
     // actually a proof
     NonTrivialProofFixture f;
-    ProofChecker pc(f.tr(), f.proof(), g_null_gs);
+    ProofChecker pc(f.tr(), f.proof());
     BOOST_REQUIRE(pc.checkProof());
 
-    DummyMinimizer dm(f.vars, f.tr(), f.proof(), g_null_gs);
+    DummyMinimizer dm(f.vars, f.tr(), f.proof());
     test_shrink(dm, f);
 }
 
 BOOST_AUTO_TEST_CASE(camsis_minimizer_trivial)
 {
     TrivialProofFixture f;
-    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findall(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(camsis_minimizer_nontrivial)
 {
     NonTrivialProofFixture f;
-    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    CAMSISMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findall(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(marco_minimizer_trivial)
 {
     TrivialProofFixture f;
-    MARCOMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    MARCOMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findall(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(marco_minimizer_nontrivial)
 {
     NonTrivialProofFixture f;
-    MARCOMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    MARCOMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findall(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(sisi_minimizer_trivial)
 {
     TrivialProofFixture f;
-    SISIMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    SISIMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findminimal(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(sisi_minimizer_nontrivial)
 {
     NonTrivialProofFixture f;
-    SISIMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    SISIMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findminimal(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(brute_force_minimizer_trivial)
 {
     TrivialProofFixture f;
-    BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findminimal(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(brute_force_minimizer_nontrivial)
 {
     NonTrivialProofFixture f;
-    BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    BruteForceMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_findminimal(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(simple_minimizer_trivial)
 {
     TrivialProofFixture f;
-    SimpleMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    SimpleMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_shrink(minimizer, f);
 }
 
 BOOST_AUTO_TEST_CASE(simple_minimizer_nontrivial)
 {
     NonTrivialProofFixture f;
-    SimpleMinimizer minimizer(f.vars, f.tr(), f.proof(), g_null_gs);
+    SimpleMinimizer minimizer(f.vars, f.tr(), f.proof());
     test_shrink(minimizer, f);
 }
 

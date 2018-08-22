@@ -30,10 +30,9 @@
 
 namespace PME {
     IVCUCBFFinder::IVCUCBFFinder(VariableManager & varman,
-                                 const TransitionRelation & tr,
-                                 GlobalState & gs)
-        : IVCFinder(varman, tr, gs),
-          m_ivcbf(varman, tr, gs),
+                                 const TransitionRelation & tr)
+        : IVCFinder(varman, tr),
+          m_ivcbf(varman, tr),
           m_debugTR(tr)
     { }
 
@@ -68,14 +67,14 @@ namespace PME {
         SafetyProof shrunk_proof;
         if (opts().ivc_ucbf_use_simple_min)
         {
-            SimpleMinimizer pmin(vars(), tr(), proof, gs());
+            SimpleMinimizer pmin(vars(), tr(), proof);
             pmin.minimize();
             assert(pmin.numProofs() == 1);
             shrunk_proof = pmin.getProof(0);
         }
         else if (opts().ivc_ucbf_use_sisi)
         {
-            SISIMinimizer pmin(vars(), tr(), proof, gs());
+            SISIMinimizer pmin(vars(), tr(), proof);
             pmin.minimize();
             assert(pmin.numProofs() == 1);
             shrunk_proof = pmin.getProof(0);
@@ -95,7 +94,7 @@ namespace PME {
         // group represents a logic gate. Instead, we use a Debug TR (as hard
         // clauses) and add soft clauses enforcing that the debug latches are
         // zero.  For each gate, (~dl) is a soft clause.
-        MUSFinderWrapper finder(vars(), gs());
+        MUSFinderWrapper finder(vars());
 
         // Inv
         finder.addHardClauses(shrunk_proof.begin(), shrunk_proof.end());

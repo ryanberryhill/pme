@@ -21,6 +21,8 @@
 
 #include "pme/id.h"
 #include "pme/engine/sat_adaptor.h"
+#include "pme/util/timer.h"
+#include "pme/engine/global_state.h"
 
 #include <cassert>
 #include <algorithm>
@@ -152,6 +154,8 @@ namespace PME
 
     bool SATAdaptor::groupSolve(GroupID group, const Cube & assumps, Cube * crits)
     {
+        GlobalState::stats().sat_calls++;
+        AutoTimer timer(GlobalState::stats().sat_runtime);
         SAT::Cube satassumps;
         for (ID lit : assumps)
         {

@@ -105,8 +105,7 @@ namespace PME { namespace IC3 {
     class IC3Solver {
         public:
             IC3Solver(VariableManager & varman,
-                      const TransitionRelation & tr,
-                      GlobalState & gs);
+                      const TransitionRelation & tr);
 
             SafetyResult prove();
             SafetyResult prove(const Cube & target);
@@ -174,11 +173,10 @@ namespace PME { namespace IC3 {
             std::string clauseStringOf(LemmaID id) const;
             std::string clauseStringOf(const Cube & c) const;
 
-            const PMEOptions & opts() const { return m_gs.opts; }
+            const PMEOptions & opts() const { return GlobalState::options(); }
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            GlobalState & m_gs;
 
             InductiveTrace m_trace;
             ObligationPool m_obls;

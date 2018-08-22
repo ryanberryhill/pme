@@ -41,9 +41,8 @@ struct DebugFixture
     VariableManager vars;
     std::unique_ptr<DebugTransitionRelation> debug_tr;
     std::unique_ptr<Debugger> debugger;
-    GlobalState gs;
 
-    DebugFixture(bool simplify = true)
+    DebugFixture()
     {
         aig = aiger_init();
 
@@ -74,7 +73,6 @@ struct DebugFixture
         aiger_add_output(aig, a2, "o0");
         o0 = a2;
 
-        gs.opts.simplify = simplify;
         debug_tr.reset(new DebugTransitionRelation(vars, aig));
 
         setInit(debug_tr->toInternal(l0), ID_TRUE);
@@ -92,7 +90,7 @@ struct DebugFixture
 
     void prepareDebugger()
     {
-        debugger.reset(new DebuggerType(vars, *debug_tr, gs));
+        debugger.reset(new DebuggerType(vars, *debug_tr));
     }
 
     ~DebugFixture()

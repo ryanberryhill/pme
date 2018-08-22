@@ -57,34 +57,34 @@ namespace PME
 
     bool Engine::checkProof()
     {
-        ProofChecker ind(m_tr, m_proof, m_gs);
+        ProofChecker ind(m_tr, m_proof);
         return ind.checkProof();
     }
 
     void Engine::minimize(PMEMinimizationAlgorithm algorithm)
     {
-        AutoTimer timer(m_gs.stats.runtime);
+        AutoTimer timer(GlobalState::stats().runtime);
         switch (algorithm)
         {
             case PME_MINIMIZATION_MARCO:
                 log(1) << "Starting MARCO" << std::endl;
-                m_minimizer.reset(new MARCOMinimizer(m_vars, m_tr, m_proof, m_gs));
+                m_minimizer.reset(new MARCOMinimizer(m_vars, m_tr, m_proof));
                 break;
             case PME_MINIMIZATION_CAMSIS:
                 log(1) << "Starting CAMSIS" << std::endl;
-                m_minimizer.reset(new CAMSISMinimizer(m_vars, m_tr, m_proof, m_gs));
+                m_minimizer.reset(new CAMSISMinimizer(m_vars, m_tr, m_proof));
                 break;
             case PME_MINIMIZATION_SISI:
                 log(1) << "Starting SISI" << std::endl;
-                m_minimizer.reset(new SISIMinimizer(m_vars, m_tr, m_proof, m_gs));
+                m_minimizer.reset(new SISIMinimizer(m_vars, m_tr, m_proof));
                 break;
             case PME_MINIMIZATION_BRUTEFORCE:
                 log(1) << "Starting BFMIN" << std::endl;
-                m_minimizer.reset(new BruteForceMinimizer(m_vars, m_tr, m_proof, m_gs));
+                m_minimizer.reset(new BruteForceMinimizer(m_vars, m_tr, m_proof));
                 break;
             case PME_MINIMIZATION_SIMPLE:
                 log(1) << "Starting SIMPLEMIN" << std::endl;
-                m_minimizer.reset(new SimpleMinimizer(m_vars, m_tr, m_proof, m_gs));
+                m_minimizer.reset(new SimpleMinimizer(m_vars, m_tr, m_proof));
                 break;
             default:
                 throw std::logic_error("Unknown minimization algorithm");
@@ -97,24 +97,24 @@ namespace PME
 
     void Engine::findIVCs(PMEIVCAlgorithm algorithm)
     {
-        AutoTimer timer(m_gs.stats.runtime);
+        AutoTimer timer(GlobalState::stats().runtime);
         switch (algorithm)
         {
             case PME_IVC_MARCO:
                 log(1) << "Starting MARCOIVC" << std::endl;
-                m_ivc_finder.reset(new MARCOIVCFinder(m_vars, m_tr, m_gs));
+                m_ivc_finder.reset(new MARCOIVCFinder(m_vars, m_tr));
                 break;
             case PME_IVC_CAIVC:
                 log(1) << "Starting CAIVC" << std::endl;
-                m_ivc_finder.reset(new CAIVCFinder(m_vars, m_tr, m_gs));
+                m_ivc_finder.reset(new CAIVCFinder(m_vars, m_tr));
                 break;
             case PME_IVC_BF:
                 log(1) << "Starting IVC_BF" << std::endl;
-                m_ivc_finder.reset(new IVCBFFinder(m_vars, m_tr, m_gs));
+                m_ivc_finder.reset(new IVCBFFinder(m_vars, m_tr));
                 break;
             case PME_IVC_UCBF:
                 log(1) << "Starting IVC_UCBF" << std::endl;
-                m_ivc_finder.reset(new IVCUCBFFinder(m_vars, m_tr, m_gs));
+                m_ivc_finder.reset(new IVCUCBFFinder(m_vars, m_tr));
                 break;
             default:
                 throw std::logic_error("Unknown IVC algorithm");
@@ -127,8 +127,8 @@ namespace PME
 
     bool Engine::runIC3()
     {
-        AutoTimer timer(m_gs.stats.runtime);
-        IC3::IC3Solver solver(m_vars, m_tr, m_gs);
+        AutoTimer timer(GlobalState::stats().runtime);
+        IC3::IC3Solver solver(m_vars, m_tr);
         SafetyResult result = solver.prove();
 
         if (result.result == SAFE)
@@ -147,8 +147,8 @@ namespace PME
 
     bool Engine::runBMC(unsigned k_max)
     {
-        AutoTimer timer(m_gs.stats.runtime);
-        BMC::BMCSolver solver(m_vars, m_tr, m_gs);
+        AutoTimer timer(GlobalState::stats().runtime);
+        BMC::BMCSolver solver(m_vars, m_tr);
         SafetyResult result = solver.solve(k_max);
 
         if (result.result == UNSAFE)
@@ -281,32 +281,32 @@ namespace PME
 
     void Engine::setLogStream(std::ostream & stream)
     {
-        m_gs.logger.setLogStream(stream);
+        GlobalState::logger().setLogStream(stream);
     }
 
     void Engine::setVerbosity(int v)
     {
-        m_gs.logger.setAllVerbosities(v);
+        GlobalState::logger().setAllVerbosities(v);
     }
 
     void Engine::setChannelVerbosity(LogChannelID channel, int v)
     {
-        m_gs.logger.setVerbosity(channel, v);
+        GlobalState::logger().setVerbosity(channel, v);
     }
 
     void Engine::printStats() const
     {
-        m_gs.stats.printAll(log(0));
+        GlobalState::stats().printAll(log(0));
     }
 
     std::ostream & Engine::log(int v) const
     {
-        return m_gs.logger.log(LOG_PME, v);
+        return GlobalState::logger().log(LOG_PME, v);
     }
 
     void Engine::parseOption(const std::string& option)
     {
-        m_gs.opts.parseOption(option);
+        GlobalState::options().parseOption(option);
     }
 }
 

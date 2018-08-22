@@ -41,7 +41,6 @@ struct BMCFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
     std::unique_ptr<BMCSolver> solver;
-    GlobalState gs;
 
     BMCFixture()
     {
@@ -85,7 +84,7 @@ struct BMCFixture
 
     void prepareSolver()
     {
-        solver.reset(new BMCSolver(vars, *tr, gs));
+        solver.reset(new BMCSolver(vars, *tr));
     }
 
     ~BMCFixture()

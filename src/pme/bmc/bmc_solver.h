@@ -34,8 +34,7 @@ namespace PME { namespace BMC {
     {
         public:
             BMCSolver(VariableManager & varman,
-                      const TransitionRelation & tr,
-                      GlobalState & gs);
+                      const TransitionRelation & tr);
 
             SafetyResult solve(unsigned k_max);
             SafetyResult solve(unsigned k_max, const Cube & assumps);
@@ -56,7 +55,6 @@ namespace PME { namespace BMC {
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
-            GlobalState & m_gs;
             SATAdaptor m_solver;
             unsigned m_numFrames;
             bool m_solverInited;

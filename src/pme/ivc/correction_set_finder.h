@@ -33,8 +33,7 @@ namespace PME {
         public:
             typedef std::pair<bool, CorrectionSet> FindResult;
             MCSFinder(VariableManager & varman,
-                      DebugTransitionRelation & tr,
-                      GlobalState & gs);
+                      DebugTransitionRelation & tr);
 
             bool moreCorrectionSets();
             FindResult findAndBlock();
@@ -54,8 +53,7 @@ namespace PME {
         public:
             typedef std::pair<bool, CorrectionSet> FindResult;
             ApproximateMCSFinder(VariableManager & varman,
-                                 DebugTransitionRelation & tr,
-                                 GlobalState & gs);
+                                 DebugTransitionRelation & tr);
 
             FindResult findAndBlockOverGates(const std::vector<ID> & gates);
             void blockSolution(const CorrectionSet & corr);
@@ -66,7 +64,6 @@ namespace PME {
             unsigned m_cardinality;
             IC3Debugger m_fallback;
             BMCDebugger m_solver;
-            GlobalState & m_gs;
     };
 }
 

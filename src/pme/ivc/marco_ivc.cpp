@@ -29,9 +29,8 @@
 namespace PME {
 
     MARCOIVCFinder::MARCOIVCFinder(VariableManager & varman,
-                                   const TransitionRelation & tr,
-                                   GlobalState & gs)
-        : IVCFinder(varman, tr, gs),
+                                   const TransitionRelation & tr)
+        : IVCFinder(varman, tr),
           m_seedSolver(varman),
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids())
@@ -121,7 +120,7 @@ namespace PME {
         // TODO: incremental debugging-based version
         // TODO: non-incremental hybrid BMC/IC3 version
         TransitionRelation partial(tr(), seed);
-        IC3::IC3Solver ic3(vars(), partial, gs());
+        IC3::IC3Solver ic3(vars(), partial);
 
         SafetyResult safe = ic3.prove();
         return (safe.result == SAFE);
@@ -149,12 +148,12 @@ namespace PME {
     {
         if (opts().marcoivc_use_ivcucbf)
         {
-            IVCUCBFFinder ivc_ucbf(vars(), tr(), gs());
+            IVCUCBFFinder ivc_ucbf(vars(), tr());
             ivc_ucbf.shrink(seed);
         }
         else
         {
-            IVCBFFinder ivc_bf(vars(), tr(), gs());
+            IVCBFFinder ivc_bf(vars(), tr());
             ivc_bf.shrink(seed);
         }
     }

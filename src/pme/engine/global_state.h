@@ -32,6 +32,18 @@ namespace PME
         // Global
         double runtime;
 
+        size_t ic3_calls;
+        double ic3_runtime;
+
+        size_t bmc_calls;
+        double bmc_runtime;
+
+        size_t maxsat_calls;
+        double maxsat_runtime;
+
+        size_t sat_calls;
+        double sat_runtime;
+
         // IVCs
         size_t num_mivcs_found;
         size_t smallest_mivc_size;
@@ -42,18 +54,27 @@ namespace PME
         PMEStats();
     };
 
-    struct GlobalState
+    class GlobalState
     {
-        // The logger is mutable because changing it should not be considered
-        // as conceptually changing the state of any object with a reference to
-        // this GlobalState. i.e., const functions should be able to log
-        // Same goes for statistics
-        mutable Logger logger;
-        mutable PMEStats stats;
-        PMEOptions opts;
-    };
+        private:
+            // The logger is mutable because changing it should not be considered
+            // as conceptually changing the state of any object with a reference to
+            // this GlobalState. i.e., const functions should be able to log
+            // Same goes for statistics
+            mutable Logger m_logger;
+            mutable PMEStats m_stats;
+            PMEOptions m_opts;
+        public:
+            GlobalState() { }
 
-    extern GlobalState g_null_gs;
+            static GlobalState& instance();
+            static PMEOptions& options();
+            static PMEStats& stats();
+            static Logger& logger();
+
+            GlobalState(const GlobalState &)     = delete;
+            void operator=(const GlobalState &)  = delete;
+    };
 }
 
 #endif
