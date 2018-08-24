@@ -51,7 +51,7 @@ namespace PME
             void recordCardinality(const Cube & assumps, unsigned c);
 
             VariableManager m_vars;
-            CardinalityConstraint m_cardinality;
+            TotalizerCardinalityConstraint m_cardinality;
             SATAdaptor m_solver;
             bool m_sat;
             std::multiset<ID> m_optimizationSet;

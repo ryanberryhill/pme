@@ -87,25 +87,25 @@ namespace PME
             }
     };
 
-    CardinalityConstraint::CardinalityConstraint(VariableManager & varman)
+    TotalizerCardinalityConstraint::TotalizerCardinalityConstraint(VariableManager & varman)
         : m_vars(varman),
           m_cardinality(0)
     { }
 
-    CardinalityConstraint::~CardinalityConstraint()
+    TotalizerCardinalityConstraint::~TotalizerCardinalityConstraint()
     { }
 
-    unsigned CardinalityConstraint::getInputCardinality() const
+    unsigned TotalizerCardinalityConstraint::getInputCardinality() const
     {
         return m_inputs.size();
     }
 
-    unsigned CardinalityConstraint::getOutputCardinality() const
+    unsigned TotalizerCardinalityConstraint::getOutputCardinality() const
     {
         return m_root ? m_root->outputSize() : 0;
     }
 
-    void CardinalityConstraint::increaseNodeCardinality(TotalizerTree * node,
+    void TotalizerCardinalityConstraint::increaseNodeCardinality(TotalizerTree * node,
                                                         std::set<TotalizerTree *> & visited)
     {
         assert(node != nullptr);
@@ -130,7 +130,7 @@ namespace PME
         }
     }
 
-    void CardinalityConstraint::setCardinality(unsigned n)
+    void TotalizerCardinalityConstraint::setCardinality(unsigned n)
     {
         if (n <= m_cardinality) { return; }
         else
@@ -146,7 +146,7 @@ namespace PME
         }
     }
 
-    void CardinalityConstraint::increaseCardinality(unsigned n)
+    void TotalizerCardinalityConstraint::increaseCardinality(unsigned n)
     {
         if (n < m_cardinality)
         {
@@ -158,7 +158,7 @@ namespace PME
         }
     }
 
-    void CardinalityConstraint::updateCachedOutputs()
+    void TotalizerCardinalityConstraint::updateCachedOutputs()
     {
         m_outputs.clear();
         if (m_root)
@@ -168,7 +168,7 @@ namespace PME
         }
     }
 
-    void CardinalityConstraint::addInput(ID id)
+    void TotalizerCardinalityConstraint::addInput(ID id)
     {
         m_inputs.push_back(id);
         if (m_root)
@@ -193,22 +193,22 @@ namespace PME
         updateCachedOutputs();
     }
 
-    ID CardinalityConstraint::freshVar()
+    ID TotalizerCardinalityConstraint::freshVar()
     {
         return m_vars.getNewID("cardinality_internal");
     }
 
-    ClauseVec CardinalityConstraint::CNFize()
+    ClauseVec TotalizerCardinalityConstraint::CNFize()
     {
         return CNFize(m_root.get());
     }
 
-    void CardinalityConstraint::clearIncrementality()
+    void TotalizerCardinalityConstraint::clearIncrementality()
     {
         clearIncrementality(m_root.get());
     }
 
-    void CardinalityConstraint::clearIncrementality(TotalizerTree * tree)
+    void TotalizerCardinalityConstraint::clearIncrementality(TotalizerTree * tree)
     {
         if (tree == nullptr) { return; }
         tree->markDirty();
@@ -216,7 +216,7 @@ namespace PME
         if (tree->right()) { clearIncrementality(tree->right().get()); }
     }
 
-    ClauseVec CardinalityConstraint::CNFize(TotalizerTree * tree)
+    ClauseVec TotalizerCardinalityConstraint::CNFize(TotalizerTree * tree)
     {
         ClauseVec cnf;
         assert(tree != nullptr);
@@ -302,7 +302,7 @@ namespace PME
         return cnf;
     }
 
-    bool CardinalityConstraint::isDirtyClause(const Clause & cls, TotalizerTree * node) const
+    bool TotalizerCardinalityConstraint::isDirtyClause(const Clause & cls, TotalizerTree * node) const
     {
         for (ID id : cls)
         {
@@ -312,12 +312,12 @@ namespace PME
         return false;
     }
 
-    const std::vector<ID> & CardinalityConstraint::outputs() const
+    const std::vector<ID> & TotalizerCardinalityConstraint::outputs() const
     {
         return m_outputs;
     }
 
-    Cube CardinalityConstraint::assumeEq(unsigned n) const
+    Cube TotalizerCardinalityConstraint::assumeEq(unsigned n) const
     {
         if (n == getInputCardinality() && n == getOutputCardinality())
         {
@@ -341,7 +341,7 @@ namespace PME
         return assumps;
     }
 
-    Cube CardinalityConstraint::assumeLEq(unsigned n) const
+    Cube TotalizerCardinalityConstraint::assumeLEq(unsigned n) const
     {
         if (n == getInputCardinality() && n == getOutputCardinality())
         {
@@ -365,7 +365,7 @@ namespace PME
         return assumps;
     }
 
-    Cube CardinalityConstraint::assumeLT(unsigned n) const
+    Cube TotalizerCardinalityConstraint::assumeLT(unsigned n) const
     {
         if (n == 0) { throw std::invalid_argument("Tried to assume cardinality < 0"); }
         if (n > getOutputCardinality())
@@ -385,7 +385,7 @@ namespace PME
         return assumps;
     }
 
-    Cube CardinalityConstraint::assumeGEq(unsigned n) const
+    Cube TotalizerCardinalityConstraint::assumeGEq(unsigned n) const
     {
         if (n == getInputCardinality() && n == getOutputCardinality())
         {
@@ -408,7 +408,7 @@ namespace PME
         return assumps;
     }
 
-    Cube CardinalityConstraint::assumeGT(unsigned n) const
+    Cube TotalizerCardinalityConstraint::assumeGT(unsigned n) const
     {
         if (n >= getOutputCardinality())
         {

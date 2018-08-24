@@ -41,7 +41,7 @@ struct CombinationalAigFixture
     ExternalID i1, o1;
     VariableManager vars;
     std::unique_ptr<DebugTransitionRelation> tr;
-    std::unique_ptr<CardinalityConstraint> cardinality;
+    std::unique_ptr<TotalizerCardinalityConstraint> cardinality;
 
     CombinationalAigFixture()
     {
@@ -74,7 +74,7 @@ struct CombinationalAigFixture
     {
         tr.reset(new DebugTransitionRelation(vars, aig));
 
-        cardinality.reset(new CardinalityConstraint(vars));
+        cardinality.reset(new TotalizerCardinalityConstraint(vars));
 
         cardinality->addInput(debugLatch());
     }
@@ -99,7 +99,7 @@ struct AigFixture
     VariableManager vars;
     std::unique_ptr<TransitionRelation> ndtr;
     std::unique_ptr<DebugTransitionRelation> tr;
-    std::unique_ptr<CardinalityConstraint> cardinality;
+    std::unique_ptr<TotalizerCardinalityConstraint> cardinality;
 
     AigFixture()
     {
@@ -161,7 +161,7 @@ struct AigFixture
     {
         ndtr.reset(new TransitionRelation(vars, aig));
         tr.reset(new DebugTransitionRelation(*ndtr));
-        cardinality.reset(new CardinalityConstraint(vars));
+        cardinality.reset(new TotalizerCardinalityConstraint(vars));
 
         std::vector<ID> dl = debugLatches();
         for (ID id : dl)

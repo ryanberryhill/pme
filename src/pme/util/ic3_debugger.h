@@ -61,7 +61,7 @@ namespace PME {
             const DebugTransitionRelation & m_debug_tr;
             IC3::IC3Solver m_ic3;
             unsigned m_cardinality;
-            CardinalityConstraint m_cardinalityConstraint;
+            TotalizerCardinalityConstraint m_cardinalityConstraint;
             std::set<ID> m_debug_latches;
             std::vector<Clause> m_blockingClauses;
     };

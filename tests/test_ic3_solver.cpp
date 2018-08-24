@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(complex_init_state)
     f.prepareSolver(*f.debug_tr);
 
     // A cardinality constraint over the debug latches
-    CardinalityConstraint cardinality(f.vars);
+    TotalizerCardinalityConstraint cardinality(f.vars);
     std::vector<ID> debug_latches(f.debug_tr->begin_latches(), f.debug_tr->end_latches());
     for (ID id : debug_latches)
     {

@@ -69,7 +69,7 @@ namespace PME {
 
             unsigned m_kmax;
             unsigned m_cardinality;
-            CardinalityConstraint m_cardinalityConstraint;
+            TotalizerCardinalityConstraint m_cardinalityConstraint;
             std::set<ID> m_debug_latches;
 
             BMC::BMCSolver m_solver;

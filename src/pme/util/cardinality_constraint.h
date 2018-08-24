@@ -32,11 +32,11 @@ namespace PME
 {
     class TotalizerTree;
 
-    class CardinalityConstraint
+    class TotalizerCardinalityConstraint
     {
         public:
-            CardinalityConstraint(VariableManager & varman);
-            ~CardinalityConstraint();
+            TotalizerCardinalityConstraint(VariableManager & varman);
+            ~TotalizerCardinalityConstraint();
             void addInput(ID id);
 
             unsigned getCardinality() const { return m_cardinality; }

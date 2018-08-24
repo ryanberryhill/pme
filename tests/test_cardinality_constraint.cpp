@@ -23,7 +23,7 @@
 #include "pme/engine/sat_adaptor.h"
 #include "pme/engine/variable_manager.h"
 
-#define BOOST_TEST_MODULE CardinalityConstraintTest
+#define BOOST_TEST_MODULE TotalizerCardinalityConstraintTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -32,7 +32,7 @@ using namespace PME;
 struct CardinalityFixture
 {
     VariableManager v;
-    CardinalityConstraint cardinality;
+    TotalizerCardinalityConstraint cardinality;
     std::vector<ID> ids;
     SATAdaptor sat;
 
@@ -72,7 +72,7 @@ struct CardinalityFixture
 BOOST_AUTO_TEST_CASE(get_cardinality)
 {
     VariableManager v;
-    CardinalityConstraint cardinality(v);
+    TotalizerCardinalityConstraint cardinality(v);
 
     ID a = v.getNewID("a");
     ID b = v.getNewID("b");
