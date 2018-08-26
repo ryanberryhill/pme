@@ -43,6 +43,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/engine/logger.cpp \
                    src/pme/util/cardinality_constraint.h \
                    src/pme/util/cardinality_constraint.cpp \
+                   src/pme/util/sorting_network.h \
+                   src/pme/util/sorting_network.cpp \
                    src/pme/util/clause_database.h \
                    src/pme/util/clause_database.cpp \
                    src/pme/util/proof_checker.h \
@@ -69,8 +71,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/hybrid_debugger.cpp \
                    src/pme/util/hybrid_safety_checker.h \
                    src/pme/util/hybrid_safety_checker.cpp \
-				   src/pme/util/timer.h \
-				   src/pme/util/timer.cpp \
+                   src/pme/util/timer.h \
+                   src/pme/util/timer.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \
@@ -155,6 +157,7 @@ TESTS = test_sat_adaptor \
         test_debug_transition_relation \
         test_variable_manager \
         test_cardinality_constraint \
+        test_sorting_network \
         test_proof_checker \
         test_proof_minimizer \
         test_maxsat_solver \
@@ -183,7 +186,6 @@ test_variable_manager_SOURCES = tests/test_variable_manager.cpp
 test_variable_manager_LDADD = libpme.a \
                               -lboost_unit_test_framework
 
-
 test_sat_adaptor_SOURCES = tests/test_sat_adaptor.cpp  
 test_sat_adaptor_LDADD = $(PME_TEST_LIBS)
 
@@ -200,6 +202,9 @@ test_debug_transition_relation_LDADD = $(PME_TEST_LIBS)
 
 test_cardinality_constraint_SOURCES = tests/test_cardinality_constraint.cpp
 test_cardinality_constraint_LDADD = $(PME_TEST_LIBS) 
+
+test_sorting_network_SOURCES = tests/test_sorting_network.cpp
+test_sorting_network_LDADD = $(PME_TEST_LIBS) 
 
 test_proof_checker_SOURCES = tests/test_proof_checker.cpp  
 test_proof_checker_LDADD = $(PME_TEST_LIBS) 
