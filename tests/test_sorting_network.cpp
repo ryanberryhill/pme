@@ -142,9 +142,9 @@ BOOST_AUTO_TEST_CASE(full_comparator)
 
 void testMergeNetworks(bool le, bool ge)
 {
-    for (size_t a = 0; a < 10; ++a)
+    for (size_t a = 0; a < 6; ++a)
     {
-        for (size_t b = 0; b < 10; ++b)
+        for (size_t b = 0; b < 6; ++b)
         {
             if (a == 0 && b == 0) { continue; }
 
@@ -258,8 +258,8 @@ void testSortingNetworkWithPattern(bool le, bool ge, std::vector<bool> pattern)
 
 void testSortingNetworks(bool le, bool ge)
 {
-    // For n up to 8, try every possible pattern
-    for (size_t n = 1; n <= 8; ++n)
+    // For n up to 6, try every possible pattern
+    for (size_t n = 1; n <= 6; ++n)
     {
         // For each possible number up to 2^n, use its binary representation
         // as a bitmask
@@ -297,9 +297,9 @@ BOOST_AUTO_TEST_CASE(sorting_networks)
 
 void testSimplifiedMergeNetworks(bool le, bool ge)
 {
-    for (size_t a = 0; a < 8; ++a)
+    for (size_t a = 0; a < 6; ++a)
     {
-        for (size_t b = 0; b < 8; ++b)
+        for (size_t b = 0; b < 6; ++b)
         {
             if (a == 0 && b == 0) { continue; }
 
@@ -452,8 +452,8 @@ BOOST_AUTO_TEST_CASE(cardinality_networks)
     testCardinalityNetworks(true, true);
 
     // <= sorting
-    // testCardinalityNetworks(true, false);
+    testCardinalityNetworks(true, false);
 
     // >= sorting
-    // testCardinalityNetworks(false, true);
+    testCardinalityNetworks(false, true);
 }
