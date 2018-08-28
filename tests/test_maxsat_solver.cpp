@@ -27,7 +27,9 @@
 
 using namespace PME;
 
-unsigned countAndBlock(const PBOMaxSATSolver & solver, const std::vector<ID> & ids, Clause & block)
+unsigned countAndBlock(const MaxSATSolver & solver,
+                       const std::vector<ID> & ids,
+                       Clause & block)
 {
     block.clear();
     BOOST_REQUIRE(solver.isSAT());
@@ -43,11 +45,8 @@ unsigned countAndBlock(const PBOMaxSATSolver & solver, const std::vector<ID> & i
     return count;
 }
 
-BOOST_AUTO_TEST_CASE(basic_maxsat)
+void testBasicMaxSAT(VariableManager & vars, MaxSATSolver & solver)
 {
-    VariableManager vars;
-    PBOMaxSATSolver solver(vars);
-
     ID a = vars.getNewID();
     ID b = vars.getNewID();
     ID c = vars.getNewID();
@@ -98,6 +97,95 @@ BOOST_AUTO_TEST_CASE(basic_maxsat)
     // And finally UNSAT if we force a literal to be 1
     solver.addClause({a});
     BOOST_CHECK(!solver.solve());
+}
+
+BOOST_AUTO_TEST_CASE(basic_pbo_maxsat)
+{
+    VariableManager vars;
+    PBOMaxSATSolver solver(vars);
+    testBasicMaxSAT(vars, solver);
+}
+
+BOOST_AUTO_TEST_CASE(basic_msu4_maxsat)
+{
+    VariableManager vars;
+    MSU4MaxSATSolver solver(vars);
+    testBasicMaxSAT(vars, solver);
+}
+
+void testMaxSAT(VariableManager & vars, MaxSATSolver & solver)
+{
+    ID a = vars.getNewID();
+    ID b = vars.getNewID();
+    ID c = vars.getNewID();
+    ID d = vars.getNewID();
+    ID e = vars.getNewID();
+
+    std::vector<ID> ids = {negate(a), negate(b), c, negate(d), negate(e)};
+
+    solver.addForOptimization(negate(a));
+    solver.addForOptimization(negate(b));
+    solver.addForOptimization(c);
+    solver.addForOptimization(negate(d));
+    solver.addForOptimization(negate(e));
+
+    // Any 3 of the above is a MaxSAT solution, but not 4 or 5
+    solver.addClause({a, b, negate(c), d});
+    solver.addClause({a, b, negate(c), e});
+    solver.addClause({a, b, d, e});
+    solver.addClause({a, negate(c), d, e});
+    solver.addClause({b, negate(c), d, e});
+
+    Clause block;
+    // First (5 C 3) = 10 assignments should satisfy 3 variables
+    for (unsigned i = 0; i < 10; ++i)
+    {
+        BOOST_REQUIRE(solver.solve());
+        unsigned count = countAndBlock(solver, ids, block);
+        BOOST_CHECK_EQUAL(count, 3);
+        solver.addClause(block);
+    }
+
+    // Next (5 C 2) = 10 assignments should satisfy 2 variables
+    for (unsigned i = 0; i < 10; ++i)
+    {
+        BOOST_REQUIRE(solver.solve());
+        unsigned count = countAndBlock(solver, ids, block);
+        BOOST_CHECK_EQUAL(count, 2);
+        solver.addClause(block);
+    }
+
+    // Next (5 C 1) = 5 assignments should satisfy 1 variable
+    for (unsigned i = 0; i < 5; ++i)
+    {
+        BOOST_REQUIRE(solver.solve());
+        unsigned count = countAndBlock(solver, ids, block);
+        BOOST_CHECK_EQUAL(count, 1);
+        solver.addClause(block);
+    }
+
+    // Finally we should get a solution where none are satisfied
+    BOOST_REQUIRE(solver.solve());
+    unsigned count = countAndBlock(solver, ids, block);
+    BOOST_CHECK_EQUAL(count, 0);
+
+    // Add a clause to force UNSAT
+    solver.addClause({c});
+    BOOST_CHECK(!solver.solve());
+}
+
+BOOST_AUTO_TEST_CASE(pbo_maxsat)
+{
+    VariableManager vars;
+    PBOMaxSATSolver solver(vars);
+    testMaxSAT(vars, solver);
+}
+
+BOOST_AUTO_TEST_CASE(msu4_maxsat)
+{
+    VariableManager vars;
+    MSU4MaxSATSolver solver(vars);
+    testMaxSAT(vars, solver);
 }
 
 BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)

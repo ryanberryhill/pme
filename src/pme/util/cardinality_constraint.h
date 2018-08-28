@@ -33,7 +33,14 @@ namespace PME
     class CardinalityConstraint
     {
         public:
+            virtual ~CardinalityConstraint() { }
             virtual void addInput(ID id) = 0;
+
+            template<typename Iterator>
+            void addInputs(Iterator begin, Iterator end)
+            {
+                for (Iterator it = begin; it != end; ++it) { addInput(*it); }
+            }
 
             virtual unsigned getCardinality() const = 0;
             virtual void setCardinality(unsigned n) = 0;

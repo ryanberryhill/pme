@@ -33,33 +33,74 @@
 
 namespace PME
 {
-    class PBOMaxSATSolver
+    class MaxSATSolver
+    {
+        public:
+            virtual ~MaxSATSolver() { }
+            virtual void addClause(const Clause & cls) = 0;
+            virtual void addClauses(const ClauseVec & vec) = 0;
+            virtual bool solve() = 0;
+            virtual void addForOptimization(ID lit) = 0;
+            virtual bool isSAT() const = 0;
+            virtual ModelValue getAssignment(ID lit) const = 0;
+            virtual ModelValue getAssignmentToVar(ID var) const = 0;
+    };
+
+    class PBOMaxSATSolver : public MaxSATSolver
     {
         public:
             PBOMaxSATSolver(VariableManager & varman);
-            void addClause(const Clause & cls);
-            void addClauses(const ClauseVec & vec);
-            bool solve();
+            virtual void addClause(const Clause & cls) override;
+            virtual void addClauses(const ClauseVec & vec) override;
+            virtual bool solve() override;
+            virtual void addForOptimization(ID lit) override;
+            virtual bool isSAT() const override;
+            virtual ModelValue getAssignment(ID lit) const override;
+            virtual ModelValue getAssignmentToVar(ID var) const override;
+
             bool solve(const Cube & assumps);
-            void addForOptimization(ID lit);
-            bool isSAT() const;
-            ModelValue getAssignment(ID lit) const;
-            ModelValue getAssignmentToVar(ID var) const;
 
         private:
             unsigned lastCardinality(const Cube & assumps) const;
             void recordCardinality(const Cube & assumps, unsigned c);
             void initSolver();
 
-            VariableManager m_vars;
+            VariableManager & m_vars;
             SortingCardinalityConstraint m_cardinality;
             SATAdaptor m_solver;
             bool m_sat;
             bool m_solverInited;
             ClauseVec m_clauses;
 
-            std::multiset<ID> m_optimizationSet;
+            std::vector<ID> m_optimizationSet;
             std::map<Cube, unsigned> m_lastCardinality;
+    };
+
+    class MSU4MaxSATSolver : public MaxSATSolver
+    {
+        public:
+            MSU4MaxSATSolver(VariableManager & varman);
+            virtual void addClause(const Clause & cls) override;
+            virtual void addClauses(const ClauseVec & vec) override;
+            virtual bool solve() override;
+            virtual void addForOptimization(ID lit) override;
+            virtual bool isSAT() const override;
+            virtual ModelValue getAssignment(ID lit) const override;
+            virtual ModelValue getAssignmentToVar(ID var) const override;
+        private:
+            void resetSolver();
+            std::set<ID> extractSolution() const;
+            Cube extractCore(const Cube & crits, const std::set<ID> & initial_assumps) const;
+            Cube addCardinality(const Cube & inputs, unsigned n);
+            unsigned numSatisfied(const Cube & lits) const;
+
+            bool m_isSAT;
+            VariableManager & m_vars;
+            std::set<ID> m_optimizationSet;
+            SATAdaptor m_solver;
+            ClauseVec m_clauses;
+            unsigned m_lb, m_ub;
+            std::set<ID> m_currentSoln;
     };
 }
 

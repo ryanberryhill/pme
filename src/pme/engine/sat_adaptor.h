@@ -47,6 +47,9 @@ namespace PME
             void addClause(const Clause & cls);
             void addClauses(const ClauseVec & vec);
             bool solve();
+            bool s(ID a);
+            bool s(ID a, ID b);
+            bool s(ID a, ID b, ID c);
             bool solve(const Cube & assumps, Cube * crits = nullptr);
             bool groupSolve(GroupID group);
             bool groupSolve(GroupID group, const Cube & assumps, Cube * crits = nullptr);

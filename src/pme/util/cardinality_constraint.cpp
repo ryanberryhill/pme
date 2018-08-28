@@ -27,6 +27,7 @@
 
 namespace PME
 {
+
     class TotalizerTree
     {
         private:

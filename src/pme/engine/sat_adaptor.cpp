@@ -52,6 +52,10 @@ namespace PME
         reset();
     }
 
+    bool SATAdaptor::s(ID a) { return solve({a}); }
+    bool SATAdaptor::s(ID a, ID b) { return solve({a, b}); }
+    bool SATAdaptor::s(ID a, ID b, ID c) { return solve({a, b, c}); }
+
     void SATAdaptor::introduceVariable(ID id)
     {
         ID stripped = strip(id);
