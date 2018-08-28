@@ -1,5 +1,6 @@
 #!/bin/bash
 
+trap exit INT
 
 PME=./pme
 CANONICALIZE=scripts/pme-canonicalize
