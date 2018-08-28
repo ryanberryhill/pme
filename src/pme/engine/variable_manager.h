@@ -50,6 +50,7 @@ namespace PME
     {
         public:
             VariableManager();
+            VariableManager(const VariableManager&) = delete;
 
             ID getNewID(std::string name = "", ExternalID external = 0);
 
