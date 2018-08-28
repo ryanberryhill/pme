@@ -67,6 +67,8 @@ namespace PME
             TransitionRelation(const TransitionRelation & other);
             TransitionRelation(const TransitionRelation & other, const std::vector<ID> & gates);
 
+            virtual ~TransitionRelation() { }
+
             ID toInternal(ExternalID aig_id) const;
             ExternalID toExternal(ID pme_id) const;
 
