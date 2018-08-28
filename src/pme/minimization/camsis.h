@@ -63,7 +63,7 @@ namespace PME
 
             ConsecutionChecker m_cons;
             CollapseSetFinder m_collapseFinder;
-            MaxSATSolver m_solver;
+            PBOMaxSATSolver m_solver;
             ClauseDatabase m_clausedb;
             VariableManager m_vars;
     };

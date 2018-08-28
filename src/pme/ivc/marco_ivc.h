@@ -55,7 +55,7 @@ namespace PME {
             id_iterator begin_gates() const { return m_debug_tr.begin_gate_ids(); }
             id_iterator end_gates() const { return m_debug_tr.end_gate_ids(); }
 
-            MaxSATSolver m_seedSolver;
+            PBOMaxSATSolver m_seedSolver;
             DebugTransitionRelation m_debug_tr;
             Seed m_smallestIVC;
             std::vector<ID> m_gates;

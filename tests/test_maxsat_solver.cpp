@@ -27,7 +27,7 @@
 
 using namespace PME;
 
-unsigned countAndBlock(const MaxSATSolver & solver, const std::vector<ID> & ids, Clause & block)
+unsigned countAndBlock(const PBOMaxSATSolver & solver, const std::vector<ID> & ids, Clause & block)
 {
     block.clear();
     BOOST_REQUIRE(solver.isSAT());
@@ -46,7 +46,7 @@ unsigned countAndBlock(const MaxSATSolver & solver, const std::vector<ID> & ids,
 BOOST_AUTO_TEST_CASE(basic_maxsat)
 {
     VariableManager vars;
-    MaxSATSolver solver(vars);
+    PBOMaxSATSolver solver(vars);
 
     ID a = vars.getNewID();
     ID b = vars.getNewID();
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(basic_maxsat)
 BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)
 {
     VariableManager vars;
-    MaxSATSolver solver(vars);
+    PBOMaxSATSolver solver(vars);
 
     ID a = vars.getNewID();
     ID b = vars.getNewID();

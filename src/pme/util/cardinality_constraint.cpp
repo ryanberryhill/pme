@@ -20,6 +20,7 @@
  */
 
 #include "pme/util/cardinality_constraint.h"
+#include "pme/util/sorting_network.h"
 
 #include <cassert>
 #include <algorithm>
@@ -61,7 +62,7 @@ namespace PME
             }
             bool isDirty() const { return !m_dirty.empty(); }
             bool isDirty(ID id) const { return m_dirty.count(id) > 0; }
-            bool isClean() const { return !isDirty(); }
+            bool isClean() const { return !isDirty() || isLeaf(); }
 
             bool isLeaf() const { return m_input != ID_NULL; }
 
@@ -86,6 +87,116 @@ namespace PME
                 return m_outputs.cend();
             }
     };
+
+    Cube CardinalityConstraint::assumeEq(unsigned n) const
+    {
+        if (n == getInputCardinality() && n == getOutputCardinality())
+        {
+            return inputs();
+        }
+        else if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeEq cardinality >= "
+                                        "current output cardinality");
+        }
+
+        Cube assumps;
+        assumps.reserve(getOutputCardinality());
+        for (unsigned i = 0; i < outputs().size(); ++i)
+        {
+            unsigned lit = outputs().at(i);
+            if (n > 0 && i <= n - 1) { assumps.push_back(lit); }
+            else { assumps.push_back(negate(lit)); }
+        }
+
+        return assumps;
+    }
+
+    Cube CardinalityConstraint::assumeLEq(unsigned n) const
+    {
+        if (n == getInputCardinality() && n == getOutputCardinality())
+        {
+            Cube empty;
+            return empty;
+        }
+        else if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeLEq cardinality >= "
+                                        "current output cardinality");
+        }
+
+        Cube assumps;
+        assumps.reserve(getOutputCardinality());
+        for (unsigned i = 0; i < outputs().size(); ++i)
+        {
+            unsigned lit = outputs().at(i);
+            if (i >= n) { assumps.push_back(negate(lit)); }
+        }
+
+        return assumps;
+    }
+
+    Cube CardinalityConstraint::assumeLT(unsigned n) const
+    {
+        if (n == 0) { throw std::invalid_argument("Tried to assume cardinality < 0"); }
+        if (n > getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeLT cardinality >= "
+                                        "current output cardinality");
+        }
+
+        Cube assumps;
+        assumps.reserve(getOutputCardinality());
+        for (unsigned i = 0; i < outputs().size(); ++i)
+        {
+            unsigned lit = outputs().at(i);
+            if (n > 0 && i >= n - 1) { assumps.push_back(negate(lit)); }
+        }
+
+        return assumps;
+    }
+
+    Cube CardinalityConstraint::assumeGEq(unsigned n) const
+    {
+        if (n == getInputCardinality() && n == getOutputCardinality())
+        {
+            return inputs();
+        }
+        else if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeGEq cardinality >= "
+                                        "current output cardinality");
+        }
+
+        Cube assumps;
+        assumps.reserve(getOutputCardinality());
+        for (unsigned i = 0; i < outputs().size(); ++i)
+        {
+            unsigned lit = outputs().at(i);
+            if (n > 0 && i <= n - 1) { assumps.push_back(lit); }
+        }
+
+        return assumps;
+    }
+
+    Cube CardinalityConstraint::assumeGT(unsigned n) const
+    {
+        if (n >= getOutputCardinality())
+        {
+            throw std::invalid_argument("Tried to assumeGT cardinality >= "
+                                        "current output cardinality");
+        }
+
+        Cube assumps;
+        assumps.reserve(getOutputCardinality());
+        for (unsigned i = 0; i < outputs().size(); ++i)
+        {
+            unsigned lit = outputs().at(i);
+            if (i <= n) { assumps.push_back(lit); }
+        }
+
+        return assumps;
+    }
 
     TotalizerCardinalityConstraint::TotalizerCardinalityConstraint(VariableManager & varman)
         : m_vars(varman),
@@ -200,7 +311,13 @@ namespace PME
 
     ClauseVec TotalizerCardinalityConstraint::CNFize()
     {
-        return CNFize(m_root.get());
+        clearIncrementality();
+        return incrementalCNFize();
+    }
+
+    ClauseVec TotalizerCardinalityConstraint::incrementalCNFize()
+    {
+        return toCNF(m_root.get());
     }
 
     void TotalizerCardinalityConstraint::clearIncrementality()
@@ -216,7 +333,7 @@ namespace PME
         if (tree->right()) { clearIncrementality(tree->right().get()); }
     }
 
-    ClauseVec TotalizerCardinalityConstraint::CNFize(TotalizerTree * tree)
+    ClauseVec TotalizerCardinalityConstraint::toCNF(TotalizerTree * tree)
     {
         ClauseVec cnf;
         assert(tree != nullptr);
@@ -232,8 +349,8 @@ namespace PME
         if (tree->isLeaf()) { return cnf; }
 
         // Recursively handle the subtrees
-        ClauseVec lcnf = CNFize(tree->left().get());
-        ClauseVec rcnf = CNFize(tree->right().get());
+        ClauseVec lcnf = toCNF(tree->left().get());
+        ClauseVec rcnf = toCNF(tree->right().get());
         cnf.insert(cnf.end(), lcnf.begin(), lcnf.end());
         cnf.insert(cnf.end(), rcnf.begin(), rcnf.end());
 
@@ -312,120 +429,55 @@ namespace PME
         return false;
     }
 
-    const std::vector<ID> & TotalizerCardinalityConstraint::outputs() const
+    SortingCardinalityConstraint::SortingCardinalityConstraint(VariableManager & varman)
+        : m_vars(varman),
+          m_cardinality(0),
+          m_cnfized(false)
+    { }
+
+    SortingCardinalityConstraint::~SortingCardinalityConstraint()
+    { }
+
+    void SortingCardinalityConstraint::addInput(ID id)
     {
+        m_inputs.push_back(id);
+    }
+
+    void SortingCardinalityConstraint::setCardinality(unsigned n)
+    {
+        m_cardinality = n;
+    }
+
+    unsigned SortingCardinalityConstraint::getInputCardinality() const
+    {
+        return m_inputs.size();
+    }
+
+    unsigned SortingCardinalityConstraint::getOutputCardinality() const
+    {
+        return std::min((size_t) m_cardinality, m_inputs.size());
+    }
+
+    ClauseVec SortingCardinalityConstraint::CNFize()
+    {
+        m_cnfized = true;
+        ClauseVec cnf;
+
+        std::tie(m_outputs, cnf) =
+            cardinalityNetwork(m_vars, m_inputs, m_cardinality, true, true);
+
+        return cnf;
+    }
+
+    const std::vector<ID> & SortingCardinalityConstraint::outputs() const
+    {
+        assert(m_cnfized);
         return m_outputs;
     }
 
-    Cube TotalizerCardinalityConstraint::assumeEq(unsigned n) const
+    ID SortingCardinalityConstraint::freshVar()
     {
-        if (n == getInputCardinality() && n == getOutputCardinality())
-        {
-            return m_inputs;
-        }
-        else if (n >= getOutputCardinality())
-        {
-            throw std::invalid_argument("Tried to assumeEq cardinality >= "
-                                        "current output cardinality");
-        }
-
-        Cube assumps;
-        assumps.reserve(getOutputCardinality());
-        for (unsigned i = 0; i < outputs().size(); ++i)
-        {
-            unsigned lit = outputs().at(i);
-            if (n > 0 && i <= n - 1) { assumps.push_back(lit); }
-            else { assumps.push_back(negate(lit)); }
-        }
-
-        return assumps;
+        return m_vars.getNewID();
     }
-
-    Cube TotalizerCardinalityConstraint::assumeLEq(unsigned n) const
-    {
-        if (n == getInputCardinality() && n == getOutputCardinality())
-        {
-            Cube empty;
-            return empty;
-        }
-        else if (n >= getOutputCardinality())
-        {
-            throw std::invalid_argument("Tried to assumeLEq cardinality >= "
-                                        "current output cardinality");
-        }
-
-        Cube assumps;
-        assumps.reserve(getOutputCardinality());
-        for (unsigned i = 0; i < outputs().size(); ++i)
-        {
-            unsigned lit = outputs().at(i);
-            if (i >= n) { assumps.push_back(negate(lit)); }
-        }
-
-        return assumps;
-    }
-
-    Cube TotalizerCardinalityConstraint::assumeLT(unsigned n) const
-    {
-        if (n == 0) { throw std::invalid_argument("Tried to assume cardinality < 0"); }
-        if (n > getOutputCardinality())
-        {
-            throw std::invalid_argument("Tried to assumeLT cardinality >= "
-                                        "current output cardinality");
-        }
-
-        Cube assumps;
-        assumps.reserve(getOutputCardinality());
-        for (unsigned i = 0; i < outputs().size(); ++i)
-        {
-            unsigned lit = outputs().at(i);
-            if (n > 0 && i >= n - 1) { assumps.push_back(negate(lit)); }
-        }
-
-        return assumps;
-    }
-
-    Cube TotalizerCardinalityConstraint::assumeGEq(unsigned n) const
-    {
-        if (n == getInputCardinality() && n == getOutputCardinality())
-        {
-            return m_inputs;
-        }
-        else if (n >= getOutputCardinality())
-        {
-            throw std::invalid_argument("Tried to assumeGEq cardinality >= "
-                                        "current output cardinality");
-        }
-
-        Cube assumps;
-        assumps.reserve(getOutputCardinality());
-        for (unsigned i = 0; i < outputs().size(); ++i)
-        {
-            unsigned lit = outputs().at(i);
-            if (n > 0 && i <= n - 1) { assumps.push_back(lit); }
-        }
-
-        return assumps;
-    }
-
-    Cube TotalizerCardinalityConstraint::assumeGT(unsigned n) const
-    {
-        if (n >= getOutputCardinality())
-        {
-            throw std::invalid_argument("Tried to assumeGT cardinality >= "
-                                        "current output cardinality");
-        }
-
-        Cube assumps;
-        assumps.reserve(getOutputCardinality());
-        for (unsigned i = 0; i < outputs().size(); ++i)
-        {
-            unsigned lit = outputs().at(i);
-            if (i <= n) { assumps.push_back(lit); }
-        }
-
-        return assumps;
-    }
-
 }
 

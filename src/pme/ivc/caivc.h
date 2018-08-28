@@ -68,7 +68,7 @@ namespace PME {
             std::vector<ID> m_gates;
             MCSFinder m_finder;
             ApproximateMCSFinder m_approx_finder;
-            MaxSATSolver m_solver;
+            PBOMaxSATSolver m_solver;
             HybridDebugger m_ivc_checker;
     };
 }

@@ -33,10 +33,10 @@
 
 namespace PME
 {
-    class MaxSATSolver
+    class PBOMaxSATSolver
     {
         public:
-            MaxSATSolver(VariableManager & varman);
+            PBOMaxSATSolver(VariableManager & varman);
             void addClause(const Clause & cls);
             void addClauses(const ClauseVec & vec);
             bool solve();
@@ -49,11 +49,15 @@ namespace PME
         private:
             unsigned lastCardinality(const Cube & assumps) const;
             void recordCardinality(const Cube & assumps, unsigned c);
+            void initSolver();
 
             VariableManager m_vars;
-            TotalizerCardinalityConstraint m_cardinality;
+            SortingCardinalityConstraint m_cardinality;
             SATAdaptor m_solver;
             bool m_sat;
+            bool m_solverInited;
+            ClauseVec m_clauses;
+
             std::multiset<ID> m_optimizationSet;
             std::map<Cube, unsigned> m_lastCardinality;
     };

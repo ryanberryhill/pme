@@ -30,30 +30,53 @@
 
 namespace PME
 {
+    class CardinalityConstraint
+    {
+        public:
+            virtual void addInput(ID id) = 0;
+
+            virtual unsigned getCardinality() const = 0;
+            virtual void setCardinality(unsigned n) = 0;
+
+            virtual unsigned getInputCardinality() const = 0;
+            virtual unsigned getOutputCardinality() const = 0;
+
+            virtual ClauseVec CNFize() = 0;
+
+            virtual const std::vector<ID> & outputs() const = 0;
+            virtual const std::vector<ID> & inputs() const = 0;
+
+            virtual Cube assumeEq(unsigned n) const;
+            virtual Cube assumeLEq(unsigned n) const;
+            virtual Cube assumeLT(unsigned n) const;
+            virtual Cube assumeGEq(unsigned n) const;
+            virtual Cube assumeGT(unsigned n) const;
+    };
+
     class TotalizerTree;
 
-    class TotalizerCardinalityConstraint
+    class TotalizerCardinalityConstraint : public CardinalityConstraint
     {
         public:
             TotalizerCardinalityConstraint(VariableManager & varman);
             ~TotalizerCardinalityConstraint();
-            void addInput(ID id);
 
-            unsigned getCardinality() const { return m_cardinality; }
+            virtual void addInput(ID id) override;
+
+            virtual unsigned getCardinality() const override { return m_cardinality; }
+            virtual void setCardinality(unsigned n) override;
             void increaseCardinality(unsigned n);
-            void setCardinality(unsigned n);
 
-            unsigned getInputCardinality() const;
-            unsigned getOutputCardinality() const;
-            void clearIncrementality();
-            ClauseVec CNFize();
+            virtual unsigned getInputCardinality() const override;
+            virtual unsigned getOutputCardinality() const override;
 
-            const std::vector<ID> & outputs() const;
-            Cube assumeEq(unsigned n) const;
-            Cube assumeLEq(unsigned n) const;
-            Cube assumeLT(unsigned n) const;
-            Cube assumeGEq(unsigned n) const;
-            Cube assumeGT(unsigned n) const;
+            virtual ClauseVec CNFize() override;
+            ClauseVec incrementalCNFize();
+
+            virtual const std::vector<ID> & outputs() const override
+            { return m_outputs; }
+            virtual const std::vector<ID> & inputs() const override
+            { return m_inputs; }
 
         private:
             VariableManager & m_vars;
@@ -65,10 +88,41 @@ namespace PME
             ID freshVar();
             void increaseNodeCardinality(TotalizerTree * node,
                                          std::set<TotalizerTree *> & visited);
-            ClauseVec CNFize(TotalizerTree * tree);
+            ClauseVec toCNF(TotalizerTree * tree);
+            void clearIncrementality();
             void clearIncrementality(TotalizerTree * tree);
             void updateCachedOutputs();
             bool isDirtyClause(const Clause & cls, TotalizerTree * node) const;
+    };
+
+    class SortingCardinalityConstraint : public CardinalityConstraint
+    {
+        public:
+            SortingCardinalityConstraint(VariableManager & varman);
+            ~SortingCardinalityConstraint();
+
+            virtual void addInput(ID id) override;
+
+            virtual unsigned getCardinality() const override { return m_cardinality; }
+            virtual void setCardinality(unsigned n) override;
+
+            virtual unsigned getInputCardinality() const override;
+            virtual unsigned getOutputCardinality() const override;
+
+            virtual ClauseVec CNFize() override;
+
+            virtual const std::vector<ID> & outputs() const override;
+            virtual const std::vector<ID> & inputs() const override
+            { return m_inputs; }
+
+        private:
+            ID freshVar();
+
+            VariableManager & m_vars;
+            unsigned m_cardinality;
+            std::vector<ID> m_outputs;
+            std::vector<ID> m_inputs;
+            bool m_cnfized;
     };
 }
 

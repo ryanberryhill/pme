@@ -88,7 +88,6 @@ namespace PME {
     {
         // Need to use (n+1) in order to assume <= n
         m_cardinalityConstraint.setCardinality(n + 1);
-        m_cardinalityConstraint.clearIncrementality();
 
         ClauseVec cnf = m_cardinalityConstraint.CNFize();
         for (const Clause & cls : cnf)

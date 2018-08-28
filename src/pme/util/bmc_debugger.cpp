@@ -51,7 +51,7 @@ namespace PME {
         m_cardinality = n;
         // Need to use n+1 if we want to assume <= n
         m_cardinalityConstraint.setCardinality(n + 1);
-        m_solver.restrictInitialStates(m_cardinalityConstraint.CNFize());
+        m_solver.restrictInitialStates(m_cardinalityConstraint.incrementalCNFize());
     }
 
     void BMCDebugger::clearCardinality()

@@ -27,41 +27,62 @@
 
 namespace PME
 {
-    MaxSATSolver::MaxSATSolver(VariableManager & varman) :
+    PBOMaxSATSolver::PBOMaxSATSolver(VariableManager & varman) :
         m_vars(varman),
         m_cardinality(varman),
-        m_sat(false)
+        m_sat(false),
+        m_solverInited(false)
     { }
 
-    void MaxSATSolver::addClause(const Clause & cls)
+    void PBOMaxSATSolver::initSolver()
     {
-        m_sat = false;
-        m_solver.addClause(cls);
+        m_solver.addClauses(m_clauses);
+
+        // TODO: avoid needing to do the full size up front
+        m_cardinality.setCardinality(m_optimizationSet.size());
+        m_solver.addClauses(m_cardinality.CNFize());
+
+        m_solverInited = true;
     }
 
-    void MaxSATSolver::addClauses(const ClauseVec & vec)
+    void PBOMaxSATSolver::addClause(const Clause & cls)
     {
+        m_sat = false;
+        m_clauses.push_back(cls);
+
+        if (m_solverInited) { m_solver.addClause(cls); }
+    }
+
+    void PBOMaxSATSolver::addClauses(const ClauseVec & vec)
+    {
+        m_clauses.reserve(m_clauses.size() + vec.size());
         for (const Clause & cls : vec)
         {
             addClause(cls);
         }
     }
 
-    void MaxSATSolver::addForOptimization(ID lit)
+    void PBOMaxSATSolver::addForOptimization(ID lit)
     {
         m_lastCardinality.clear();
-        m_cardinality.addInput(negate(lit));
+        m_cardinality.addInput(lit);
         m_optimizationSet.insert(lit);
+
+        if (m_solverInited)
+        {
+            m_solver.reset();
+            m_solverInited = false;
+        }
     }
 
-    unsigned MaxSATSolver::lastCardinality(const Cube & assumps) const
+    unsigned PBOMaxSATSolver::lastCardinality(const Cube & assumps) const
     {
         assert(!m_optimizationSet.empty());
         assert(std::is_sorted(assumps.begin(), assumps.end()));
         auto it = m_lastCardinality.find(assumps);
         if (it == m_lastCardinality.end())
         {
-            return 0;
+            return m_optimizationSet.size();
         }
         else
         {
@@ -69,22 +90,24 @@ namespace PME
         }
     }
 
-    void MaxSATSolver::recordCardinality(const Cube & assumps, unsigned c)
+    void PBOMaxSATSolver::recordCardinality(const Cube & assumps, unsigned c)
     {
         assert(std::is_sorted(assumps.begin(), assumps.end()));
         m_lastCardinality[assumps] = c;
     }
 
-    bool MaxSATSolver::solve()
+    bool PBOMaxSATSolver::solve()
     {
         std::vector<ID> assumps;
         return solve(assumps);
     }
 
-    bool MaxSATSolver::solve(const Cube & assumps)
+    bool PBOMaxSATSolver::solve(const Cube & assumps)
     {
         GlobalState::stats().maxsat_calls++;
         AutoTimer timer(GlobalState::stats().maxsat_runtime);
+
+        if (!m_solverInited) { initSolver(); }
 
         Cube assumps_sorted = assumps;
         std::sort(assumps_sorted.begin(), assumps_sorted.end());
@@ -94,23 +117,18 @@ namespace PME
         bool sat = false;
 
         // Do a linear search for the maximum cardinality that is SAT
-        // Instead of maximizing the number of lits set to 1, we minimize
-        // the number set to 0.
         while (!sat)
         {
-            m_cardinality.setCardinality(cardinality + 1);
-            m_solver.addClauses(m_cardinality.CNFize());
-
-            Cube solver_assumps = m_cardinality.assumeLEq(cardinality);
+            Cube solver_assumps = m_cardinality.assumeGEq(cardinality);
             solver_assumps.insert(solver_assumps.end(), assumps.begin(), assumps.end());
 
             sat = m_solver.solve(solver_assumps);
 
             if (!sat)
             {
-                if (cardinality < m_optimizationSet.size())
+                if (cardinality > 0)
                 {
-                    cardinality++;
+                    cardinality--;
                 }
                 else { break; }
             }
@@ -123,18 +141,18 @@ namespace PME
         return m_sat;
     }
 
-    bool MaxSATSolver::isSAT() const
+    bool PBOMaxSATSolver::isSAT() const
     {
         return m_sat;
     }
 
-    ModelValue MaxSATSolver::getAssignment(ID lit) const
+    ModelValue PBOMaxSATSolver::getAssignment(ID lit) const
     {
         assert(isSAT());
         return m_solver.getAssignment(lit);
     }
 
-    ModelValue MaxSATSolver::getAssignmentToVar(ID var) const
+    ModelValue PBOMaxSATSolver::getAssignmentToVar(ID var) const
     {
         assert(isSAT());
         return m_solver.getAssignmentToVar(var);

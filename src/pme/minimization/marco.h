@@ -59,7 +59,7 @@ namespace PME
             void updateProofs(const Seed & seed);
 
             VariableManager m_vars;
-            MaxSATSolver m_seedSolver;
+            PBOMaxSATSolver m_seedSolver;
             ConsecutionChecker m_indSolver;
             std::unordered_map<ClauseID, ID> m_clauseToSeedVar;
 

@@ -54,7 +54,7 @@ namespace PME
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
             DualActivationClauseDatabase m_clausedb;
-            MaxSATSolver m_solver;
+            PBOMaxSATSolver m_solver;
             bool m_solverInited;
     };
 }

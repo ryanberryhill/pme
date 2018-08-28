@@ -82,7 +82,6 @@ struct CombinationalAigFixture
     ClauseVec getCardinality(unsigned n)
     {
         cardinality->setCardinality(n + 1);
-        cardinality->clearIncrementality();
 
         ClauseVec vec = cardinality->CNFize();
         Cube assumps = cardinality->assumeLEq(n);
@@ -173,7 +172,6 @@ struct AigFixture
     ClauseVec getCardinality(unsigned n)
     {
         cardinality->setCardinality(n + 1);
-        cardinality->clearIncrementality();
 
         ClauseVec vec = cardinality->CNFize();
         Cube assumps = cardinality->assumeLEq(n);
