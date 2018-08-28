@@ -178,6 +178,10 @@ namespace PME
         // Reset upper bound
         // TODO this isn't really necessary if we're careful
         m_ub = std::numeric_limits<unsigned>::max();
+
+        // Reset solver (for performance)
+        // TODO figure out when it's good to do this
+        resetSolver();
     }
 
     void MSU4MaxSATSolver::resetSolver()
