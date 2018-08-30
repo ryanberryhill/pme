@@ -825,9 +825,8 @@ int main(int argc, char ** argv)
 
     if (g_checkmivc)
     {
-        // TODO: Use a different algorithm like the brute force MSIS one
-        int caivc_ok = cpme_run_caivc(pme);
-        if (caivc_ok < 0)
+        int bf_ok = cpme_run_ivcbf(pme);
+        if (bf_ok < 0)
         {
             fprintf(stderr, "Error checking IVC minimality\n");
             failure = 1; goto cleanup;
