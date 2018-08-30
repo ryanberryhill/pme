@@ -86,6 +86,7 @@ namespace PME {
 
     void HybridDebugger::setKMax(unsigned k)
     {
+        m_kmax = k;
         m_bmc.setKMax(k);
     }
 
