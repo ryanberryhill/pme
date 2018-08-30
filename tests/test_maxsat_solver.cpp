@@ -220,23 +220,23 @@ BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)
     // don't block it yet
 
     // First with assumption (d) should have all three
-    BOOST_REQUIRE(solver.solve({d}));
+    BOOST_REQUIRE(solver.assumpSolve({d}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 3);
     // Same for (e)
-    BOOST_REQUIRE(solver.solve({e}));
+    BOOST_REQUIRE(solver.assumpSolve({e}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 3);
     // With (e) and (d) it should be 2
-    BOOST_REQUIRE(solver.solve({d, e}));
+    BOOST_REQUIRE(solver.assumpSolve({d, e}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 2);
     // Order shouldn't matter
-    BOOST_REQUIRE(solver.solve({e, d}));
+    BOOST_REQUIRE(solver.assumpSolve({e, d}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 2);
     // Nor should calling it several times
-    BOOST_REQUIRE(solver.solve({e, d}));
+    BOOST_REQUIRE(solver.assumpSolve({e, d}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 2);
 
@@ -258,18 +258,18 @@ BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)
     solver.addClause({negate(e), negate(a)});
 
     // There should not be a two true assingment with (d)
-    BOOST_REQUIRE(solver.solve({d}));
+    BOOST_REQUIRE(solver.assumpSolve({d}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 1);
     // Don't block it
 
     // With (e) there should be only 1 cardinality 2 solution
-    BOOST_REQUIRE(solver.solve({e}));
+    BOOST_REQUIRE(solver.assumpSolve({e}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 2);
     solver.addClause(block);
 
-    BOOST_REQUIRE(solver.solve({e}));
+    BOOST_REQUIRE(solver.assumpSolve({e}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 1);
 
@@ -285,24 +285,24 @@ BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)
     solver.addClause(block);
 
     // With (d) there should only be a single cardinality 1 solution
-    BOOST_REQUIRE(solver.solve({d}));
+    BOOST_REQUIRE(solver.assumpSolve({d}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 1);
     BOOST_CHECK(solver.getAssignment(c) == SAT::TRUE);
     solver.addClause(block);
 
     // No more solutions under (d)
-    BOOST_CHECK(!solver.solve({d}));
+    BOOST_CHECK(!solver.assumpSolve({d}));
 
     // With (e) there should be one more
-    BOOST_REQUIRE(solver.solve({e}));
+    BOOST_REQUIRE(solver.assumpSolve({e}));
     count = countAndBlock(solver, ids, block);
     BOOST_CHECK_EQUAL(count, 1);
     BOOST_CHECK(solver.getAssignment(b) == SAT::TRUE);
     solver.addClause(block);
 
     // No more solutions under (e)
-    BOOST_CHECK(!solver.solve({e}));
+    BOOST_CHECK(!solver.assumpSolve({e}));
 
     // Assumptionless there should be one more solution
     BOOST_REQUIRE(solver.solve());

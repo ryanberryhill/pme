@@ -153,7 +153,7 @@ namespace PME
         // same collapse set for another clause if applicable.
         assumps.push_back(check);
 
-        bool sat = m_solver.solve(assumps);
+        bool sat = m_solver.assumpSolve(assumps);
 
         if (!sat) { return false; }
 

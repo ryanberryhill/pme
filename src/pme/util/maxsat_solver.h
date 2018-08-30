@@ -39,11 +39,13 @@ namespace PME
             virtual ~MaxSATSolver() { }
             virtual void addClause(const Clause & cls) = 0;
             virtual void addClauses(const ClauseVec & vec) = 0;
-            virtual bool solve() = 0;
+            virtual bool solve();
+            virtual bool doSolve() = 0;
             virtual void addForOptimization(ID lit) = 0;
             virtual bool isSAT() const = 0;
             virtual ModelValue getAssignment(ID lit) const = 0;
             virtual ModelValue getAssignmentToVar(ID var) const = 0;
+            const PMEOptions& opts() const;
     };
 
     class PBOMaxSATSolver : public MaxSATSolver
@@ -52,13 +54,13 @@ namespace PME
             PBOMaxSATSolver(VariableManager & varman);
             virtual void addClause(const Clause & cls) override;
             virtual void addClauses(const ClauseVec & vec) override;
-            virtual bool solve() override;
+            virtual bool doSolve() override;
             virtual void addForOptimization(ID lit) override;
             virtual bool isSAT() const override;
             virtual ModelValue getAssignment(ID lit) const override;
             virtual ModelValue getAssignmentToVar(ID var) const override;
 
-            bool solve(const Cube & assumps);
+            bool assumpSolve(const Cube & assumps);
 
         private:
             unsigned lastCardinality(const Cube & assumps) const;
@@ -82,12 +84,14 @@ namespace PME
             MSU4MaxSATSolver(VariableManager & varman);
             virtual void addClause(const Clause & cls) override;
             virtual void addClauses(const ClauseVec & vec) override;
-            virtual bool solve() override;
+            virtual bool doSolve() override;
             virtual void addForOptimization(ID lit) override;
             virtual bool isSAT() const override;
             virtual ModelValue getAssignment(ID lit) const override;
             virtual ModelValue getAssignmentToVar(ID var) const override;
         private:
+            void reset();
+            void resetCardinality();
             void resetSolver();
             std::set<ID> extractSolution() const;
             Cube extractCore(const Cube & crits, const std::set<ID> & initial_assumps) const;
@@ -95,12 +99,20 @@ namespace PME
             unsigned numSatisfied(const Cube & lits) const;
 
             bool m_isSAT;
+            bool m_absoluteUNSAT;
             VariableManager & m_vars;
             std::set<ID> m_optimizationSet;
             SATAdaptor m_solver;
             ClauseVec m_clauses;
+            unsigned m_solves;
+            unsigned m_unsatRounds;
             unsigned m_lb, m_ub;
             std::set<ID> m_currentSoln;
+            std::set<ID> m_initialAssumps;
+            Cube m_blockedAssumps;
+
+            Cube m_lastCardinalityInput;
+            std::unique_ptr<CardinalityConstraint> m_cardinality;
     };
 }
 

@@ -61,9 +61,14 @@ namespace PME {
             std::unordered_map<std::string, OptionParser> m_option_parsers;
         public:
             // --- Global ---
-
             PMEOption<bool> simplify;
             PMEOption<unsigned> hybrid_ic3_bmc_kmax;
+
+
+            // --- MaxSAT --
+            PMEOption<unsigned> msu4_reset_solver_period;
+            PMEOption<unsigned> msu4_reset_all_period;
+            PMEOption<bool> msu4_use_hint_clauses;
 
             // --- Proof Minimization ---
 

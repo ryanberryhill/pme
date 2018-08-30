@@ -21,12 +21,26 @@
 
 #include "pme/util/maxsat_solver.h"
 #include "pme/util/timer.h"
+#include "pme/engine/global_state.h"
 
 #include <cassert>
 #include <algorithm>
 
 namespace PME
 {
+    bool MaxSATSolver::solve()
+    {
+        GlobalState::stats().maxsat_calls++;
+        AutoTimer timer(GlobalState::stats().maxsat_runtime);
+
+        return doSolve();
+    }
+
+    const PMEOptions& MaxSATSolver::opts() const
+    {
+        return GlobalState::options();
+    }
+
     PBOMaxSATSolver::PBOMaxSATSolver(VariableManager & varman) :
         m_vars(varman),
         m_cardinality(varman),
@@ -96,17 +110,14 @@ namespace PME
         m_lastCardinality[assumps] = c;
     }
 
-    bool PBOMaxSATSolver::solve()
+    bool PBOMaxSATSolver::doSolve()
     {
         std::vector<ID> assumps;
-        return solve(assumps);
+        return assumpSolve(assumps);
     }
 
-    bool PBOMaxSATSolver::solve(const Cube & assumps)
+    bool PBOMaxSATSolver::assumpSolve(const Cube & assumps)
     {
-        GlobalState::stats().maxsat_calls++;
-        AutoTimer timer(GlobalState::stats().maxsat_runtime);
-
         if (!m_solverInited) { initSolver(); }
 
         Cube assumps_sorted = assumps;
@@ -160,7 +171,10 @@ namespace PME
 
     MSU4MaxSATSolver::MSU4MaxSATSolver(VariableManager & varman)
         : m_isSAT(false),
+          m_absoluteUNSAT(false),
           m_vars(varman),
+          m_solves(0),
+          m_unsatRounds(0),
           m_lb(0),
           m_ub(std::numeric_limits<unsigned>::max())
     { }
@@ -170,22 +184,40 @@ namespace PME
         m_clauses.push_back(cls);
         m_solver.addClause(cls);
 
+        m_isSAT = false;
+        m_lb = 0;
+        m_currentSoln.clear();
+    }
+
+    void MSU4MaxSATSolver::resetCardinality()
+    {
+        m_cardinality.reset();
+        m_lastCardinalityInput.clear();
+    }
+
+    void MSU4MaxSATSolver::reset()
+    {
+        // Reset incremental cardinality
+        resetCardinality();
+
         // Reset existing lower bound and solution
         m_isSAT = false;
         m_lb = 0;
         m_currentSoln.clear();
 
         // Reset upper bound
-        // TODO this isn't really necessary if we're careful
         m_ub = std::numeric_limits<unsigned>::max();
 
-        // Reset solver (for performance)
-        // TODO figure out when it's good to do this
-        resetSolver();
+        // Reset current state
+        m_blockedAssumps.clear();
+        m_initialAssumps = m_optimizationSet;
+        m_solves = 0;
+        m_unsatRounds = 0;
     }
 
     void MSU4MaxSATSolver::resetSolver()
     {
+        resetCardinality();
         m_solver.reset();
         for (const Clause & cls : m_clauses)
         {
@@ -235,15 +267,48 @@ namespace PME
 
     Cube MSU4MaxSATSolver::addCardinality(const Cube & inputs, unsigned n)
     {
-        // TODO: dynamically choose whether the >= or <= makes more sense
-        // TODO: incrementality. If inputs don't change, just change
-        // the cardinality
-        SortingCardinalityConstraint cardinality(m_vars);
-        cardinality.addInputs(inputs.begin(), inputs.end());
-        cardinality.setCardinality(n + 1);
+        assert(!inputs.empty());
+        unsigned neg_n = inputs.size() - n;
+        Cube sorted = inputs;
+        std::sort(sorted.begin(), sorted.end());
 
-        m_solver.addClauses(cardinality.CNFize());
-        return cardinality.assumeGT(n);
+        if (sorted == m_lastCardinalityInput && m_cardinality->getOutputCardinality() > neg_n)
+        {
+            return m_cardinality->assumeLT(neg_n);
+        }
+        else
+        {
+            if (neg_n < n * 8)
+            {
+                m_lastCardinalityInput = sorted;
+
+                // sum(!a for a in inputs) < |inputs| - n
+                Cube neg = negateVec(inputs);
+
+                m_cardinality.reset(new SortingLEqConstraint(m_vars));
+                m_cardinality->addInputs(neg.begin(), neg.end());
+                m_cardinality->setCardinality(neg_n + 1);
+
+                m_solver.addClauses(m_cardinality->CNFize());
+                return m_cardinality->assumeLT(neg_n);
+            }
+            else
+            {
+                // sum(inputs) > n
+
+                // In this case, don't do incrementality because we can't just
+                // keep incrementally weakening the constraint (but for the <=
+                // case above, we can incrementally strengthen).
+                m_lastCardinalityInput.clear();
+
+                SortingGEqConstraint cardinality(m_vars);
+                cardinality.addInputs(inputs.begin(), inputs.end());
+                cardinality.setCardinality(n + 1);
+
+                m_solver.addClauses(cardinality.CNFize());
+                return cardinality.assumeGT(n);
+            }
+        }
     }
 
     unsigned MSU4MaxSATSolver::numSatisfied(const Cube & lits) const
@@ -261,21 +326,40 @@ namespace PME
         return count;
     }
 
-    bool MSU4MaxSATSolver::solve()
+    bool MSU4MaxSATSolver::doSolve()
     {
-        std::set<ID> initial_assumps = m_optimizationSet;
-        std::vector<ID> blocked_assumps;
-        Cube cardinality_assumps;
+        // Reset solver occasionally (for performance)
+        // TODO: some kind of better heursitic (maybe the number of cardinality
+        // constraints added that are no longer needed).
+        if (m_solves > opts().msu4_reset_all_period)
+        {
+            resetSolver();
+            reset();
+        }
+        else if (m_solves % opts().msu4_reset_solver_period == 0)
+        {
+            resetSolver();
+        }
+
+        m_solves++;
 
         // Check if the hard clauses are satisfiable
-        if (!m_solver.solve()) { return false; }
+        if (m_absoluteUNSAT || !m_solver.solve())
+        {
+            m_absoluteUNSAT = true;
+            return false;
+        }
 
-        unsigned unsat_rounds = 0;
+        Cube cardinality_assumps;
+        ID hint_lit = m_vars.getNewID("hint");
+
         while (true)
         {
-            Cube assumps(initial_assumps.begin(), initial_assumps.end());
+            Cube assumps(m_initialAssumps.begin(), m_initialAssumps.end());
             assumps.insert(assumps.end(), cardinality_assumps.begin(),
                                           cardinality_assumps.end());
+
+            if (opts().msu4_use_hint_clauses) { assumps.push_back(hint_lit); }
 
             Cube crits;
             bool sat = m_solver.solve(assumps, &crits);
@@ -297,18 +381,18 @@ namespace PME
                 // a better solution. Let n = |{satisfied blocked_assumps}|.
                 // We want sum(b_a) > n or equivalently
                 //         sum(!a for a in b_a) < |b_a| - n
-                unsigned n = numSatisfied(blocked_assumps);
-                if (n == blocked_assumps.size())
+                unsigned n = numSatisfied(m_blockedAssumps);
+                if (n == m_blockedAssumps.size())
                 {
                     // All clauses are satsifiable
                     m_isSAT = true;
                     return true;
                 }
-                cardinality_assumps = addCardinality(blocked_assumps, n);
+                cardinality_assumps = addCardinality(m_blockedAssumps, n);
             }
             else
             {
-                Cube core = extractCore(crits, initial_assumps);
+                Cube core = extractCore(crits, m_initialAssumps);
 
                 if (core.empty())
                 {
@@ -322,14 +406,24 @@ namespace PME
                     // blocked assumptions
                     for (ID core_lit : core)
                     {
-                        initial_assumps.erase(core_lit);
-                        blocked_assumps.push_back(core_lit);
+                        m_initialAssumps.erase(core_lit);
+                        m_blockedAssumps.push_back(core_lit);
+                    }
+
+                    if (opts().msu4_use_hint_clauses)
+                    {
+                        // Add optional hint clause saying one literal from
+                        // ~core must be active. This clause can't persist
+                        // incrementally so we add an activation variable.
+                        Clause hint_cls = negateVec(core);
+                        hint_cls.push_back(negate(hint_lit));
+                        m_solver.addClause(hint_cls);
                     }
 
                     // Update upper bound
-                    unsat_rounds++;
-                    assert(m_ub > m_optimizationSet.size() - unsat_rounds);
-                    m_ub = m_optimizationSet.size() - unsat_rounds;
+                    m_unsatRounds++;
+                    assert(m_ub > m_optimizationSet.size() - m_unsatRounds);
+                    m_ub = m_optimizationSet.size() - m_unsatRounds;
                 }
             }
 
@@ -355,10 +449,7 @@ namespace PME
         }
 
         m_optimizationSet.insert(lit);
-        m_isSAT = false;
-        m_currentSoln.clear();
-        m_lb = 0;
-        m_ub = std::numeric_limits<unsigned>::max();
+        reset();
     }
 
     bool MSU4MaxSATSolver::isSAT() const

@@ -65,6 +65,9 @@ namespace PME {
     PMEOptions::PMEOptions() :
         simplify(*this, true, "simplify"),
         hybrid_ic3_bmc_kmax(*this, 8, "hybrid_ic3_bmc_kmax"),
+        msu4_reset_solver_period(*this, 8, "msu4_reset_solver_period"),
+        msu4_reset_all_period(*this, 64, "msu4_reset_all_period"),
+        msu4_use_hint_clauses(*this, true, "msu4_use_hint_clauses"),
         simple_min_use_min_supp(*this, true, "simple_min_use_min_supp"),
         camsis_abstraction_refinement(*this, true, "camsis_ar"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
