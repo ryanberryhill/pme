@@ -118,7 +118,6 @@ namespace PME {
 
         for (unsigned n = 1; n <= n_max; ++n)
         {
-            std::cout << "n = " << n << "/" << n_max << ", k_max = " << k_max << std::endl;
             // Debug at cardinality n on [0, k_max]
             m_solver.setCardinality(n);
             std::tie(found, corr) = m_solver.debugOverGatesRangeAndBlock(gates, 0, k_max);
@@ -141,7 +140,6 @@ namespace PME {
 
         for (unsigned n = 2; n <= gates.size(); ++n)
         {
-            std::cout << "n = " << n << "/" << gates.size() << ", k_max = inf" << std::endl;
             m_fallback.setCardinality(n);
 
             std::tie(found, corr) = m_fallback.debugAndBlockOverGates(gates);
