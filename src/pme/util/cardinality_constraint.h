@@ -102,11 +102,11 @@ namespace PME
             bool isDirtyClause(const Clause & cls, TotalizerTree * node) const;
     };
 
-    class SortingCardinalityConstraint : public CardinalityConstraint
+    class SortingConstraint : public CardinalityConstraint
     {
         public:
-            SortingCardinalityConstraint(VariableManager & varman);
-            ~SortingCardinalityConstraint();
+            SortingConstraint(VariableManager & varman, bool le, bool ge);
+            virtual ~SortingConstraint();
 
             virtual void addInput(ID id) override;
 
@@ -122,6 +122,12 @@ namespace PME
             virtual const std::vector<ID> & inputs() const override
             { return m_inputs; }
 
+            virtual Cube assumeEq(unsigned n) const override;
+            virtual Cube assumeLEq(unsigned n) const override;
+            virtual Cube assumeLT(unsigned n) const override;
+            virtual Cube assumeGEq(unsigned n) const override;
+            virtual Cube assumeGT(unsigned n) const override;
+
         private:
             ID freshVar();
 
@@ -129,7 +135,31 @@ namespace PME
             unsigned m_cardinality;
             std::vector<ID> m_outputs;
             std::vector<ID> m_inputs;
-            bool m_cnfized;
+            bool m_cnfized, m_le, m_ge;
+    };
+
+    class SortingGEqConstraint : public SortingConstraint
+    {
+        public:
+            SortingGEqConstraint(VariableManager & varman)
+                : SortingConstraint(varman, false, true)
+            { }
+    };
+
+    class SortingLEqConstraint : public SortingConstraint
+    {
+        public:
+            SortingLEqConstraint(VariableManager & varman)
+                : SortingConstraint(varman, true, false)
+            { }
+    };
+
+    class SortingCardinalityConstraint : public SortingConstraint
+    {
+        public:
+            SortingCardinalityConstraint(VariableManager & varman)
+                : SortingConstraint(varman, true, true)
+            { }
     };
 }
 

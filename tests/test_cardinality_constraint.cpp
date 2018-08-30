@@ -250,6 +250,11 @@ BOOST_AUTO_TEST_CASE(sn_assume_leq)
     testAssumeLEq<SortingCardinalityConstraint>();
 }
 
+BOOST_AUTO_TEST_CASE(half_sn_assume_leq)
+{
+    testAssumeLEq<SortingLEqConstraint>();
+}
+
 template<typename T>
 void testAssumeLT()
 {
@@ -294,6 +299,11 @@ BOOST_AUTO_TEST_CASE(sn_assume_lt)
     testAssumeLT<SortingCardinalityConstraint>();
 }
 
+BOOST_AUTO_TEST_CASE(half_sn_assume_lt)
+{
+    testAssumeLT<SortingLEqConstraint>();
+}
+
 template<typename T>
 void testAssumeGEq()
 {
@@ -336,6 +346,11 @@ BOOST_AUTO_TEST_CASE(sn_assume_geq)
     testAssumeGEq<SortingCardinalityConstraint>();
 }
 
+BOOST_AUTO_TEST_CASE(half_sn_assume_geq)
+{
+    testAssumeGEq<SortingGEqConstraint>();
+}
+
 template<typename T>
 void testAssumeGT()
 {
@@ -376,6 +391,11 @@ BOOST_AUTO_TEST_CASE(totalizer_assume_gt)
 BOOST_AUTO_TEST_CASE(sn_assume_gt)
 {
     testAssumeGT<SortingCardinalityConstraint>();
+}
+
+BOOST_AUTO_TEST_CASE(half_sn_assume_gt)
+{
+    testAssumeGT<SortingGEqConstraint>();
 }
 
 template<typename T>

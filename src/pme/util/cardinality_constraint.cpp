@@ -430,55 +430,109 @@ namespace PME
         return false;
     }
 
-    SortingCardinalityConstraint::SortingCardinalityConstraint(VariableManager & varman)
+    SortingConstraint::SortingConstraint(VariableManager & varman,
+                                                               bool le, bool ge)
         : m_vars(varman),
           m_cardinality(0),
-          m_cnfized(false)
+          m_cnfized(false),
+          m_le(le), m_ge(ge)
+    {
+        assert(m_le || m_ge);
+    }
+
+    SortingConstraint::~SortingConstraint()
     { }
 
-    SortingCardinalityConstraint::~SortingCardinalityConstraint()
-    { }
-
-    void SortingCardinalityConstraint::addInput(ID id)
+    void SortingConstraint::addInput(ID id)
     {
         m_inputs.push_back(id);
     }
 
-    void SortingCardinalityConstraint::setCardinality(unsigned n)
+    void SortingConstraint::setCardinality(unsigned n)
     {
         m_cardinality = n;
     }
 
-    unsigned SortingCardinalityConstraint::getInputCardinality() const
+    unsigned SortingConstraint::getInputCardinality() const
     {
         return m_inputs.size();
     }
 
-    unsigned SortingCardinalityConstraint::getOutputCardinality() const
+    unsigned SortingConstraint::getOutputCardinality() const
     {
         return std::min((size_t) m_cardinality, m_inputs.size());
     }
 
-    ClauseVec SortingCardinalityConstraint::CNFize()
+    ClauseVec SortingConstraint::CNFize()
     {
         m_cnfized = true;
         ClauseVec cnf;
 
         std::tie(m_outputs, cnf) =
-            cardinalityNetwork(m_vars, m_inputs, m_cardinality, true, true);
+            cardinalityNetwork(m_vars, m_inputs, m_cardinality, m_le, m_ge);
 
         return cnf;
     }
 
-    const std::vector<ID> & SortingCardinalityConstraint::outputs() const
+    const std::vector<ID> & SortingConstraint::outputs() const
     {
         assert(m_cnfized);
         return m_outputs;
     }
 
-    ID SortingCardinalityConstraint::freshVar()
+    ID SortingConstraint::freshVar()
     {
         return m_vars.getNewID();
+    }
+
+    Cube SortingConstraint::assumeEq(unsigned n) const
+    {
+        if (!m_ge || !m_le)
+        {
+            throw std::runtime_error("Tried to assumeEq on partial cardinality constraint");
+        }
+
+        return CardinalityConstraint::assumeEq(n);
+    }
+
+    Cube SortingConstraint::assumeLEq(unsigned n) const
+    {
+        if (!m_le)
+        {
+            throw std::runtime_error("Tried to assumeLEq on >= constraint");
+        }
+
+        return CardinalityConstraint::assumeLEq(n);
+    }
+
+    Cube SortingConstraint::assumeLT(unsigned n) const
+    {
+        if (!m_le)
+        {
+            throw std::runtime_error("Tried to assumeLT on >= constraint");
+        }
+
+        return CardinalityConstraint::assumeLT(n);
+    }
+
+    Cube SortingConstraint::assumeGEq(unsigned n) const
+    {
+        if (!m_ge)
+        {
+            throw std::runtime_error("Tried to assumeGEq on <= constraint");
+        }
+
+        return CardinalityConstraint::assumeGEq(n);
+    }
+
+    Cube SortingConstraint::assumeGT(unsigned n) const
+    {
+        if (!m_ge)
+        {
+            throw std::runtime_error("Tried to assumeGT on <= constraint");
+        }
+
+        return CardinalityConstraint::assumeGT(n);
     }
 }
 
