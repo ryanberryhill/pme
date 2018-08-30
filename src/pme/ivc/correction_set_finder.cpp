@@ -95,6 +95,13 @@ namespace PME {
           m_solver(varman, tr)
     { }
 
+    ApproximateMCSFinder::FindResult
+    ApproximateMCSFinder::findAndBlockWithBMC(unsigned n)
+    {
+        m_solver.setCardinality(n);
+        unsigned k_max = GlobalState::options().caivc_ar_bmc_kmax;
+        return m_solver.debugRangeAndBlock(0, k_max);
+    }
 
     ApproximateMCSFinder::FindResult
     ApproximateMCSFinder::findAndBlockOverGates(const std::vector<ID> & gates)
@@ -102,42 +109,22 @@ namespace PME {
         bool found;
         CorrectionSet corr;
 
-        // TODO investigate strategies for this process
+        // TODO investigate strategies for this process, and especially
+        // try to avoid the fallback situation
         unsigned k_max = GlobalState::options().caivc_ar_bmc_kmax;
-        unsigned n_max = gates.size();
+        unsigned n_max = GlobalState::options().caivc_ar_bmc_nmax;
 
-        assert(k_max < std::numeric_limits<unsigned>::max());
-        assert(n_max < std::numeric_limits<unsigned>::max());
+        n_max = std::min(n_max, (unsigned) gates.size());
 
-        // Start from n = 2 under the assumption that all n = 1 MCSes were
-        // already blocked
-        unsigned n = std::min(2u, n_max);
-        // Start k on the range [0, 4]
-        unsigned k_lo = 0, k_hi = std::min(4u, k_max);
-
-        bool n_cycle = true;
-        while (n <= n_max)
+        for (unsigned n = 1; n <= n_max; ++n)
         {
-            // Debug at cardinality n on [k_lo, k_hi]
+            std::cout << "n = " << n << "/" << n_max << ", k_max = " << k_max << std::endl;
+            // Debug at cardinality n on [0, k_max]
             m_solver.setCardinality(n);
-            std::tie(found, corr) = m_solver.debugOverGatesRangeAndBlock(gates, k_lo, k_hi);
+            std::tie(found, corr) = m_solver.debugOverGatesRangeAndBlock(gates, 0, k_max);
 
             // Return solution if we found one
             if (found) { return std::make_pair(true, corr); }
-
-            // If not, we need to increase k or n
-            if (n_cycle || k_hi >= k_max)
-            {
-                n++;
-                k_lo = 0;
-            }
-            else
-            {
-                k_lo = k_hi + 1;
-                k_hi = std::min(k_hi * 2, k_max);
-            }
-
-            n_cycle = !n_cycle;
         }
 
         // We failed to find an MCS within our k_max parameter, fallback to IC3
@@ -152,13 +139,20 @@ namespace PME {
         bool found;
         CorrectionSet corr;
 
-        std::tie(found, corr) = m_fallback.debugAndBlockOverGates(gates);
-        if (found)
+        for (unsigned n = 2; n <= gates.size(); ++n)
         {
-            m_solver.blockSolution(corr);
+            std::cout << "n = " << n << "/" << gates.size() << ", k_max = inf" << std::endl;
+            m_fallback.setCardinality(n);
+
+            std::tie(found, corr) = m_fallback.debugAndBlockOverGates(gates);
+            if (found)
+            {
+                m_solver.blockSolution(corr);
+                return std::make_pair(true, corr);
+            }
         }
 
-        return std::make_pair(found, corr);
+        return std::make_pair(false, corr);
     }
 
     void ApproximateMCSFinder::blockSolution(const CorrectionSet & corr)

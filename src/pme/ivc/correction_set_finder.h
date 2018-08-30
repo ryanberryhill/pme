@@ -55,7 +55,9 @@ namespace PME {
             ApproximateMCSFinder(VariableManager & varman,
                                  DebugTransitionRelation & tr);
 
+            FindResult findAndBlockWithBMC(unsigned n);
             FindResult findAndBlockOverGates(const std::vector<ID> & gates);
+            FindResult findAndBlockOverGates(const std::vector<ID> & gates, unsigned n_max);
             void blockSolution(const CorrectionSet & corr);
 
         private:

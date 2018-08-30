@@ -53,6 +53,7 @@ namespace PME {
             std::vector<ID> negateGateSet(const std::vector<ID> & gates) const;
 
             bool moreCorrectionSets();
+            std::pair<bool, CorrectionSet> findUpfront(unsigned n);
             std::pair<bool, CorrectionSet> findCorrectionSet();
             CorrectionSet findCorrectionSetOverGates(const std::vector<ID> & gates);
             CorrectionSet findApproxMCSOverGates(const std::vector<ID> & gates);

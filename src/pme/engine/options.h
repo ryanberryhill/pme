@@ -86,6 +86,8 @@ namespace PME {
             PMEOption<bool> caivc_approx_mcs;
             PMEOption<bool> caivc_check_with_debug;
             PMEOption<unsigned> caivc_ar_bmc_kmax;
+            PMEOption<unsigned> caivc_ar_bmc_nmax;
+            PMEOption<unsigned> caivc_ar_upfront_nmax;
 
             // MARCO-IVC
             PMEOption<bool> marcoivc_use_ivcucbf;

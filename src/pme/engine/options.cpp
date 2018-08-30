@@ -64,7 +64,7 @@ namespace PME {
 
     PMEOptions::PMEOptions() :
         simplify(*this, true, "simplify"),
-        hybrid_ic3_bmc_kmax(*this, 8, "hybrid_ic3_bmc_kmax"),
+        hybrid_ic3_bmc_kmax(*this, 16, "hybrid_ic3_bmc_kmax"),
         msu4_reset_solver_period(*this, 8, "msu4_reset_solver_period"),
         msu4_reset_all_period(*this, 64, "msu4_reset_all_period"),
         msu4_use_hint_clauses(*this, true, "msu4_use_hint_clauses"),
@@ -74,7 +74,9 @@ namespace PME {
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
         caivc_check_with_debug(*this, false, "caivc_check_with_debug"),
-        caivc_ar_bmc_kmax(*this, 8, "caivc_ar_bmc_kmax"),
+        caivc_ar_bmc_kmax(*this, 24, "caivc_ar_bmc_kmax"),
+        caivc_ar_bmc_nmax(*this, 8, "caivc_ar_bmc_nmax"),
+        caivc_ar_upfront_nmax(*this, 1, "caivc_ar_upfront_nmax"),
         marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),

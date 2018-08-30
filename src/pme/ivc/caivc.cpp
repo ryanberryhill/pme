@@ -71,22 +71,25 @@ namespace PME {
 
     void CAIVCFinder::abstractionRefinementFindIVCs()
     {
-        // Find all cardinality 1 MCSes
+        // Typically, we want to start by finding all cardinality 1 MCSes
+        // An option allows us to start with even higher cardinalities
         double prep_time = 0.0;
         {
             AutoTimer timer(prep_time);
 
-            m_finder.setCardinality(1);
-            while (true)
+            unsigned n_max = opts().caivc_ar_upfront_nmax;
+            for (unsigned n = 1; n <= n_max; ++n)
             {
-                bool found;
-                CorrectionSet corr;
-                std::tie(found, corr) = findCorrectionSet();
-                if (!found) { break; }
+                while (true)
+                {
+                    bool found;
+                    CorrectionSet corr;
+                    std::tie(found, corr) = findUpfront(n);
+                    if (!found) { break; }
 
-                logMCS(corr);
-                assert(corr.size() == 1);
-                m_necessary_gates.insert(corr.at(0));
+                    logMCS(corr);
+                    if (corr.size() == 1) { m_necessary_gates.insert(corr.at(0)); }
+                }
             }
         }
         log(1) << "Preparation time: " << prep_time << std::endl;
@@ -188,6 +191,19 @@ namespace PME {
         else
         {
             return findMCSOverGates(gates);
+        }
+    }
+
+    std::pair<bool, CorrectionSet> CAIVCFinder::findUpfront(unsigned n)
+    {
+        if (opts().caivc_approx_mcs)
+        {
+            return m_approx_finder.findAndBlockWithBMC(n);
+        }
+        else
+        {
+            m_finder.setCardinality(n);
+            return findCorrectionSet();
         }
     }
 
