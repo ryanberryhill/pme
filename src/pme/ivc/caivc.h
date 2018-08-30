@@ -66,6 +66,7 @@ namespace PME {
 
             DebugTransitionRelation m_debug_tr;
             std::vector<ID> m_gates;
+            std::set<ID> m_necessary_gates;
             MCSFinder m_finder;
             ApproximateMCSFinder m_approx_finder;
             MSU4MaxSATSolver m_solver;

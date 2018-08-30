@@ -85,7 +85,8 @@ namespace PME {
                 if (!found) { break; }
 
                 logMCS(corr);
-                m_solver.addClause(corr);
+                assert(corr.size() == 1);
+                m_necessary_gates.insert(corr.at(0));
             }
         }
         log(1) << "Preparation time: " << prep_time << std::endl;
@@ -142,7 +143,7 @@ namespace PME {
 
                     count++;
                     logMCS(corr);
-                    m_solver.addClause(corr);
+                    if (corr.size() == 1) { m_necessary_gates.insert(corr.at(0)); }
                 }
 
                 cardinality++;
@@ -248,7 +249,28 @@ namespace PME {
 
     void CAIVCFinder::blockMIVC(const IVC & mivc)
     {
-        Clause block_cls = negateVec(mivc);
+        IVC blockable_ivc;
+
+        for (ID id : mivc)
+        {
+            if (m_necessary_gates.count(id) == 0)
+            {
+                blockable_ivc.push_back(id);
+            }
+        }
+
+        Clause block_cls;
+
+        if (blockable_ivc.empty())
+        {
+            // This occurs when the original circuit is already a MIVC. We
+            // don't allow empty clauses, so add the clause (false).
+            block_cls.push_back(ID_FALSE);
+        }
+        else
+        {
+            block_cls = negateVec(blockable_ivc);
+        }
         m_solver.addClause(block_cls);
     }
 
@@ -282,12 +304,14 @@ namespace PME {
     {
         assert(m_solver.isSAT());
 
-        IVC mivc;
+        // Start with the necessary gates
+        IVC mivc(m_necessary_gates.begin(), m_necessary_gates.end());
 
         for (ID gate : m_gates)
         {
             if (m_solver.getAssignmentToVar(gate) == SAT::TRUE)
             {
+                assert(m_necessary_gates.count(gate) == 0);
                 mivc.push_back(gate);
             }
         }
