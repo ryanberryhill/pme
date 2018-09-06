@@ -353,26 +353,28 @@ namespace PME {
 
     void CAIVCFinder::logMCS(const CorrectionSet & mcs) const
     {
-        log(2) << "Found correction set of size " << mcs.size() << std::endl;
-        log(3) << "[ ";
+        log(2) << "Found correction set of size " << mcs.size();
+        log(3) << " [ ";
         for (ID id : mcs) { log(3) << id << " "; }
-        log(3) << "]" << std::endl;
+        log(3) << "]";
+        log(2) << std::endl;
     }
 
     void CAIVCFinder::logMIVC(const IVC & mivc) const
     {
-        log(2) << "Found MIVC of size " << mivc.size() << std::endl;
-        log(3) << "[ ";
+        log(2) << "Found MIVC of size " << mivc.size();
+        log(3) << " [ ";
         for (ID id : mivc) { log(3) << id << " "; }
         log(3) << "]" << std::endl;
+        log(2) << std::endl;
     }
 
     void CAIVCFinder::logCandidate(const IVC & candidate) const
     {
-        log(3) << "Found candidate MIVC of size " << candidate.size() << std::endl;
-        log(3) << "[ ";
+        log(4) << "Found candidate MIVC of size " << candidate.size();
+        log(4) << " [ ";
         for (ID id : candidate) { log(3) << id << " "; }
-        log(3) << "]" << std::endl;
+        log(4) << "]" << std::endl;
     }
 }
 
