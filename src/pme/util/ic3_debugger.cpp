@@ -33,14 +33,14 @@ namespace PME {
         : m_debug_tr(tr),
           m_ic3(varman, m_debug_tr),
           m_cardinality(CARDINALITY_INF),
-          m_cardinalityConstraint(varman)
+          m_cardinality_constraint(varman)
     {
        clearCardinality();
        m_debug_latches.insert(m_debug_tr.begin_debug_latches(),
                               m_debug_tr.end_debug_latches());
        for (ID id : m_debug_latches)
        {
-           m_cardinalityConstraint.addInput(id);
+           m_cardinality_constraint.addInput(id);
        }
     }
 
@@ -87,15 +87,15 @@ namespace PME {
     void IC3Debugger::addCardinalityCNF(unsigned n)
     {
         // Need to use (n+1) in order to assume <= n
-        m_cardinalityConstraint.setCardinality(n + 1);
+        m_cardinality_constraint.setCardinality(n + 1);
 
-        ClauseVec cnf = m_cardinalityConstraint.CNFize();
+        ClauseVec cnf = m_cardinality_constraint.CNFize();
         for (const Clause & cls : cnf)
         {
             m_ic3.restrictInitialStates(cls);
         }
 
-        Cube assumps = m_cardinalityConstraint.assumeLEq(n);
+        Cube assumps = m_cardinality_constraint.assumeLEq(n);
         for (ID id : assumps)
         {
             Clause assump = {id};
@@ -105,7 +105,7 @@ namespace PME {
 
     void IC3Debugger::addBlockingClauses()
     {
-        for (const Clause & cls : m_blockingClauses)
+        for (const Clause & cls : m_blocking_clauses)
         {
             m_ic3.restrictInitialStates(cls);
             m_ic3.addClausalLemma(cls, IC3::LEVEL_INF);
@@ -200,7 +200,7 @@ namespace PME {
             block.push_back(negate(debug_latch));
         }
 
-        m_blockingClauses.push_back(block);
+        m_blocking_clauses.push_back(block);
         m_ic3.restrictInitialStates(block);
         // Note: we assume the lemma we add below is taken away when we
         // take away the restriction on the initial states (such as by
