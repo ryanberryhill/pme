@@ -34,7 +34,7 @@ namespace PME {
           m_tr(tr),
           m_kmax(4),
           m_cardinality(CARDINALITY_INF),
-          m_cardinalityConstraint(varman),
+          m_cardinality_constraint(varman),
           m_solver(varman, tr)
     {
        clearCardinality();
@@ -42,16 +42,26 @@ namespace PME {
                               m_tr.end_debug_latches());
        for (ID id : m_debug_latches)
        {
-           m_cardinalityConstraint.addInput(id);
+           m_cardinality_constraint.addInput(id);
        }
     }
 
     void BMCDebugger::setCardinality(unsigned n)
     {
+        // Increasing cardinality means we have to rebuild the constraint CNF
+        if (m_cardinality < n || m_cardinality == CARDINALITY_INF)
+        {
+            // Need to use n+1 if we want to assume <= n
+            m_cardinality_constraint.setCardinality(n + 1);
+            m_solver.clearRestrictions();
+            for (const Clause & block : m_blocking_clauses)
+            {
+                m_solver.restrictInitialStates(block);
+            }
+            m_solver.restrictInitialStates(m_cardinality_constraint.CNFize());
+        }
+
         m_cardinality = n;
-        // Need to use n+1 if we want to assume <= n
-        m_cardinalityConstraint.setCardinality(n + 1);
-        m_solver.restrictInitialStates(m_cardinalityConstraint.incrementalCNFize());
     }
 
     void BMCDebugger::clearCardinality()
@@ -143,7 +153,7 @@ namespace PME {
         Cube local_assumps = assumps;
         if (m_cardinality < CARDINALITY_INF)
         {
-            Cube cardinality_assumps = m_cardinalityConstraint.assumeLEq(m_cardinality);
+            Cube cardinality_assumps = m_cardinality_constraint.assumeLEq(m_cardinality);
             local_assumps.insert(local_assumps.end(), cardinality_assumps.begin(),
                                                       cardinality_assumps.end());
         }
@@ -176,6 +186,7 @@ namespace PME {
         }
 
         m_solver.restrictInitialStates(block);
+        m_blocking_clauses.push_back(block);
     }
 
     std::vector<ID> BMCDebugger::extractSolution(const SafetyCounterExample & cex) const
