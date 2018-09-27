@@ -80,8 +80,8 @@ namespace PME {
         marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),
-        ivc_ucbf_use_simple_min(*this, true, "ivc_ucbf_use_simple_min"),
-        ivc_ucbf_use_sisi(*this, false, "ivc_ucbf_use_sisi")
+        ivc_ucbf_use_simple_min(*this, false, "ivc_ucbf_use_simple_min"),
+        ivc_ucbf_use_sisi(*this, true, "ivc_ucbf_use_sisi")
     { }
 
     template<typename T>
