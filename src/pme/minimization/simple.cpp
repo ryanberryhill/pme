@@ -69,9 +69,9 @@ namespace PME {
             assert(ind);
         }
 
-        log(2) << "Found support set of size " << support.size()
+        log(4) << "Found support set of size " << support.size()
                << " for clause " << id << std::endl;
-        log(3) << support << std::endl;
+        log(4) << support << std::endl;
 
 
         return support;
