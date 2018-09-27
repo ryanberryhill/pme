@@ -42,12 +42,12 @@ namespace PME {
             seed_copy.erase(seed_copy.begin() + i);
             if (isSafe(seed_copy))
             {
-                log(2) << "Successfully removed " << seed[i] << std::endl;
+                log(4) << "Successfully removed " << seed[i] << std::endl;
                 seed.erase(seed.begin() + i);
             }
             else
             {
-                log(3) << "Cannot remove " << seed[i] << std::endl;
+                log(4) << "Cannot remove " << seed[i] << std::endl;
                 ++i;
             }
         }
