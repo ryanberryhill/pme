@@ -67,14 +67,16 @@ namespace PME {
         SafetyProof shrunk_proof;
         if (opts().ivc_ucbf_use_simple_min)
         {
-            SimpleMinimizer pmin(vars(), tr(), proof);
+            TransitionRelation seed_tr(tr(), seed);
+            SimpleMinimizer pmin(vars(), seed_tr, proof);
             pmin.minimize();
             assert(pmin.numProofs() == 1);
             shrunk_proof = pmin.getProof(0);
         }
         else if (opts().ivc_ucbf_use_sisi)
         {
-            SISIMinimizer pmin(vars(), tr(), proof);
+            TransitionRelation seed_tr(tr(), seed);
+            SISIMinimizer pmin(vars(), seed_tr, proof);
             pmin.minimize();
             assert(pmin.numProofs() == 1);
             shrunk_proof = pmin.getProof(0);
