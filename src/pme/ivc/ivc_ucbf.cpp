@@ -159,7 +159,7 @@ namespace PME {
         // That is, (x V y) becomes (~x V ~a) & (~y V ~a) [each clause gets
         // a unique a] and a cardinality constraint enforces exactly one
         // a is equal to 1.
-        TotalizerCardinalityConstraint cardinality(vars());
+        SortingCardinalityConstraint cardinality(vars());
 
         // Need cardinality 2 to assume = 1
         cardinality.setCardinality(2);
