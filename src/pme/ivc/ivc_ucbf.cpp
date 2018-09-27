@@ -139,15 +139,9 @@ namespace PME {
             log(2) << "Did not shrink seed due to settings, size is " << seed.size() << std::endl;
         }
 
-        // TODO remove
-        assert(isSafe(core));
-
         // Run IVC_BF
         m_ivcbf.shrink(core);
         log(2) << "Further shrunk down to " << core.size() << " using IVC_BF" << std::endl;
-
-        // TODO remove
-        assert(isSafe(core));
 
         seed = core;
     }
