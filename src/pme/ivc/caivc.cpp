@@ -365,7 +365,7 @@ namespace PME {
         log(2) << "Found MIVC of size " << mivc.size();
         log(3) << " [ ";
         for (ID id : mivc) { log(3) << id << " "; }
-        log(3) << "]" << std::endl;
+        log(3) << "]";
         log(2) << std::endl;
     }
 
