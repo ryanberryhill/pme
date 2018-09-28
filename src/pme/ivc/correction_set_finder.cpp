@@ -138,7 +138,9 @@ namespace PME {
         bool found;
         CorrectionSet corr;
 
-        for (unsigned n = 2; n <= gates.size(); ++n)
+        // We shouldn't assume all cardinality 1 MCSes were already found.
+        // Sometimes the approximate procedure misses them.
+        for (unsigned n = 1; n <= gates.size(); ++n)
         {
             m_fallback.setCardinality(n);
 

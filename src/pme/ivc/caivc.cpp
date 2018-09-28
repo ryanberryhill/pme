@@ -95,7 +95,7 @@ namespace PME {
         log(1) << "Preparation time: " << prep_time << std::endl;
 
         // Repeatedly find candidate MIVCs. If the candidate is not safe, then
-        // find a new MCS consiting only of clauses outside the candidate.
+        // find a new MCS consiting only of gates outside the candidate.
         while (true)
         {
             bool found;
