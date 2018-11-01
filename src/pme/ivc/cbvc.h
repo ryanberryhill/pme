@@ -19,6 +19,9 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef CBVC_H_INCLUDED
+#define CBVC_H_INCLUDED
+
 #include "pme/ivc/ivc.h"
 
 namespace PME {
@@ -36,4 +39,6 @@ namespace PME {
     };
 
 }
+
+#endif
 
