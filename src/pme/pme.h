@@ -61,6 +61,7 @@ typedef enum
 {
     PME_IVC_MARCO,
     PME_IVC_CAIVC,
+    PME_IVC_CBVC,
     PME_IVC_BF,
     PME_IVC_UCBF
 } PMEIVCAlgorithm;
@@ -107,6 +108,7 @@ int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
 int cpme_run_simplemin(void * pme);
 int cpme_run_caivc(void * pme);
+int cpme_run_cbvc(void * pme);
 int cpme_run_marcoivc(void * pme);
 int cpme_run_ivcbf(void * pme);
 int cpme_run_ivcucbf(void * pme);
