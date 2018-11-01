@@ -35,7 +35,8 @@ namespace PME
         sat_runtime(0.0),
         num_mivcs_found(0),
         smallest_mivc_size(0),
-        largest_mivc_size(0)
+        largest_mivc_size(0),
+        ivc_prep_time(0.0)
     { }
 
     void PMEStats::printAll(std::ostream & os) const
@@ -59,6 +60,7 @@ namespace PME
         os << "MIVCs Found: " << num_mivcs_found << std::endl;
         os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
         os << "Largest MIVC: " << largest_mivc_size << std::endl;
+        os << "Preparation Time: " << ivc_prep_time << std::endl;
     }
 
     GlobalState& GlobalState::instance()

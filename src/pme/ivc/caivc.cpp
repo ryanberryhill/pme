@@ -73,9 +73,8 @@ namespace PME {
     {
         // Typically, we want to start by finding all cardinality 1 MCSes
         // An option allows us to start with even higher cardinalities
-        double prep_time = 0.0;
         {
-            AutoTimer timer(prep_time);
+            AutoTimer timer(stats().ivc_prep_time);
 
             unsigned n_max = opts().caivc_ar_upfront_nmax;
             for (unsigned n = 1; n <= n_max; ++n)
@@ -92,7 +91,6 @@ namespace PME {
                 }
             }
         }
-        log(1) << "Preparation time: " << prep_time << std::endl;
 
         // Repeatedly find candidate MIVCs. If the candidate is not safe, then
         // find a new MCS consiting only of gates outside the candidate.
