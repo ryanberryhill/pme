@@ -34,7 +34,7 @@ struct BVCSolverFixture
     ExternalID i0, l0, l1, l2, l3, a0, a1, a2, o0;
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
-    std::unique_ptr<BVCSolver> debugger;
+    std::unique_ptr<BVCSolver> solver;
 
     BVCSolverFixture()
     {
@@ -60,13 +60,14 @@ struct BVCSolverFixture
         // l2' = l3 & l1 = a1
         aiger_add_latch(aig, l2, a1, "l2");
 
-        // l3' = l1 & l2 = a3
+        // l3' = l1 & l2 = a2
         aiger_add_latch(aig, l3, a2, "l3");
 
-        // o0 = l3 & l2 & l1 & l0
         aiger_add_and(aig, a0, l0, l3);
         aiger_add_and(aig, a1, l1, l3);
         aiger_add_and(aig, a2, l1, l2);
+
+        // o0 = l3
         aiger_add_output(aig, l3, "o0");
         o0 = l3;
 
@@ -77,7 +78,7 @@ struct BVCSolverFixture
         setInit(tr->toInternal(l2), ID_FALSE);
         setInit(tr->toInternal(l3), ID_FALSE);
 
-        prepareDebugger();
+        prepareSolver();
     }
 
     void setInit(ID latch, ID val)
@@ -85,9 +86,9 @@ struct BVCSolverFixture
         tr->setInit(latch, val);
     }
 
-    void prepareDebugger()
+    void prepareSolver()
     {
-        debugger.reset(new BVCSolver(*tr));
+        solver.reset(new BVCSolver(vars, *tr));
     }
 
     ~BVCSolverFixture()
@@ -97,11 +98,31 @@ struct BVCSolverFixture
     }
 };
 
-BOOST_AUTO_TEST_CASE(basic_bvc_debug)
+BOOST_AUTO_TEST_CASE(basic_bvc_debug_no_abstraction)
 {
     BVCSolverFixture f;
-    f.prepareDebugger();
 
+    ID a2 = f.tr->toInternal(f.a2);
 
+    // There should be a correction set of {a2}
+    BOOST_REQUIRE(f.solver->solutionExists());
+
+    bool sat = false;
+    BVCSolution soln;
+    BVCPredecessor pred;
+
+    std::tie(sat, soln, pred) = f.solver->solve();
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(pred.empty());
+    BOOST_REQUIRE(!soln.empty());
+
+    BVCSolution expected = {a2};
+    BOOST_CHECK(soln == expected);
+
+    f.solver->blockSolution(soln);
+
+    // There shouldn't be any more correction sets for k = 1
+    BOOST_CHECK(!f.solver->solutionExists());
 }
 
