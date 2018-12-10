@@ -98,7 +98,7 @@ struct BVCSolverFixture
     }
 };
 
-BOOST_AUTO_TEST_CASE(basic_bvc_debug_no_abstraction)
+BOOST_AUTO_TEST_CASE(basic_bvc_k1)
 {
     BVCSolverFixture f;
 
@@ -124,5 +124,44 @@ BOOST_AUTO_TEST_CASE(basic_bvc_debug_no_abstraction)
 
     // There shouldn't be any more correction sets for k = 1
     BOOST_CHECK(!f.solver->solutionExists());
+}
+
+BOOST_AUTO_TEST_CASE(basic_bvc_abstraction)
+{
+    BVCSolverFixture f;
+
+    ID a2 = f.tr->toInternal(f.a2);
+
+    // There should be a correction set of {a2}
+    BOOST_REQUIRE(f.solver->solutionExists());
+
+    bool sat = false;
+    BVCSolution soln;
+    BVCPredecessor pred;
+
+    std::tie(sat, soln, pred) = f.solver->solve();
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(pred.empty());
+    BOOST_REQUIRE(!soln.empty());
+
+    BVCSolution expected = {a2};
+    BOOST_CHECK(soln == expected);
+
+    f.solver->blockSolution(soln);
+
+    // There shouldn't be any more correction sets for k = 1
+    BOOST_CHECK(!f.solver->solutionExists());
+
+    // Set the abstraction to {a2} (which is the hitting set
+    // of the currently-known correction sets {{a2}}).
+    // Also, one frame of abstraction.
+    f.solver->setAbstraction({a2});
+    f.solver->increaseLevel(1);
+
+    // A predecessor should exist
+    BOOST_REQUIRE(f.solver->predecessorExists());
+
+    // TODO: finish test
 }
 

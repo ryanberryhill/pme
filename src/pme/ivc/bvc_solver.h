@@ -63,12 +63,17 @@ namespace PME {
             BVCSolver(VariableManager & varman, const TransitionRelation & tr);
 
             void setAbstraction(std::vector<ID> gates);
+            void increaseLevel(unsigned k);
 
             BVCResult solve();
+            BVCResult solve(const Cube & target);
             bool solutionExists();
+            bool predecessorExists();
             void blockSolution(const BVCSolution & soln);
 
         private:
+            void blockKnownSolutions(SATAdaptor & solver);
+            void unrollAbstraction(SATAdaptor & solver);
             void initSolver0();
             void initSolverN();
             void initCardinality(unsigned n);
@@ -80,6 +85,7 @@ namespace PME {
             bool solverNReady() const { return m_solverN_inited; }
 
             BVCResult solveAtCardinality(unsigned n);
+            BVCResult solveAtCardinality(unsigned n, const Cube & target);
 
             BVCPredecessor extractPredecessor() const;
             BVCSolution extractSolution() const;

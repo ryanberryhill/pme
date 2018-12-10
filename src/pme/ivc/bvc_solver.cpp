@@ -41,46 +41,76 @@ namespace PME {
                                            m_debug_tr.end_debug_latches());
     }
 
-    void BVCSolver::initSolver0()
+    void BVCSolver::blockKnownSolutions(SATAdaptor & solver)
     {
-        // TODO: handle abstraction
-        assert(m_abstraction_frames == 0);
-
-        m_solver0.reset();
-
-        m_solver0.addClauses(m_tr.unrollFrame(0));
-        m_solver0.addClauses(m_tr.unrollFrame(1));
-        m_solver0.addClauses(m_tr.initState());
-
-        m_solver0.addClause({prime(m_tr.bad())});
-
-        m_solver0_inited = true;
-
         for (const BVCSolution & soln : m_blocked_solutions)
         {
             Clause block = blockingClause(soln);
-            m_solver0.addClause(block);
+            solver.addClause(block);
         }
+    }
+
+    void BVCSolver::unrollAbstraction(SATAdaptor & solver)
+    {
+        assert(!m_abstraction_gates.empty());
+
+        std::vector<ID> abstraction(m_abstraction_gates.begin(), m_abstraction_gates.end());
+        TransitionRelation abs_tr(m_tr, abstraction);
+        for (unsigned i = 0; i < m_abstraction_frames; ++i)
+        {
+            solver.addClauses(abs_tr.unrollFrame(i));
+        }
+
+        solver.addClauses(abs_tr.initState());
+    }
+
+    void BVCSolver::initSolver0()
+    {
+        m_solver0.reset();
+
+        if (m_abstraction_frames == 0)
+        {
+            m_solver0.addClauses(m_tr.initState());
+        }
+        else
+        {
+            unrollAbstraction(m_solver0);
+        }
+
+        // Add the final concrete frame (and primed form)
+        m_solver0.addClauses(m_tr.unrollFrame(m_abstraction_frames));
+        m_solver0.addClauses(m_tr.unrollFrame(m_abstraction_frames + 1));
+
+        m_solver0_inited = true;
     }
 
     void BVCSolver::initSolverN()
     {
-        // TODO: handle abstraction
-        assert(m_abstraction_frames == 0);
-
         m_solverN.reset();
 
-        m_solverN.addClauses(m_debug_tr.unrollFrame(0));
-        m_solverN.addClauses(m_debug_tr.unrollFrame(1));
-        m_solverN.addClauses(m_debug_tr.initState());
-
-        m_solverN.addClause({prime(m_debug_tr.bad())});
-
-        for (const BVCSolution & soln : m_blocked_solutions)
+        if (m_abstraction_frames == 0)
         {
-            Clause block = blockingClause(soln);
-            m_solverN.addClause(block);
+            m_solverN.addClauses(m_debug_tr.initState());
         }
+        else
+        {
+            unrollAbstraction(m_solverN);
+
+            // Add "initial" state for debug latches
+            ClauseVec debug_init(m_debug_tr.begin_debug_latches(),
+                                 m_debug_tr.end_debug_latches());
+            debug_init = primeClauses(debug_init, m_abstraction_frames);
+
+            m_solverN.addClauses(debug_init);
+        }
+
+        // Add the final concrete frame (and primed form)
+        m_solverN.addClauses(m_debug_tr.unrollFrame(m_abstraction_frames));
+        m_solverN.addClauses(m_debug_tr.unrollFrame(m_abstraction_frames + 1));
+
+        // Block known solutions (only applies to solverN, as solver0 finds
+        // predecessors)
+        blockKnownSolutions(m_solverN);
 
         m_solverN_inited = true;
     }
@@ -104,17 +134,31 @@ namespace PME {
         markSolversDirty();
     }
 
+    void BVCSolver::increaseLevel(unsigned k)
+    {
+        assert(k > m_abstraction_frames);
+        m_abstraction_frames = k;
+        markSolversDirty();
+    }
+
     BVCResult BVCSolver::solve()
     {
+        return solve({m_tr.bad()});
+    }
+
+    BVCResult BVCSolver::solve(const Cube & target)
+    {
         BVCResult result;
-        result = solveAtCardinality(0);
+
+        result = solveAtCardinality(0, target);
         if (result.sat)
         {
             std::cout << "SAT at 0" << std::endl;
+            assert(!result.predecessor.empty());
             return result;
         }
 
-        result = solveAtCardinality(1);
+        result = solveAtCardinality(1, target);
         if (result.sat)
         {
             std::cout << "SAT at 1" << std::endl;
@@ -125,6 +169,12 @@ namespace PME {
         return BVCResult();
     }
 
+    bool BVCSolver::predecessorExists()
+    {
+        BVCResult result = solveAtCardinality(0);
+        return result.sat;
+    }
+
     bool BVCSolver::solutionExists()
     {
         BVCResult result = solveAtCardinality(CARDINALITY_INF);
@@ -133,12 +183,18 @@ namespace PME {
 
     BVCResult BVCSolver::solveAtCardinality(unsigned n)
     {
+        return solveAtCardinality(n, { m_tr.bad() });
+    }
+
+    BVCResult BVCSolver::solveAtCardinality(unsigned n, const Cube & target)
+    {
         SATAdaptor & solver = (n == 0) ? m_solver0 : m_solverN;
 
         if (n == 0 && !solver0Ready()) { initSolver0(); }
         if (n > 0 && !solverNReady())  { initSolverN(); }
 
-        Cube assumps;
+        // Assume the target state e.g., (bad') or (r_1' & r_2')
+        Cube assumps = primeVec(target, m_abstraction_frames + 1);
 
         if (n > 0 && n != CARDINALITY_INF)
         {
@@ -147,7 +203,8 @@ namespace PME {
             {
                 initCardinality(n);
             }
-            assumps = m_cardinality_constraint.assumeLEq(n);
+            Cube cassumps = m_cardinality_constraint.assumeLEq(n);
+            assumps.insert(assumps.end(), cassumps.begin(), cassumps.end());
         }
 
         bool sat = solver.solve(assumps);
@@ -209,7 +266,8 @@ namespace PME {
                   it != m_debug_tr.end_debug_latches(); ++it)
         {
             ID dl_id = *it;
-            if (m_solverN.getAssignmentToVar(dl_id) == SAT::TRUE)
+            ID pdl_id = prime(dl_id, m_abstraction_frames);
+            if (m_solverN.getAssignmentToVar(pdl_id) == SAT::TRUE)
             {
                 ID gate = m_debug_tr.gateForDebugLatch(dl_id);
                 soln.push_back(gate);
@@ -225,7 +283,8 @@ namespace PME {
 
         for (ID id : soln)
         {
-            ID to_block = negate(prime(id, m_abstraction_frames));
+            ID dl_id = m_debug_tr.debugLatchForGate(id);
+            ID to_block = negate(prime(dl_id, m_abstraction_frames));
             blocking_clause.push_back(to_block);
         }
 
@@ -234,10 +293,11 @@ namespace PME {
 
     void BVCSolver::blockSolutionInSolvers(const BVCSolution & soln)
     {
-        Clause blocking_clause = blockingClause(soln);
-
-        if (solver0Ready()) { m_solver0.addClause(blocking_clause); }
-        if (solverNReady()) { m_solverN.addClause(blocking_clause); }
+        if (solverNReady())
+        {
+            Clause blocking_clause = blockingClause(soln);
+            m_solverN.addClause(blocking_clause);
+        }
     }
 }
 
