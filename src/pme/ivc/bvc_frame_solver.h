@@ -19,8 +19,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef BVC_SOLVER_H_INCLUDED
-#define BVC_SOLVER_H_INCLUDED
+#ifndef BVC_FRAME_SOLVER_H_INCLUDED
+#define BVC_FRAME_SOLVER_H_INCLUDED
 
 #include "pme/util/debugger.h"
 #include "pme/util/cardinality_constraint.h"
@@ -36,20 +36,20 @@ namespace PME {
     typedef std::vector<ID> BVCSolution;
     typedef std::vector<ID> BVCPredecessor;
 
-    struct BVCResult
+    struct BVCBlockResult
     {
-        typedef std::tuple<bool &, BVCSolution &, BVCPredecessor &> BVCResultTuple;
+        typedef std::tuple<bool &, BVCSolution &, BVCPredecessor &> BVCBlockResultTuple;
 
-        BVCResult(bool sat, const BVCSolution & soln, const BVCPredecessor & pred)
+        BVCBlockResult(bool sat, const BVCSolution & soln, const BVCPredecessor & pred)
             : sat(sat), solution(soln), predecessor(pred)
         { }
 
-        BVCResult() : sat(false)
+        BVCBlockResult() : sat(false)
         { }
 
-        operator BVCResultTuple()
+        operator BVCBlockResultTuple()
         {
-            return BVCResultTuple(sat, solution, predecessor);
+            return BVCBlockResultTuple(sat, solution, predecessor);
         }
 
         bool sat;
@@ -61,16 +61,17 @@ namespace PME {
     {
         public:
             BVCFrameSolver(VariableManager & varman,
-                      const TransitionRelation & tr,
-                      unsigned level);
+                           const TransitionRelation & tr,
+                           unsigned level);
 
-            void setAbstraction(std::vector<ID> gates);
+            void setAbstraction(const std::vector<ID> & gates);
+            const std::set<ID> & getAbstraction() { return m_abstraction_gates; }
 
-            BVCResult solve();
-            BVCResult solve(const Cube & target);
+            BVCBlockResult solve();
+            BVCBlockResult solve(const Cube & target);
 
-            BVCResult solveAtCardinality(unsigned n);
-            BVCResult solveAtCardinality(unsigned n, const Cube & target);
+            BVCBlockResult solveAtCardinality(unsigned n);
+            BVCBlockResult solveAtCardinality(unsigned n, const Cube & target);
 
             bool solutionExists();
             bool predecessorExists();
@@ -98,6 +99,8 @@ namespace PME {
             void blockSolutionInSolvers(const BVCSolution & soln);
             Clause blockingClause(const BVCSolution & soln) const;
 
+            bool abstractionIsSubsetOf(const std::vector<ID> & gates) const;
+
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
             DebugTransitionRelation m_debug_tr;
@@ -107,8 +110,8 @@ namespace PME {
 
             bool m_solver0_inited;
             bool m_solverN_inited;
-            SATAdaptor m_solver0;
-            SATAdaptor m_solverN;
+            ClauseDeduplicatingSATAdaptor m_solver0;
+            ClauseDeduplicatingSATAdaptor m_solverN;
 
             std::set<ID> m_abstraction_gates;
             std::vector<BVCSolution> m_blocked_solutions;

@@ -99,6 +99,15 @@ struct BVCFrameSolverFixture
     }
 };
 
+BOOST_AUTO_TEST_CASE(bvc_abstraction_initially_empty)
+{
+    BVCFrameSolverFixture f(5);
+
+    // Check the initial abstraction is empty
+    std::set<ID> empty;
+    BOOST_CHECK(f.solver->getAbstraction() == empty);
+}
+
 BOOST_AUTO_TEST_CASE(basic_bvc_k1)
 {
     BVCFrameSolverFixture f(0);
@@ -178,6 +187,10 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     // Setting the abstraction shouldn't change that
     f0.solver->setAbstraction({a2});
     BOOST_CHECK(!f0.solver->solutionExists());
+
+    // Check the abstraction is as expected
+    std::set<ID> expected_abs = {a2};
+    BOOST_CHECK(f0.solver->getAbstraction() == expected_abs);
 
     // Set the abstraction to {a2} (which is the hitting set
     // of the currently-known correction sets {{a2}}).
