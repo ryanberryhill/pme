@@ -60,15 +60,24 @@ namespace PME {
     class BVCSolver
     {
         public:
-            BVCSolver(VariableManager & varman, const TransitionRelation & tr);
+            BVCSolver(VariableManager & varman,
+                      const TransitionRelation & tr,
+                      unsigned level);
 
             void setAbstraction(std::vector<ID> gates);
-            void increaseLevel(unsigned k);
 
             BVCResult solve();
             BVCResult solve(const Cube & target);
+
+            BVCResult solveAtCardinality(unsigned n);
+            BVCResult solveAtCardinality(unsigned n, const Cube & target);
+
             bool solutionExists();
             bool predecessorExists();
+            bool solutionExists(const Cube & target);
+            bool predecessorExists(const Cube & target);
+            bool solutionAtCardinality(unsigned n);
+            bool solutionAtCardinality(unsigned n, const Cube & target);
             void blockSolution(const BVCSolution & soln);
 
         private:
@@ -83,9 +92,6 @@ namespace PME {
             void markSolversDirty() { markSolver0Dirty(); markSolverNDirty(); }
             bool solver0Ready() const { return m_solver0_inited; }
             bool solverNReady() const { return m_solverN_inited; }
-
-            BVCResult solveAtCardinality(unsigned n);
-            BVCResult solveAtCardinality(unsigned n, const Cube & target);
 
             BVCPredecessor extractPredecessor() const;
             BVCSolution extractSolution() const;

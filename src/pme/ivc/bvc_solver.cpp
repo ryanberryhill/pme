@@ -27,7 +27,9 @@
 namespace PME {
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
 
-    BVCSolver::BVCSolver(VariableManager & varman, const TransitionRelation & tr)
+    BVCSolver::BVCSolver(VariableManager & varman,
+                         const TransitionRelation & tr,
+                         unsigned level)
         : m_vars(varman),
           m_tr(tr),
           m_debug_tr(tr),
@@ -35,7 +37,7 @@ namespace PME {
           m_cardinality(0),
           m_solver0_inited(false),
           m_solverN_inited(false),
-          m_abstraction_frames(0)
+          m_abstraction_frames(level)
     {
         m_cardinality_constraint.addInputs(m_debug_tr.begin_debug_latches(),
                                            m_debug_tr.end_debug_latches());
@@ -118,7 +120,6 @@ namespace PME {
     void BVCSolver::initCardinality(unsigned n)
     {
         // Need to make a cardinality n+1 constraint to assume <= n
-        // TODO: handle corner cases with very few gates
         m_cardinality_constraint.setCardinality(n + 1);
         m_solverN.addClauses(m_cardinality_constraint.CNFize());
     }
@@ -131,13 +132,6 @@ namespace PME {
         m_abstraction_gates.clear();
         m_abstraction_gates.insert(gates.begin(), gates.end());
 
-        markSolversDirty();
-    }
-
-    void BVCSolver::increaseLevel(unsigned k)
-    {
-        assert(k > m_abstraction_frames);
-        m_abstraction_frames = k;
         markSolversDirty();
     }
 
@@ -171,13 +165,33 @@ namespace PME {
 
     bool BVCSolver::predecessorExists()
     {
-        BVCResult result = solveAtCardinality(0);
-        return result.sat;
+        return solutionAtCardinality(0);
     }
 
     bool BVCSolver::solutionExists()
     {
-        BVCResult result = solveAtCardinality(CARDINALITY_INF);
+        return solutionAtCardinality(CARDINALITY_INF);
+    }
+
+    bool BVCSolver::predecessorExists(const Cube & target)
+    {
+        return solutionAtCardinality(0, target);
+    }
+
+    bool BVCSolver::solutionExists(const Cube & target)
+    {
+        return solutionAtCardinality(CARDINALITY_INF, target);
+    }
+
+    bool BVCSolver::solutionAtCardinality(unsigned n)
+    {
+        BVCResult result = solveAtCardinality(n);
+        return result.sat;
+    }
+
+    bool BVCSolver::solutionAtCardinality(unsigned n, const Cube & target)
+    {
+        BVCResult result = solveAtCardinality(n, target);
         return result.sat;
     }
 
@@ -198,12 +212,9 @@ namespace PME {
 
         if (n > 0 && n != CARDINALITY_INF)
         {
-            initCardinality(n);
-            if (n > m_cardinality_constraint.getOutputCardinality())
-            {
-                initCardinality(n);
-            }
-            Cube cassumps = m_cardinality_constraint.assumeLEq(n);
+            unsigned c = std::min((size_t) n, m_debug_tr.numSuspects());
+            initCardinality(c);
+            Cube cassumps = m_cardinality_constraint.assumeLEq(c);
             assumps.insert(assumps.end(), cassumps.begin(), cassumps.end());
         }
 

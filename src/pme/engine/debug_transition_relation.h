@@ -47,6 +47,8 @@ namespace PME {
             ID debugPPIForGate(ID id) const;
             ID gateForDebugLatch(ID id) const;
 
+            size_t numSuspects() const { return m_debugLatchIDs.size(); }
+
         private:
             std::vector<ID> m_debugLatchIDs;
             std::vector<ID> m_debugPPIs;

@@ -41,6 +41,9 @@ namespace PME {
         SafetyAnswer result;
         SafetyProof proof;
         SafetyCounterExample cex;
+
+        bool safe() { return result == SAFE; }
+        bool unsafe() { return result == UNSAFE; }
     };
 }
 

@@ -203,6 +203,9 @@ BOOST_AUTO_TEST_CASE(latch_iterators)
     std::vector<ID> debug_latches(f.tr->begin_debug_latches(),
                                   f.tr->end_debug_latches());
     BOOST_CHECK_EQUAL(debug_latches.size(), 3);
+
+    BOOST_CHECK_EQUAL(f.tr->numSuspects(), 3);
+    BOOST_CHECK_EQUAL(f.tr->numGates(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(input_iterators)
