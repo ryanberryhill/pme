@@ -213,6 +213,7 @@ namespace PME
         m_initialAssumps = m_optimizationSet;
         m_solves = 0;
         m_unsatRounds = 0;
+        m_absoluteUNSAT = false;
     }
 
     void MSU4MaxSATSolver::resetSolver()

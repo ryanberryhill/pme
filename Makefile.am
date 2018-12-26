@@ -73,6 +73,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/hybrid_safety_checker.cpp \
                    src/pme/util/timer.h \
                    src/pme/util/timer.cpp \
+                   src/pme/util/hitting_set_finder.h \
+                   src/pme/util/hitting_set_finder.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \
@@ -113,8 +115,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ivc/ivc_ucbf.cpp \
                    src/pme/ivc/marco_ivc.h \
                    src/pme/ivc/marco_ivc.cpp \
-				   src/pme/ivc/bvc_solver.h \
-				   src/pme/ivc/bvc_solver.cpp \
+                   src/pme/ivc/bvc_solver.h \
+                   src/pme/ivc/bvc_solver.cpp \
                    src/pme/ivc/bvc_frame_solver.h \
                    src/pme/ivc/bvc_frame_solver.cpp 
 
@@ -186,7 +188,8 @@ TESTS = test_sat_adaptor \
         test_correction_set_finder \
         test_ivc \
         test_ivc_checker \
-        test_hybrid_safety_checker
+        test_hybrid_safety_checker \
+        test_hitting_set_finder
 
 check_PROGRAMS = $(TESTS)
 
@@ -282,6 +285,9 @@ test_correction_set_finder_LDADD = $(PME_TEST_LIBS)
 
 test_hybrid_safety_checker_SOURCES = tests/test_hybrid_safety_checker.cpp
 test_hybrid_safety_checker_LDADD = $(PME_TEST_LIBS)
+
+test_hitting_set_finder_SOURCES = tests/test_hitting_set_finder.cpp
+test_hitting_set_finder_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 
