@@ -57,10 +57,10 @@ namespace PME {
         BVCPredecessor predecessor;
     };
 
-    class BVCSolver
+    class BVCFrameSolver
     {
         public:
-            BVCSolver(VariableManager & varman,
+            BVCFrameSolver(VariableManager & varman,
                       const TransitionRelation & tr,
                       unsigned level);
 

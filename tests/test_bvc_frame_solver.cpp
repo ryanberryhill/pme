@@ -20,24 +20,24 @@
  */
 
 #include "pme/id.h"
-#include "pme/ivc/bvc_solver.h"
+#include "pme/ivc/bvc_frame_solver.h"
 #include "pme/ic3/ic3_solver.h"
 
-#define BOOST_TEST_MODULE BVCSolverTest
+#define BOOST_TEST_MODULE BVCFrameSolverTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 using namespace PME;
 
-struct BVCSolverFixture
+struct BVCFrameSolverFixture
 {
     aiger * aig;
     ExternalID i0, l0, l1, l2, l3, a0, a1, a2, o0;
     VariableManager vars;
     std::unique_ptr<TransitionRelation> tr;
-    std::unique_ptr<BVCSolver> solver;
+    std::unique_ptr<BVCFrameSolver> solver;
 
-    BVCSolverFixture(unsigned level)
+    BVCFrameSolverFixture(unsigned level)
     {
         aig = aiger_init();
 
@@ -89,10 +89,10 @@ struct BVCSolverFixture
 
     void prepareSolver(unsigned level)
     {
-        solver.reset(new BVCSolver(vars, *tr, level));
+        solver.reset(new BVCFrameSolver(vars, *tr, level));
     }
 
-    ~BVCSolverFixture()
+    ~BVCFrameSolverFixture()
     {
         aiger_reset(aig);
         aig = nullptr;
@@ -101,7 +101,7 @@ struct BVCSolverFixture
 
 BOOST_AUTO_TEST_CASE(basic_bvc_k1)
 {
-    BVCSolverFixture f(0);
+    BVCFrameSolverFixture f(0);
 
     ID a2 = f.tr->toInternal(f.a2);
 
@@ -141,8 +141,8 @@ BOOST_AUTO_TEST_CASE(basic_bvc_k1)
 
 BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
 {
-    BVCSolverFixture f0(0);
-    BVCSolverFixture f1(1);
+    BVCFrameSolverFixture f0(0);
+    BVCFrameSolverFixture f1(1);
 
     ID a0 = f0.tr->toInternal(f0.a0);
     ID a1 = f0.tr->toInternal(f0.a1);

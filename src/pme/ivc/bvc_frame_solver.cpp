@@ -19,7 +19,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "pme/ivc/bvc_solver.h"
+#include "pme/ivc/bvc_frame_solver.h"
 
 #include <limits>
 #include <cassert>
@@ -27,7 +27,7 @@
 namespace PME {
     const unsigned CARDINALITY_INF = std::numeric_limits<unsigned>::max();
 
-    BVCSolver::BVCSolver(VariableManager & varman,
+    BVCFrameSolver::BVCFrameSolver(VariableManager & varman,
                          const TransitionRelation & tr,
                          unsigned level)
         : m_vars(varman),
@@ -43,7 +43,7 @@ namespace PME {
                                            m_debug_tr.end_debug_latches());
     }
 
-    void BVCSolver::blockKnownSolutions(SATAdaptor & solver)
+    void BVCFrameSolver::blockKnownSolutions(SATAdaptor & solver)
     {
         for (const BVCSolution & soln : m_blocked_solutions)
         {
@@ -52,7 +52,7 @@ namespace PME {
         }
     }
 
-    void BVCSolver::unrollAbstraction(SATAdaptor & solver)
+    void BVCFrameSolver::unrollAbstraction(SATAdaptor & solver)
     {
         assert(!m_abstraction_gates.empty());
 
@@ -66,7 +66,7 @@ namespace PME {
         solver.addClauses(abs_tr.initState());
     }
 
-    void BVCSolver::initSolver0()
+    void BVCFrameSolver::initSolver0()
     {
         m_solver0.reset();
 
@@ -86,7 +86,7 @@ namespace PME {
         m_solver0_inited = true;
     }
 
-    void BVCSolver::initSolverN()
+    void BVCFrameSolver::initSolverN()
     {
         m_solverN.reset();
 
@@ -117,14 +117,14 @@ namespace PME {
         m_solverN_inited = true;
     }
 
-    void BVCSolver::initCardinality(unsigned n)
+    void BVCFrameSolver::initCardinality(unsigned n)
     {
         // Need to make a cardinality n+1 constraint to assume <= n
         m_cardinality_constraint.setCardinality(n + 1);
         m_solverN.addClauses(m_cardinality_constraint.CNFize());
     }
 
-    void BVCSolver::setAbstraction(std::vector<ID> gates)
+    void BVCFrameSolver::setAbstraction(std::vector<ID> gates)
     {
         // TODO: if gates is a superset of m_abstraction_gates
         // we can just add the new gates to the solver.
@@ -135,12 +135,12 @@ namespace PME {
         markSolversDirty();
     }
 
-    BVCResult BVCSolver::solve()
+    BVCResult BVCFrameSolver::solve()
     {
         return solve({m_tr.bad()});
     }
 
-    BVCResult BVCSolver::solve(const Cube & target)
+    BVCResult BVCFrameSolver::solve(const Cube & target)
     {
         BVCResult result;
 
@@ -163,44 +163,44 @@ namespace PME {
         return BVCResult();
     }
 
-    bool BVCSolver::predecessorExists()
+    bool BVCFrameSolver::predecessorExists()
     {
         return solutionAtCardinality(0);
     }
 
-    bool BVCSolver::solutionExists()
+    bool BVCFrameSolver::solutionExists()
     {
         return solutionAtCardinality(CARDINALITY_INF);
     }
 
-    bool BVCSolver::predecessorExists(const Cube & target)
+    bool BVCFrameSolver::predecessorExists(const Cube & target)
     {
         return solutionAtCardinality(0, target);
     }
 
-    bool BVCSolver::solutionExists(const Cube & target)
+    bool BVCFrameSolver::solutionExists(const Cube & target)
     {
         return solutionAtCardinality(CARDINALITY_INF, target);
     }
 
-    bool BVCSolver::solutionAtCardinality(unsigned n)
+    bool BVCFrameSolver::solutionAtCardinality(unsigned n)
     {
         BVCResult result = solveAtCardinality(n);
         return result.sat;
     }
 
-    bool BVCSolver::solutionAtCardinality(unsigned n, const Cube & target)
+    bool BVCFrameSolver::solutionAtCardinality(unsigned n, const Cube & target)
     {
         BVCResult result = solveAtCardinality(n, target);
         return result.sat;
     }
 
-    BVCResult BVCSolver::solveAtCardinality(unsigned n)
+    BVCResult BVCFrameSolver::solveAtCardinality(unsigned n)
     {
         return solveAtCardinality(n, { m_tr.bad() });
     }
 
-    BVCResult BVCSolver::solveAtCardinality(unsigned n, const Cube & target)
+    BVCResult BVCFrameSolver::solveAtCardinality(unsigned n, const Cube & target)
     {
         SATAdaptor & solver = (n == 0) ? m_solver0 : m_solverN;
 
@@ -241,13 +241,13 @@ namespace PME {
         }
     }
 
-    void BVCSolver::blockSolution(const BVCSolution & soln)
+    void BVCFrameSolver::blockSolution(const BVCSolution & soln)
     {
         m_blocked_solutions.push_back(soln);
         blockSolutionInSolvers(soln);
     }
 
-    BVCPredecessor BVCSolver::extractPredecessor() const
+    BVCPredecessor BVCFrameSolver::extractPredecessor() const
     {
         assert(m_solver0.isSAT());
 
@@ -268,7 +268,7 @@ namespace PME {
         return pred;
     }
 
-    BVCSolution BVCSolver::extractSolution() const
+    BVCSolution BVCFrameSolver::extractSolution() const
     {
         assert(m_solverN.isSAT());
 
@@ -288,7 +288,7 @@ namespace PME {
         return soln;
     }
 
-    Clause BVCSolver::blockingClause(const BVCSolution & soln) const
+    Clause BVCFrameSolver::blockingClause(const BVCSolution & soln) const
     {
         Clause blocking_clause;
 
@@ -302,7 +302,7 @@ namespace PME {
         return blocking_clause;
     }
 
-    void BVCSolver::blockSolutionInSolvers(const BVCSolution & soln)
+    void BVCFrameSolver::blockSolutionInSolvers(const BVCSolution & soln)
     {
         if (solverNReady())
         {
