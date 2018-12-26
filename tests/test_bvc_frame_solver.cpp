@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(basic_bvc_k1)
     BOOST_CHECK(f.solver->solutionExists());
     BOOST_CHECK(f.solver->solutionAtCardinality(1));
 
-    std::tie(sat, soln, pred) = f.solver->solveAtCardinality(1);
+    std::tie(sat, soln, pred) = f.solver->solve(1);
 
     BOOST_REQUIRE(sat);
     BOOST_CHECK(pred.empty());
@@ -166,10 +166,10 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     BVCSolution soln;
     BVCPredecessor pred;
 
-    std::tie(sat, soln, pred) = f0.solver->solveAtCardinality(0);
+    std::tie(sat, soln, pred) = f0.solver->solve(0);
     BOOST_REQUIRE(!sat);
 
-    std::tie(sat, soln, pred) = f0.solver->solveAtCardinality(1);
+    std::tie(sat, soln, pred) = f0.solver->solve(1);
 
     BOOST_REQUIRE(sat);
     BOOST_CHECK(pred.empty());
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     BOOST_CHECK(!f0.solver->solutionExists());
 
     // Setting the abstraction shouldn't change that
-    f0.solver->setAbstraction({a2});
+    f0.solver->setAbs({a2});
     BOOST_CHECK(!f0.solver->solutionExists());
 
     // Check the abstraction is as expected
@@ -195,12 +195,12 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     // Set the abstraction to {a2} (which is the hitting set
     // of the currently-known correction sets {{a2}}).
     // Also, move on to one frame of abstraction.
-    f1.solver->setAbstraction({a2});
+    f1.solver->setAbs({a2});
 
     // A predecessor should exist
     BOOST_REQUIRE(f1.solver->predecessorExists());
 
-    std::tie(sat, soln, pred) = f1.solver->solveAtCardinality(0);
+    std::tie(sat, soln, pred) = f1.solver->solve(0);
     BOOST_REQUIRE(sat);
     BOOST_CHECK(soln.empty());
 
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     BOOST_CHECK(f0.solver->solutionAtCardinality(2, pred));
 
     BVCPredecessor old_pred = pred;
-    std::tie(sat, soln, pred) = f0.solver->solveAtCardinality(2, pred);
+    std::tie(sat, soln, pred) = f0.solver->solve(2, pred);
 
     BOOST_REQUIRE(sat);
     BOOST_CHECK(pred.empty());
@@ -247,8 +247,8 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     // Choose hitting set {a1, a2}
     // It turns out this is an IVC
     std::vector<ID> abstraction = {a1, a2};
-    f0.solver->setAbstraction(abstraction);
-    f1.solver->setAbstraction(abstraction);
+    f0.solver->setAbs(abstraction);
+    f1.solver->setAbs(abstraction);
 
     BOOST_CHECK(!f0.solver->predecessorExists());
     BOOST_CHECK(!f0.solver->solutionExists());

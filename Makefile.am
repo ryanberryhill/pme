@@ -113,6 +113,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/ivc/ivc_ucbf.cpp \
                    src/pme/ivc/marco_ivc.h \
                    src/pme/ivc/marco_ivc.cpp \
+				   src/pme/ivc/bvc_solver.h \
+				   src/pme/ivc/bvc_solver.cpp \
                    src/pme/ivc/bvc_frame_solver.h \
                    src/pme/ivc/bvc_frame_solver.cpp 
 
@@ -178,6 +180,7 @@ TESTS = test_sat_adaptor \
         test_ic3_solver \
         test_debugger \
         test_bvc_frame_solver \
+        test_bvc_solver \
         test_bmc_solver \
         test_basics \
         test_correction_set_finder \
@@ -258,6 +261,9 @@ test_debugger_LDADD = $(PME_TEST_LIBS)
 
 test_bvc_frame_solver_SOURCES = tests/test_bvc_frame_solver.cpp
 test_bvc_frame_solver_LDADD = $(PME_TEST_LIBS)
+
+test_bvc_solver_SOURCES = tests/test_bvc_solver.cpp
+test_bvc_solver_LDADD = $(PME_TEST_LIBS)
 
 test_bmc_solver_SOURCES = tests/test_bmc_solver.cpp
 test_bmc_solver_LDADD = $(PME_TEST_LIBS)

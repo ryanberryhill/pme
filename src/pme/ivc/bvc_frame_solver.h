@@ -64,14 +64,14 @@ namespace PME {
                            const TransitionRelation & tr,
                            unsigned level);
 
+            void setAbs(const std::vector<ID> & gates) { setAbstraction(gates); }
             void setAbstraction(const std::vector<ID> & gates);
+            void setAbstraction(const std::set<ID> & gates);
             const std::set<ID> & getAbstraction() { return m_abstraction_gates; }
 
-            BVCBlockResult solve();
-            BVCBlockResult solve(const Cube & target);
-
-            BVCBlockResult solveAtCardinality(unsigned n);
-            BVCBlockResult solveAtCardinality(unsigned n, const Cube & target);
+            BVCBlockResult solve(unsigned n);
+            BVCBlockResult solve(unsigned n, const Cube & target);
+            void blockSolution(const BVCSolution & soln);
 
             bool solutionExists();
             bool predecessorExists();
@@ -79,7 +79,6 @@ namespace PME {
             bool predecessorExists(const Cube & target);
             bool solutionAtCardinality(unsigned n);
             bool solutionAtCardinality(unsigned n, const Cube & target);
-            void blockSolution(const BVCSolution & soln);
 
         private:
             void blockKnownSolutions(SATAdaptor & solver);
@@ -99,14 +98,13 @@ namespace PME {
             void blockSolutionInSolvers(const BVCSolution & soln);
             Clause blockingClause(const BVCSolution & soln) const;
 
-            bool abstractionIsSubsetOf(const std::vector<ID> & gates) const;
+            bool abstractionIsSubsetOf(const std::set<ID> & gates) const;
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
             DebugTransitionRelation m_debug_tr;
 
             SortingCardinalityConstraint m_cardinality_constraint;
-            unsigned m_cardinality;
 
             bool m_solver0_inited;
             bool m_solverN_inited;
