@@ -28,6 +28,7 @@
 #include <vector>
 #include <set>
 #include <memory>
+#include <unordered_set>
 
 namespace PME
 {
@@ -44,7 +45,8 @@ namespace PME
     {
         public:
             SATAdaptor(SATBackend backend = GLUCOSE);
-            void addClause(const Clause & cls);
+            virtual ~SATAdaptor() { }
+            virtual void addClause(const Clause & cls);
             void addClauses(const ClauseVec & vec);
             bool solve();
             bool s(ID a);
@@ -66,7 +68,7 @@ namespace PME
             void freeze(id_iterator begin, id_iterator end, bool primes = false);
             ClauseVec simplify();
 
-            void reset();
+            virtual void reset();
 
         private:
             SATBackend m_backend;
@@ -83,6 +85,20 @@ namespace PME
             std::vector<SAT::Literal> toSAT(const std::vector<ID> & idvec);
             ID fromSAT(SAT::Literal lit) const;
             std::vector<ID> fromSAT(const std::vector<SAT::Literal> & satvec) const;
+    };
+
+    class ClauseDeduplicatingSATAdaptor : public SATAdaptor
+    {
+        public:
+            ClauseDeduplicatingSATAdaptor(SATBackend backend = GLUCOSE) :
+                SATAdaptor(backend)
+            { }
+
+            virtual void addClause(const Clause & cls) override;
+            virtual void reset() override;
+
+        private:
+            std::unordered_set<Clause> m_clauses;
     };
 }
 

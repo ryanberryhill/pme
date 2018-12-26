@@ -287,5 +287,23 @@ namespace PME
             if (primes) { freeze(prime(*it)); }
         }
     }
+
+    void ClauseDeduplicatingSATAdaptor::addClause(const Clause & cls)
+    {
+        Clause copy = cls;
+        std::sort(copy.begin(), copy.end());
+
+        if (m_clauses.count(copy) == 0)
+        {
+            m_clauses.insert(copy);
+            SATAdaptor::addClause(copy);
+        }
+    }
+
+    void ClauseDeduplicatingSATAdaptor::reset()
+    {
+        m_clauses.clear();
+        SATAdaptor::reset();
+    }
 }
 

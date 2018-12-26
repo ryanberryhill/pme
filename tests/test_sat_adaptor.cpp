@@ -239,3 +239,49 @@ BOOST_AUTO_TEST_CASE(groups)
     }
 }
 
+BOOST_AUTO_TEST_CASE(clause_dedup)
+{
+    for (SATBackend backend : backends)
+    {
+        ClauseDeduplicatingSATAdaptor slv(backend);
+
+        ID a = MIN_ID, b = a + ID_INCR, c = b + ID_INCR;
+
+        for (unsigned i = 0; i <= 1; ++i)
+        {
+            // (a) & (b V c) & (-b V -c)
+            slv.addClause({a});
+            slv.addClause({a});
+            slv.addClause({a});
+            slv.addClause({b, c});
+            slv.addClause({c, b});
+            slv.addClause({a});
+            slv.addClause({negate(b), negate(c)});
+            slv.addClause({b, c});
+            slv.addClause({c, b});
+            slv.addClause({negate(c), negate(b)});
+            slv.addClause({negate(b), negate(c)});
+
+            BOOST_CHECK(slv.solve());
+
+            BOOST_CHECK(slv.solve({b}));
+            BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::TRUE);
+
+            BOOST_CHECK(slv.solve({negate(b)}));
+            BOOST_CHECK_EQUAL(slv.getAssignment(b), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(c), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(b), SAT::FALSE);
+            BOOST_CHECK_EQUAL(slv.getAssignmentToVar(c), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(b)), SAT::TRUE);
+            BOOST_CHECK_EQUAL(slv.getAssignment(negate(c)), SAT::FALSE);
+
+            if (i == 0) { slv.reset(); }
+        }
+    }
+}
+
