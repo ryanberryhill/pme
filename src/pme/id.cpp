@@ -102,6 +102,17 @@ namespace PME
         return pcls;
     }
 
+    Clause unprimeClause(const Clause & cls)
+    {
+        Clause ucls;
+        ucls.reserve(cls.size());
+        for (ID lit : cls)
+        {
+            ucls.push_back(unprime(lit));
+        }
+        return ucls;
+    }
+
     ClauseVec primeClauses(const ClauseVec & vec, size_t n)
     {
         ClauseVec pvec;
@@ -117,5 +128,10 @@ namespace PME
     std::vector<ID> primeVec(const std::vector<ID> & vec, size_t n)
     {
         return primeClause(vec, n);
+    }
+
+    std::vector<ID> unprimeVec(const std::vector<ID> & vec)
+    {
+        return unprimeClause(vec);
     }
 }

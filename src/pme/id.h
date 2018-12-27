@@ -43,9 +43,11 @@ namespace PME
     ID strip(ID id);
 
     Clause primeClause(const Clause & cls, size_t n = 1);
+    Clause unprimeClause(const Clause & cls);
     ClauseVec primeClauses(const ClauseVec & vec, size_t n = 1);
 
     std::vector<ID> primeVec(const std::vector<ID> & vec, size_t n = 1);
+    std::vector<ID> unprimeVec(const std::vector<ID> & vec);
 }
 
 #endif

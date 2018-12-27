@@ -90,3 +90,52 @@ BOOST_AUTO_TEST_CASE(true_prime_false_prime)
     BOOST_CHECK(prime(ID_FALSE) == ID_FALSE);
 }
 
+BOOST_AUTO_TEST_CASE(negate_vecs)
+{
+    Cube c1 = { 2, 4, 6 };
+    Cube neg_c1 = negateVec(c1);
+
+    BOOST_REQUIRE(neg_c1.size() == c1.size());
+
+    for (size_t i = 0; i < c1.size(); ++i)
+    {
+        BOOST_CHECK_EQUAL(c1.at(i), negate(neg_c1.at(i)));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(prime_vecs)
+{
+    Cube c1 = { 2, 4, 6 };
+    Cube c1p = primeVec(c1);
+    Cube c1p3 = primeVec(c1, 3);
+
+    BOOST_REQUIRE(c1p.size() == c1.size());
+    BOOST_REQUIRE(c1p3.size() == c1.size());
+
+    for (size_t i = 0; i < c1.size(); ++i)
+    {
+        BOOST_CHECK_EQUAL(c1p.at(i), prime(c1.at(i), 1));
+        BOOST_CHECK_EQUAL(c1p3.at(i), prime(c1.at(i), 3));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(unprime_vecs)
+{
+    Cube c1 = { 2, 4, 6 };
+    Cube c1p = primeVec(c1);
+    Cube c1p3 = primeVec(c1, 3);
+    Cube c1pu = unprimeVec(c1p);
+    Cube c1p3u = unprimeVec(c1p3);
+
+    BOOST_REQUIRE(c1p.size() == c1.size());
+    BOOST_REQUIRE(c1p3.size() == c1.size());
+
+    for (size_t i = 0; i < c1.size(); ++i)
+    {
+        BOOST_CHECK_EQUAL(c1p.at(i), prime(c1.at(i), 1));
+        BOOST_CHECK_EQUAL(c1p3.at(i), prime(c1.at(i), 3));
+        BOOST_CHECK_EQUAL(c1p3u.at(i), c1.at(i));
+        BOOST_CHECK_EQUAL(c1pu.at(i), c1.at(i));
+    }
+}
+

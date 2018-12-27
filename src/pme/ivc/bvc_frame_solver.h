@@ -55,6 +55,8 @@ namespace PME {
         bool sat;
         BVCSolution solution;
         BVCPredecessor predecessor;
+
+        Cube inputs, pinputs, state;
     };
 
     class BVCFrameSolver
@@ -97,7 +99,11 @@ namespace PME {
             bool solverNReady() const { return m_solverN_inited; }
 
             BVCPredecessor extractPredecessor() const;
+            Cube extractInputs() const;
+            Cube extractPrimedInputs() const;
+            Cube extract(const SATAdaptor & solver,const Cube & vars) const;
             BVCSolution extractSolution() const;
+
             void blockSolutionInSolvers(const BVCSolution & soln);
             Clause blockingClause(const BVCSolution & soln) const;
 

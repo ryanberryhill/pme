@@ -223,7 +223,13 @@ namespace PME {
         {
             BVCPredecessor pred = extractPredecessor();
             BVCSolution empty_soln;
-            return BVCBlockResult(true, empty_soln, pred);
+            BVCBlockResult result(true, empty_soln, pred);
+
+            result.inputs = extractInputs();
+            result.state = pred;
+            result.inputs = extractPrimedInputs();
+
+            return result;
         }
         else if (sat && n > 0)
         {
@@ -247,22 +253,43 @@ namespace PME {
     BVCPredecessor BVCFrameSolver::extractPredecessor() const
     {
         assert(m_solver0.isSAT());
+        Cube platches(m_tr.begin_latches(), m_tr.end_latches());
+        platches = primeVec(platches, m_abstraction_frames);
+        return extract(m_solver0, platches);
+    }
 
-        BVCPredecessor pred;
-        for (auto it = m_tr.begin_latches(); it != m_tr.end_latches(); ++it)
+    Cube BVCFrameSolver::extractInputs() const
+    {
+        assert(m_solver0.isSAT());
+        Cube pinp(m_tr.begin_inputs(), m_tr.end_inputs());
+        pinp = primeVec(pinp, m_abstraction_frames);
+        return extract(m_solver0, pinp);
+    }
+
+    Cube BVCFrameSolver::extractPrimedInputs() const
+    {
+        assert(m_solver0.isSAT());
+        Cube pinp(m_tr.begin_inputs(), m_tr.end_inputs());
+        pinp = primeVec(pinp, m_abstraction_frames + 1);
+        return extract(m_solver0, pinp);
+    }
+
+    Cube BVCFrameSolver::extract(const SATAdaptor & solver, const Cube & vars) const
+    {
+        assert(solver.isSAT());
+
+        Cube ext;
+        for (ID var : vars)
         {
-            ID latch = *it;
-            ID platch = prime(latch, m_abstraction_frames);
-
-            SAT::ModelValue val = m_solver0.getAssignmentToVar(platch);
+            SAT::ModelValue val = solver.getAssignmentToVar(var);
             assert(val == SAT::TRUE || val == SAT::FALSE);
             bool neg = val == SAT::FALSE;
 
-            ID lit = neg ? negate(latch) : latch;
-            pred.push_back(lit);
+            ID lit = neg ? negate(var) : var;
+            ext.push_back(lit);
         }
 
-        return pred;
+        return unprimeVec(ext);
     }
 
     BVCSolution BVCFrameSolver::extractSolution() const
