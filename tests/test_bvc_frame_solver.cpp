@@ -108,6 +108,96 @@ BOOST_AUTO_TEST_CASE(bvc_abstraction_initially_empty)
     BOOST_CHECK(f.solver->getAbstraction() == empty);
 }
 
+BOOST_AUTO_TEST_CASE(bvc_extract_no_abs)
+{
+    BVCFrameSolverFixture f(0);
+
+    ID i0 = f.tr->toInternal(f.i0);
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    Cube test;
+    BVCSolution expected;
+
+    test = { negate(l0), negate(l1) };
+    expected = { negate(l0), negate(l1), negate(l2), negate(l3) };
+    std::sort(expected.begin(), expected.end());
+
+    // There should be a predecessor (i.e., the initial state)
+    BOOST_REQUIRE(f.solver->solutionExistsUnprimed(test));
+    BOOST_REQUIRE(f.solver->predecessorExistsUnprimed(test));
+
+    BVCBlockResult result = f.solver->solveUnprimed(0, test);
+
+    BOOST_REQUIRE(result.sat);
+    BOOST_CHECK(result.solution.empty());
+    BOOST_REQUIRE(!result.predecessor.empty());
+
+    BVCPredecessor pred = result.predecessor;
+    std::sort(pred.begin(), pred.end());
+    BOOST_CHECK(pred == expected);
+
+    Cube state = result.state;
+    std::sort(state.begin(), state.end());
+    BOOST_CHECK(state == expected);
+
+    Cube pinp = result.pinputs;
+    BOOST_CHECK(pinp.empty());
+
+    // The input is a don't care here. Check for exactly one of i0 and !i0
+    BOOST_CHECK_EQUAL(result.inputs.size(), 1);
+    BOOST_CHECK_EQUAL(strip(result.inputs.at(0)), i0);
+}
+
+BOOST_AUTO_TEST_CASE(bvc_extract_abs)
+{
+    BVCFrameSolverFixture f(2);
+
+    Cube bad = { f.tr->bad() };
+    ID i0 = f.tr->toInternal(f.i0);
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+    ID a2 = f.tr->toInternal(f.a2);
+
+    f.solver->setAbs({a2});
+
+    Cube test;
+    BVCSolution expected;
+
+    test = { negate(l0), negate(l1), l2, negate(l3) };
+    expected = { negate(l0), l1, negate(l2), l3 };
+    std::sort(expected.begin(), expected.end());
+
+    // There should be a predecessor (i.e., the initial state)
+    BOOST_REQUIRE(f.solver->solutionExists(test));
+    BOOST_REQUIRE(f.solver->predecessorExists(test));
+
+    BVCBlockResult result = f.solver->solve(0, test);
+
+    BOOST_REQUIRE(result.sat);
+    BOOST_CHECK(result.solution.empty());
+    BOOST_REQUIRE(!result.predecessor.empty());
+
+    BVCPredecessor pred = result.predecessor;
+    std::sort(pred.begin(), pred.end());
+    BOOST_CHECK(pred == expected);
+
+    Cube state = result.state;
+    std::sort(state.begin(), state.end());
+    BOOST_CHECK(state == expected);
+
+    Cube pinp = result.pinputs;
+    BOOST_CHECK(pinp.empty());
+
+    // The input should be false
+    BOOST_CHECK_EQUAL(result.inputs.size(), 1);
+    BOOST_CHECK_EQUAL(result.inputs.at(0), negate(i0));
+}
+
 BOOST_AUTO_TEST_CASE(basic_bvc_k0_unprimed)
 {
     BVCFrameSolverFixture f(0);
@@ -259,10 +349,10 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
 
     // It should be l1 & l2 (l0 and l3 are don't cares)
     std::set<ID> p(pred.begin(), pred.end());
-    BOOST_CHECK(p.find(l1) != p.end());
-    BOOST_CHECK(p.find(l2) != p.end());
-    BOOST_CHECK(p.find(negate(l1)) == p.end());
-    BOOST_CHECK(p.find(negate(l2)) == p.end());
+    BOOST_CHECK(p.count(l1) > 0);
+    BOOST_CHECK(p.count(l2) > 0);
+    BOOST_CHECK(p.count(negate(l1)) == 0);
+    BOOST_CHECK(p.count(negate(l2)) == 0);
 
     // "Generalize" magically
     pred = {l1, l2};
