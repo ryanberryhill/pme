@@ -28,29 +28,29 @@
 
 namespace PME {
 
-   class BVCSolver
-   {
-       public:
-           BVCSolver(VariableManager & varman, const TransitionRelation & tr);
+    class BVCSolver
+    {
+        public:
+            BVCSolver(VariableManager & varman, const TransitionRelation & tr);
 
-           BVCBlockResult block(unsigned level);
-           BVCBlockResult block(const Cube & target, unsigned level);
+            BVCBlockResult block(unsigned level);
+            BVCBlockResult block(const Cube & target, unsigned level);
 
-           void setAbstraction(const std::vector<ID> & gates);
+            void setAbstraction(const std::vector<ID> & gates);
 
-           void blockSolution(const BVCSolution & soln);
+            void blockSolution(const BVCSolution & soln);
 
-       private:
-           BVCFrameSolver & frameSolver(unsigned level);
-           BVCBlockResult blockInitial(const Cube & target);
+        private:
+            BVCFrameSolver & frameSolver(unsigned level);
+            BVCBlockResult blockInitial(const Cube & target);
 
-           VariableManager & m_vars;
-           const TransitionRelation & m_tr;
-           std::vector<std::unique_ptr<BVCFrameSolver>> m_solvers;
-           SATAdaptor m_initial_solver;
-           std::set<ID> m_abstraction_gates;
-           std::vector<BVCSolution> m_solutions;
-   };
+            VariableManager & m_vars;
+            const TransitionRelation & m_tr;
+            std::vector<std::unique_ptr<BVCFrameSolver>> m_solvers;
+            SATAdaptor m_initial_solver;
+            std::set<ID> m_abstraction_gates;
+            std::vector<BVCSolution> m_solutions;
+    };
 }
 
 #endif
