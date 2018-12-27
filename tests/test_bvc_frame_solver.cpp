@@ -108,24 +108,75 @@ BOOST_AUTO_TEST_CASE(bvc_abstraction_initially_empty)
     BOOST_CHECK(f.solver->getAbstraction() == empty);
 }
 
-BOOST_AUTO_TEST_CASE(basic_bvc_k1)
+BOOST_AUTO_TEST_CASE(basic_bvc_k0_unprimed)
 {
     BVCFrameSolverFixture f(0);
 
+    Cube bad = { f.tr->bad() };
     ID a2 = f.tr->toInternal(f.a2);
 
-    // There should be a correction set of {a2}
-    BOOST_REQUIRE(f.solver->solutionExists());
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    // bad is a latch output, so unless the initial state is bad (it isn't),
+    // there should be no solution or predecessor (i.e., bad initial state)
+    BOOST_REQUIRE(!f.solver->solutionExistsUnprimed(bad));
+    BOOST_REQUIRE(!f.solver->predecessorExistsUnprimed(bad));
+
+    // For this case, there should be a solution (i.e., a2 itself)
+    Cube test = { a2 };
+
+    BOOST_REQUIRE(f.solver->solutionExistsUnprimed(test));
+    BOOST_REQUIRE(!f.solver->predecessorExistsUnprimed(test));
 
     bool sat = false;
     BVCSolution soln;
     BVCPredecessor pred;
 
-    BOOST_REQUIRE(!f.solver->predecessorExists());
-    BOOST_CHECK(f.solver->solutionExists());
-    BOOST_CHECK(f.solver->solutionAtCardinality(1));
+    std::tie(sat, soln, pred) = f.solver->solve(1, test);
 
-    std::tie(sat, soln, pred) = f.solver->solve(1);
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(pred.empty());
+    BOOST_CHECK(soln == test);
+
+    test = { negate(l0), negate(l1) };
+    BVCSolution expected = { negate(l0), negate(l1), negate(l2), negate(l3) };
+    std::sort(expected.begin(), expected.end());
+
+    // For this case, there should be a predecessor (i.e., the initial state)
+    BOOST_REQUIRE(f.solver->solutionExistsUnprimed(test));
+    BOOST_REQUIRE(f.solver->predecessorExistsUnprimed(test));
+
+    std::tie(sat, soln, pred) = f.solver->solve(0, test);
+    std::sort(soln.begin(), soln.end());
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(soln.empty());
+    BOOST_CHECK(!pred.empty());
+    BOOST_CHECK(pred == expected);
+}
+
+BOOST_AUTO_TEST_CASE(basic_bvc_k1)
+{
+    BVCFrameSolverFixture f(0);
+
+    ID a2 = f.tr->toInternal(f.a2);
+    Cube bad = { f.tr->bad() };
+
+    // There should be a correction set of {a2}
+    BOOST_REQUIRE(f.solver->solutionExists(bad));
+
+    bool sat = false;
+    BVCSolution soln;
+    BVCPredecessor pred;
+
+    BOOST_REQUIRE(!f.solver->predecessorExists(bad));
+    BOOST_CHECK(f.solver->solutionExists(bad));
+    BOOST_CHECK(f.solver->solutionAtCardinality(1, bad));
+
+    std::tie(sat, soln, pred) = f.solver->solve(1, bad);
 
     BOOST_REQUIRE(sat);
     BOOST_CHECK(pred.empty());
@@ -137,21 +188,23 @@ BOOST_AUTO_TEST_CASE(basic_bvc_k1)
     f.solver->blockSolution(soln);
 
     // There shouldn't be any more correction sets for k = 1
-    BOOST_CHECK(!f.solver->solutionExists());
+    BOOST_CHECK(!f.solver->solutionExists(bad));
 
     // Check the other interfaces
-    BOOST_CHECK(!f.solver->predecessorExists());
-    BOOST_CHECK(!f.solver->solutionAtCardinality(0));
-    BOOST_CHECK(!f.solver->solutionAtCardinality(1));
-    BOOST_CHECK(!f.solver->solutionAtCardinality(2));
-    BOOST_CHECK(!f.solver->solutionAtCardinality(3));
-    BOOST_CHECK(!f.solver->solutionAtCardinality(50));
+    BOOST_CHECK(!f.solver->predecessorExists(bad));
+    BOOST_CHECK(!f.solver->solutionAtCardinality(0, bad));
+    BOOST_CHECK(!f.solver->solutionAtCardinality(1, bad));
+    BOOST_CHECK(!f.solver->solutionAtCardinality(2, bad));
+    BOOST_CHECK(!f.solver->solutionAtCardinality(3, bad));
+    BOOST_CHECK(!f.solver->solutionAtCardinality(50, bad));
 }
 
 BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
 {
     BVCFrameSolverFixture f0(0);
     BVCFrameSolverFixture f1(1);
+
+    Cube bad = { f0.tr->bad() };
 
     ID a0 = f0.tr->toInternal(f0.a0);
     ID a1 = f0.tr->toInternal(f0.a1);
@@ -160,16 +213,16 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     ID l1 = f0.tr->toInternal(f0.l1);
 
     // There should be a correction set of {a2}
-    BOOST_REQUIRE(f0.solver->solutionExists());
+    BOOST_REQUIRE(f0.solver->solutionExists(bad));
 
     bool sat = false;
     BVCSolution soln;
     BVCPredecessor pred;
 
-    std::tie(sat, soln, pred) = f0.solver->solve(0);
+    std::tie(sat, soln, pred) = f0.solver->solve(0, bad);
     BOOST_REQUIRE(!sat);
 
-    std::tie(sat, soln, pred) = f0.solver->solve(1);
+    std::tie(sat, soln, pred) = f0.solver->solve(1, bad);
 
     BOOST_REQUIRE(sat);
     BOOST_CHECK(pred.empty());
@@ -182,11 +235,11 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     f1.solver->blockSolution(soln);
 
     // There shouldn't be any more correction sets for k = 1
-    BOOST_CHECK(!f0.solver->solutionExists());
+    BOOST_CHECK(!f0.solver->solutionExists(bad));
 
     // Setting the abstraction shouldn't change that
     f0.solver->setAbs({a2});
-    BOOST_CHECK(!f0.solver->solutionExists());
+    BOOST_CHECK(!f0.solver->solutionExists(bad));
 
     // Check the abstraction is as expected
     std::set<ID> expected_abs = {a2};
@@ -198,9 +251,9 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     f1.solver->setAbs({a2});
 
     // A predecessor should exist
-    BOOST_REQUIRE(f1.solver->predecessorExists());
+    BOOST_REQUIRE(f1.solver->predecessorExists(bad));
 
-    std::tie(sat, soln, pred) = f1.solver->solve(0);
+    std::tie(sat, soln, pred) = f1.solver->solve(0, bad);
     BOOST_REQUIRE(sat);
     BOOST_CHECK(soln.empty());
 
@@ -250,11 +303,11 @@ BOOST_AUTO_TEST_CASE(basic_bvc_standard_usage)
     f0.solver->setAbs(abstraction);
     f1.solver->setAbs(abstraction);
 
-    BOOST_CHECK(!f0.solver->predecessorExists());
-    BOOST_CHECK(!f0.solver->solutionExists());
+    BOOST_CHECK(!f0.solver->predecessorExists(bad));
+    BOOST_CHECK(!f0.solver->solutionExists(bad));
 
-    BOOST_CHECK(!f1.solver->predecessorExists());
-    BOOST_CHECK(!f1.solver->solutionExists());
+    BOOST_CHECK(!f1.solver->predecessorExists(bad));
+    BOOST_CHECK(!f1.solver->solutionExists(bad));
 
     // Check it's an IVC
     TransitionRelation tr(*f0.tr, abstraction);

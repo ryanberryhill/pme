@@ -21,6 +21,8 @@
 
 #include "pme/id.h"
 #include "pme/ivc/bvc_solver.h"
+#include "pme/util/hitting_set_finder.h"
+#include "pme/ic3/ic3_solver.h"
 
 #define BOOST_TEST_MODULE BVCSolverTest
 #define BOOST_TEST_DYN_LINK
@@ -28,8 +30,18 @@
 
 using namespace PME;
 
+bool isIVC(VariableManager & vars,
+           const TransitionRelation & tr,
+           const std::vector<ID> & abstraction)
+{
+    TransitionRelation abs_tr(tr, abstraction);
+    IC3::IC3Solver ic3(vars, abs_tr);
+    SafetyResult safe = ic3.prove();
+    return safe.safe();
+}
+
 // Primitive implementation of CBVC for testing
-bool runBVC(const TransitionRelation & tr, BVCSolver & solver)
+bool runBVC(VariableManager & vars, const TransitionRelation & tr, BVCSolver & solver)
 {
     typedef std::pair<unsigned, Cube> Obligation;
 
@@ -37,44 +49,70 @@ bool runBVC(const TransitionRelation & tr, BVCSolver & solver)
     BVCSolution soln;
     BVCPredecessor pred;
 
+    HittingSetFinder hs(vars);
+
     std::set<BVCSolution> lemmas;
     std::vector<Obligation> obls;
+    std::vector<ID> abstraction;
     Cube bad = {tr.bad()};
+    unsigned level = 0;
 
-    obls.push_back(std::make_pair(0, bad));
-    while (!obls.empty())
+    // Impose a limit on levels in case there's a bug that causes an infinite loop
+    // (at the end we require isIVC is true, so the bug will be detected)
+    // Also limit iterations
+    while (!isIVC(vars, tr, abstraction) && level < 256)
     {
-        unsigned level;
-        Cube obl;
-
-        std::tie(level, obl) = obls.back(); obls.pop_back();
-
-        std::tie(sat, soln, pred) = solver.block(obl, level);
-
-        if (sat && !pred.empty())
+        unsigned iters = 0;
+        obls.push_back(std::make_pair(level, bad));
+        while (!obls.empty() && iters < 1024)
         {
-            // Obligation at level below (or counter-example)
-            if (level == 0) { return false; }
-        }
-        else if (sat && !soln.empty())
-        {
-            // New "lemma" (i.e., correction set).
-            // Add, block, update abstraction, re-add obligation
+            iters++;
+            unsigned level;
+            Cube obl;
 
-            solver.blockSolution(soln);
+            std::tie(level, obl) = obls.back(); obls.pop_back();
 
-            std::sort(soln.begin(), soln.end());
-            BOOST_CHECK(lemmas.find(soln) == lemmas.end());
-            lemmas.insert(soln);
+            std::tie(sat, soln, pred) = solver.block(obl, level);
 
-            // TODO: hitting sets
+            if (sat && !pred.empty())
+            {
+                // Obligation at level below (or counter-example)
+                if (level == 0) { return false; }
+                else
+                {
+                    obls.push_back(std::make_pair(level, obl));
+                    obls.push_back(std::make_pair(level - 1, pred));
+                }
+            }
+            else if (sat && !soln.empty())
+            {
+                // New "lemma" (i.e., correction set).
+                // Add, block, update abstraction, re-add obligation
+                std::sort(soln.begin(), soln.end());
+                BOOST_CHECK(lemmas.find(soln) == lemmas.end());
+                lemmas.insert(soln);
+
+                solver.blockSolution(soln);
+
+                hs.addSet(soln);
+                abstraction = hs.solve();
+                BOOST_REQUIRE(!abstraction.empty());
+
+                solver.setAbstraction(abstraction);
+
+                obls.push_back(std::make_pair(level, obl));
+            }
+            else
+            {
+                // Should be done this level
+                BOOST_CHECK(!sat);
+            }
         }
-        else
-        {
-            // Should be done this level
-            BOOST_CHECK(!sat);
-        }
+
+        level++;
     }
+
+    BOOST_REQUIRE(isIVC(vars, tr, abstraction));
 
     return true;
 }
@@ -220,6 +258,9 @@ BOOST_AUTO_TEST_CASE(bvc_single_block_safe)
     BVCPredecessor pred;
 
     std::tie(sat, soln, pred) = f.solver->block(0);
+    BOOST_REQUIRE(!sat);
+
+    std::tie(sat, soln, pred) = f.solver->block(1);
 
     BOOST_REQUIRE(sat);
     BOOST_CHECK(pred.empty());
@@ -250,11 +291,21 @@ BOOST_AUTO_TEST_CASE(bvc_single_block_unsafe)
 BOOST_AUTO_TEST_CASE(basic_bvc_safe)
 {
     BVCSolverSafeFixture f;
-    runBVC(*f.tr, *f.solver);
+    bool safe = runBVC(f.vars, *f.tr, *f.solver);
+    BOOST_CHECK(safe);
 }
 
-BOOST_AUTO_TEST_CASE(basic_bvc_unsafe)
+BOOST_AUTO_TEST_CASE(basic_bvc_unsafe_small)
 {
-    BVCSolverUnsafeFixture f(8);
+    BVCSolverUnsafeFixture f(3);
+    bool safe = runBVC(f.vars, *f.tr, *f.solver);
+    BOOST_CHECK(!safe);
+}
+
+BOOST_AUTO_TEST_CASE(basic_bvc_unsafe_big)
+{
+    BVCSolverUnsafeFixture f(24);
+    bool safe = runBVC(f.vars, *f.tr, *f.solver);
+    BOOST_CHECK(!safe);
 }
 

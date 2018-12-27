@@ -62,25 +62,28 @@ namespace PME {
         public:
             BVCFrameSolver(VariableManager & varman,
                            const TransitionRelation & tr,
-                           unsigned level);
+                           unsigned abstracted_frames);
 
             void setAbs(const std::vector<ID> & gates) { setAbstraction(gates); }
             void setAbstraction(const std::vector<ID> & gates);
             void setAbstraction(const std::set<ID> & gates);
-            const std::set<ID> & getAbstraction() { return m_abstraction_gates; }
+            const std::set<ID> & getAbstraction() const { return m_abstraction_gates; }
 
-            BVCBlockResult solve(unsigned n);
             BVCBlockResult solve(unsigned n, const Cube & target);
-            void blockSolution(const BVCSolution & soln);
-
-            bool solutionExists();
-            bool predecessorExists();
-            bool solutionExists(const Cube & target);
             bool predecessorExists(const Cube & target);
-            bool solutionAtCardinality(unsigned n);
+            bool solutionExists(const Cube & target);
             bool solutionAtCardinality(unsigned n, const Cube & target);
 
+            BVCBlockResult solveUnprimed(unsigned n, const Cube & target);
+            bool predecessorExistsUnprimed(const Cube & target);
+            bool solutionExistsUnprimed(const Cube & target);
+            bool solutionAtCardinalityUnprimed(unsigned n, const Cube & target);
+
+            void blockSolution(const BVCSolution & soln);
+
         private:
+            BVCBlockResult solve(unsigned n, const Cube & target, bool prime);
+
             void blockKnownSolutions(SATAdaptor & solver);
             void unrollAbstraction(SATAdaptor & solver);
             void initSolver0();

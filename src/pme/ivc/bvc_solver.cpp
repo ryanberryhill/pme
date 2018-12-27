@@ -27,21 +27,26 @@ namespace PME {
 
     BVCSolver::BVCSolver(VariableManager & varman, const TransitionRelation & tr)
         : m_vars(varman), m_tr(tr)
-    { }
+    {
+    }
 
     void BVCSolver::setAbstraction(const std::vector<ID> & gates)
     {
         m_abstraction_gates.clear();
         m_abstraction_gates.insert(gates.begin(), gates.end());
+
+        TransitionRelation abs_tr(m_tr, gates);
+        m_initial_solver.reset();
+        m_initial_solver.addClauses(abs_tr.unrollWithInit());
     }
 
     void BVCSolver::blockSolution(const BVCSolution & soln)
     {
+        m_solutions.push_back(soln);
         for (auto & solver : m_solvers)
         {
             solver->blockSolution(soln);
         }
-        m_solutions.push_back(soln);
     }
 
     BVCBlockResult BVCSolver::block(unsigned level)
@@ -53,9 +58,13 @@ namespace PME {
     BVCBlockResult BVCSolver::block(const Cube & target, unsigned level)
     {
         BVCBlockResult result;
-        BVCFrameSolver & solver = frameSolver(level);
 
-        if (solver.solutionExists())
+        // For level 0, we need to check if the given target is an initial
+        // state (n = 0) or can be made one by a correction set (n > 0)
+        if (level == 0) { return blockInitial(target); }
+
+        BVCFrameSolver & solver = frameSolver(level);
+        if (solver.solutionExists(target))
         {
             for (unsigned n = 0; n <= m_tr.numGates(); n++)
             {
@@ -70,22 +79,47 @@ namespace PME {
         return result;
     }
 
+    BVCBlockResult BVCSolver::blockInitial(const Cube & target)
+    {
+        // TODO: this has high duplication with the level > 0 block function
+        BVCBlockResult result;
+        BVCFrameSolver & solver = frameSolver(0);
+
+        if (solver.solutionExistsUnprimed(target))
+        {
+            for (unsigned n = 0; n <= m_tr.numGates(); n++)
+            {
+                 result = solver.solveUnprimed(n, target);
+                 if (result.sat) { return result; }
+            }
+
+            // A solution exists but we didn't find it
+            assert(false);
+        }
+
+        return result;
+    }
+
     BVCFrameSolver & BVCSolver::frameSolver(unsigned level)
     {
+        // Levels 0 and 1 use the same solver with 0 abstracted frames
+        unsigned abstraction_frames = level == 0 ? 0 : level - 1;
+
         // Construct new solvers if needed
-        m_solvers.reserve(level + 1);
-        for (unsigned i = m_solvers.size(); i <= level; ++i)
+        m_solvers.reserve(abstraction_frames + 1);
+        for (unsigned i = m_solvers.size(); i <= abstraction_frames; ++i)
         {
             m_solvers.emplace_back(new BVCFrameSolver(m_vars, m_tr, i));
+
             for (const BVCSolution & soln : m_solutions)
             {
-                m_solvers.at(i)->blockSolution(soln);
+                m_solvers.back()->blockSolution(soln);
             }
         }
 
         // Set the abstraction for the relevant one
-        m_solvers.at(level)->setAbstraction(m_abstraction_gates);
-        return *m_solvers.at(level);
+        m_solvers.at(abstraction_frames)->setAbstraction(m_abstraction_gates);
+        return *m_solvers.at(abstraction_frames);
     }
 }
 

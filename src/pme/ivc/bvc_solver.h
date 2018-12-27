@@ -42,10 +42,12 @@ namespace PME {
 
        private:
            BVCFrameSolver & frameSolver(unsigned level);
+           BVCBlockResult blockInitial(const Cube & target);
 
            VariableManager & m_vars;
            const TransitionRelation & m_tr;
            std::vector<std::unique_ptr<BVCFrameSolver>> m_solvers;
+           SATAdaptor m_initial_solver;
            std::set<ID> m_abstraction_gates;
            std::vector<BVCSolution> m_solutions;
    };

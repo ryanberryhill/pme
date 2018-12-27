@@ -30,14 +30,14 @@ namespace PME {
 
     BVCFrameSolver::BVCFrameSolver(VariableManager & varman,
                          const TransitionRelation & tr,
-                         unsigned level)
+                         unsigned abstracted_frames)
         : m_vars(varman),
           m_tr(tr),
           m_debug_tr(tr),
           m_cardinality_constraint(varman),
           m_solver0_inited(false),
           m_solverN_inited(false),
-          m_abstraction_frames(level)
+          m_abstraction_frames(abstracted_frames)
     {
         m_cardinality_constraint.addInputs(m_debug_tr.begin_debug_latches(),
                                            m_debug_tr.end_debug_latches());
@@ -155,16 +155,6 @@ namespace PME {
                              m_abstraction_gates.begin(), m_abstraction_gates.end());
     }
 
-    bool BVCFrameSolver::predecessorExists()
-    {
-        return solutionAtCardinality(0);
-    }
-
-    bool BVCFrameSolver::solutionExists()
-    {
-        return solutionAtCardinality(CARDINALITY_INF);
-    }
-
     bool BVCFrameSolver::predecessorExists(const Cube & target)
     {
         return solutionAtCardinality(0, target);
@@ -175,24 +165,39 @@ namespace PME {
         return solutionAtCardinality(CARDINALITY_INF, target);
     }
 
-    bool BVCFrameSolver::solutionAtCardinality(unsigned n)
-    {
-        BVCBlockResult result = solve(n);
-        return result.sat;
-    }
-
     bool BVCFrameSolver::solutionAtCardinality(unsigned n, const Cube & target)
     {
         BVCBlockResult result = solve(n, target);
         return result.sat;
     }
 
-    BVCBlockResult BVCFrameSolver::solve(unsigned n)
+    bool BVCFrameSolver::predecessorExistsUnprimed(const Cube & target)
     {
-        return solve(n, { m_tr.bad() });
+        return solutionAtCardinalityUnprimed(0, target);
+    }
+
+    bool BVCFrameSolver::solutionExistsUnprimed(const Cube & target)
+    {
+        return solutionAtCardinalityUnprimed(CARDINALITY_INF, target);
+    }
+
+    bool BVCFrameSolver::solutionAtCardinalityUnprimed(unsigned n, const Cube & target)
+    {
+        BVCBlockResult result = solve(n, target, false);
+        return result.sat;
     }
 
     BVCBlockResult BVCFrameSolver::solve(unsigned n, const Cube & target)
+    {
+        return solve(n, target, true);
+    }
+
+    BVCBlockResult BVCFrameSolver::solveUnprimed(unsigned n, const Cube & target)
+    {
+        return solve(n, target, false);
+    }
+
+    BVCBlockResult BVCFrameSolver::solve(unsigned n, const Cube & target, bool prime)
     {
         SATAdaptor & solver = (n == 0) ? m_solver0 : m_solverN;
 
@@ -200,7 +205,7 @@ namespace PME {
         if (n > 0 && !solverNReady())  { initSolverN(); }
 
         // Assume the target state e.g., (bad') or (r_1' & r_2')
-        Cube assumps = primeVec(target, m_abstraction_frames + 1);
+        Cube assumps = prime ? primeVec(target, m_abstraction_frames + 1) : target;
 
         if (n > 0 && n != CARDINALITY_INF)
         {
