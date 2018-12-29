@@ -23,6 +23,7 @@
 #include "pme/ivc/bvc_solver.h"
 #include "pme/util/hitting_set_finder.h"
 #include "pme/ic3/ic3_solver.h"
+#include "pme/util/ivc_checker.h"
 
 #define BOOST_TEST_MODULE BVCSolverTest
 #define BOOST_TEST_DYN_LINK
@@ -34,10 +35,8 @@ bool isIVC(VariableManager & vars,
            const TransitionRelation & tr,
            const std::vector<ID> & abstraction)
 {
-    TransitionRelation abs_tr(tr, abstraction);
-    IC3::IC3Solver ic3(vars, abs_tr);
-    SafetyResult safe = ic3.prove();
-    return safe.safe();
+    IVCChecker checker(vars, tr);
+    return checker.checkSafe(abstraction);
 }
 
 // Primitive implementation of CBVC for testing the block function
@@ -337,7 +336,8 @@ BOOST_AUTO_TEST_CASE(rec_block_safe)
 
 BOOST_AUTO_TEST_CASE(rec_block_unsafe_small)
 {
-    BVCSolverUnsafeFixture f(3);
+    unsigned n = 3;
+    BVCSolverUnsafeFixture f(n);
 
     Cube bad = {f.tr->bad()};
     unsigned level = 0;
@@ -349,20 +349,23 @@ BOOST_AUTO_TEST_CASE(rec_block_unsafe_small)
     {
         result = f.solver->recursiveBlock(bad, level);
         abstraction = f.solver->getAbstraction();
-        level++;
 
         if (!result.safe) { break; }
+
+        level++;
     }
 
     BOOST_CHECK(!result.safe);
     BOOST_CHECK(result.cex_obl != nullptr);
+    BOOST_CHECK(level <= n);
 
     // TODO: check counter-example
 }
 
 BOOST_AUTO_TEST_CASE(rec_block_unsafe_large)
 {
-    BVCSolverUnsafeFixture f(24);
+    unsigned n = 24;
+    BVCSolverUnsafeFixture f(n);
 
     Cube bad = {f.tr->bad()};
     unsigned level = 0;
@@ -374,14 +377,41 @@ BOOST_AUTO_TEST_CASE(rec_block_unsafe_large)
     {
         result = f.solver->recursiveBlock(bad, level);
         abstraction = f.solver->getAbstraction();
-        level++;
 
         if (!result.safe) { break; }
+
+        level++;
     }
 
     BOOST_CHECK(!result.safe);
     BOOST_CHECK(result.cex_obl != nullptr);
+    BOOST_CHECK(level <= n);
 
     // TODO: check counter-example
 }
+
+BOOST_AUTO_TEST_CASE(prove_safe)
+{
+    BVCSolverSafeFixture f;
+    BVCResult result = f.solver->prove();
+    BOOST_CHECK(result.safe());
+    // TODO: check IVC and proof
+}
+
+BOOST_AUTO_TEST_CASE(prove_unsafe_small)
+{
+    BVCSolverUnsafeFixture f(3);
+    BVCResult result = f.solver->prove();
+    BOOST_CHECK(result.unsafe());
+    // TODO: check counter-example
+}
+
+BOOST_AUTO_TEST_CASE(prove_unsafe_large)
+{
+    BVCSolverUnsafeFixture f(24);
+    BVCResult result = f.solver->prove();
+    BOOST_CHECK(result.unsafe());
+    // TODO: check counter-example
+}
+
 

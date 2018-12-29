@@ -29,7 +29,7 @@
 
 namespace PME {
     IVCChecker::IVCChecker(VariableManager & varman,
-                           TransitionRelation & tr)
+                           const TransitionRelation & tr)
        : m_vars(varman),
          m_tr(tr)
     { }

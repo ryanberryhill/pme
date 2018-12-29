@@ -102,6 +102,8 @@ namespace PME {
 
             void refineAbstraction(const BVCSolution & correction_set);
 
+            bool checkAbstraction() const;
+
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
             std::vector<std::unique_ptr<BVCFrameSolver>> m_solvers;

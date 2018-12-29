@@ -20,6 +20,7 @@
  */
 
 #include "pme/ivc/bvc_solver.h"
+#include "pme/util/hybrid_safety_checker.h"
 
 #include <cassert>
 #include <algorithm>
@@ -48,8 +49,29 @@ namespace PME {
     {
         BVCResult result;
 
+        Cube bad = { m_tr.bad() };
+        unsigned level = 0;
 
+        while (!checkAbstraction())
+        {
+            BVCRecBlockResult br = recursiveBlock(bad, level);
 
+            if (!br.safe)
+            {
+                // TODO: counter-example
+                result.safety.result = UNSAFE;
+                return result;
+            }
+            else
+            {
+                // TODO: record bounded core
+            }
+
+            level++;
+        }
+
+        // TODO: IVC and proof of safety
+        result.safety.result = SAFE;
         return result;
     }
 
@@ -183,6 +205,17 @@ namespace PME {
         }
 
         return result;
+    }
+
+    bool BVCSolver::checkAbstraction() const
+    {
+        TransitionRelation abs_tr(m_tr, getAbstraction());
+
+        HybridSafetyChecker checker(m_vars, abs_tr);
+        SafetyResult result = checker.prove();
+        assert(!result.unknown());
+
+        return result.safe();
     }
 
     void BVCSolver::refineAbstraction(const BVCSolution & correction_set)
