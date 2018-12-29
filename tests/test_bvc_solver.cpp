@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(block_unsafe_small)
 
 BOOST_AUTO_TEST_CASE(block_unsafe_big)
 {
-    BVCSolverUnsafeFixture f(24);
+    BVCSolverUnsafeFixture f(16);
     bool safe = runBVC(f.vars, *f.tr, *f.solver);
     BOOST_CHECK(!safe);
 }
@@ -362,9 +362,9 @@ BOOST_AUTO_TEST_CASE(rec_block_unsafe_small)
     // TODO: check counter-example
 }
 
-BOOST_AUTO_TEST_CASE(rec_block_unsafe_large)
+BOOST_AUTO_TEST_CASE(rec_block_unsafe_big)
 {
-    unsigned n = 24;
+    unsigned n = 16;
     BVCSolverUnsafeFixture f(n);
 
     Cube bad = {f.tr->bad()};
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(prove_unsafe_small)
 
 BOOST_AUTO_TEST_CASE(prove_unsafe_large)
 {
-    BVCSolverUnsafeFixture f(24);
+    BVCSolverUnsafeFixture f(16);
     BVCResult result = f.solver->prove();
     BOOST_CHECK(result.unsafe());
     // TODO: check counter-example
