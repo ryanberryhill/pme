@@ -22,12 +22,40 @@
 #include "pme/ivc/bvc_solver.h"
 
 #include <cassert>
+#include <algorithm>
 
 namespace PME {
 
-    BVCSolver::BVCSolver(VariableManager & varman, const TransitionRelation & tr)
-        : m_vars(varman), m_tr(tr)
+    bool BVCObligationComparator::operator()(const BVCProofObligation * lhs,
+                                             const BVCProofObligation * rhs) const
     {
+        // First sort by level
+        if (lhs->level != rhs->level) { return lhs->level > rhs->level; }
+
+        // Then by number of literals in the CTI
+        size_t lhs_size = lhs->cti.size(), rhs_size = rhs->cti.size();
+        if (lhs_size != rhs_size) { return lhs_size > rhs_size; }
+
+        // Finally, break ties arbitrarily
+        return lhs->cti > rhs->cti;
+    }
+
+    BVCSolver::BVCSolver(VariableManager & varman, const TransitionRelation & tr)
+        : m_vars(varman), m_tr(tr), m_hs_solver(varman)
+    { }
+
+    BVCResult BVCSolver::prove()
+    {
+        BVCResult result;
+
+
+
+        return result;
+    }
+
+    std::vector<ID> BVCSolver::getAbstraction() const
+    {
+        return std::vector<ID>(m_abstraction_gates.begin(), m_abstraction_gates.end());
     }
 
     void BVCSolver::setAbstraction(const std::vector<ID> & gates)
@@ -47,6 +75,63 @@ namespace PME {
         {
             solver->blockSolution(soln);
         }
+    }
+
+    // Caller should check for unbounded safety or build the counter-example
+    // if necessary
+    BVCRecBlockResult BVCSolver::recursiveBlock(const Cube & target, unsigned target_level)
+    {
+        ObligationQueue q;
+
+        q.push(newObligation(target, target_level));
+
+        while(!q.empty())
+        {
+            BVCProofObligation * obl = popObligation(q);
+
+            const Cube & s = obl->cti;
+            unsigned level = obl->level;
+
+            assert(std::is_sorted(s.begin(), s.end()));
+
+            BVCBlockResult br = block(s, level);
+            bool sat = br.sat;
+            BVCSolution soln = br.solution;
+            BVCPredecessor pred = br.predecessor;
+
+            if (sat && !pred.empty())
+            {
+                assert(std::is_sorted(pred.begin(), pred.end()));
+                if (level == 0)
+                {
+                    // Counter-example found
+                    return BVCRecBlockResult(obl);
+                }
+                else
+                {
+                    // Predecessor found. Add new obligation.
+                    q.push(obl);
+                    q.push(newObligation(pred, level - 1));
+                }
+            }
+            else if (sat && !soln.empty())
+            {
+                // Correction set found. Block, refine, re-enqueue
+                assert(std::is_sorted(soln.begin(), soln.end()));
+
+                blockSolution(soln);
+                refineAbstraction(soln);
+
+                q.push(obl);
+            }
+            else
+            {
+                // Obligation discharged
+                assert(!sat);
+            }
+        }
+
+        return BVCRecBlockResult();
     }
 
     BVCBlockResult BVCSolver::block(unsigned level)
@@ -98,6 +183,37 @@ namespace PME {
         }
 
         return result;
+    }
+
+    void BVCSolver::refineAbstraction(const BVCSolution & correction_set)
+    {
+        m_hs_solver.addSet(correction_set);
+        std::vector<ID> abstraction = m_hs_solver.solve();
+        assert(!abstraction.empty());
+
+        setAbstraction(abstraction);
+    }
+
+    BVCProofObligation * BVCSolver::newObligation(const Cube & cti, unsigned level)
+    {
+        m_obls.emplace_front(cti, level);
+        return &m_obls.front();
+    }
+
+    void BVCSolver::clearObligationPool()
+    {
+        m_obls.clear();
+    }
+
+    BVCProofObligation * BVCSolver::popObligation(ObligationQueue & q) const
+    {
+        // priority_queue only gives const access, but we want to be able
+        // to modify the obligation and re-enqueue it without copies.
+        // The const_cast below should be totally safe since we
+        // immediately pop the element.
+        BVCProofObligation * obl = const_cast<BVCProofObligation *>(q.top());
+        q.pop();
+        return obl;
     }
 
     BVCFrameSolver & BVCSolver::frameSolver(unsigned level)

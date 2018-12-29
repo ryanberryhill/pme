@@ -289,7 +289,9 @@ namespace PME {
             ext.push_back(lit);
         }
 
-        return unprimeVec(ext);
+        ext = unprimeVec(ext);
+        std::sort(ext.begin(), ext.end());
+        return ext;
     }
 
     BVCSolution BVCFrameSolver::extractSolution() const
@@ -309,6 +311,7 @@ namespace PME {
             }
         }
 
+        std::sort(soln.begin(), soln.end());
         return soln;
     }
 

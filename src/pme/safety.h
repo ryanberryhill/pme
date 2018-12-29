@@ -44,6 +44,7 @@ namespace PME {
 
         bool safe() { return result == SAFE; }
         bool unsafe() { return result == UNSAFE; }
+        bool unknown() { return result == UNKNOWN; }
     };
 }
 

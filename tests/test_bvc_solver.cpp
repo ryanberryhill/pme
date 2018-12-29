@@ -40,7 +40,7 @@ bool isIVC(VariableManager & vars,
     return safe.safe();
 }
 
-// Primitive implementation of CBVC for testing
+// Primitive implementation of CBVC for testing the block function
 bool runBVC(VariableManager & vars, const TransitionRelation & tr, BVCSolver & solver)
 {
     typedef std::pair<unsigned, Cube> Obligation;
@@ -56,15 +56,17 @@ bool runBVC(VariableManager & vars, const TransitionRelation & tr, BVCSolver & s
     std::vector<ID> abstraction;
     Cube bad = {tr.bad()};
     unsigned level = 0;
+    unsigned last_abs_size = 0;
 
     // Impose a limit on levels in case there's a bug that causes an infinite loop
     // (at the end we require isIVC is true, so the bug will be detected)
     // Also limit iterations
     while (!isIVC(vars, tr, abstraction) && level < 256)
     {
+#define MAX_ITERS 1024
         unsigned iters = 0;
         obls.push_back(std::make_pair(level, bad));
-        while (!obls.empty() && iters < 1024)
+        while (!obls.empty() && iters < MAX_ITERS)
         {
             iters++;
             unsigned level;
@@ -97,6 +99,8 @@ bool runBVC(VariableManager & vars, const TransitionRelation & tr, BVCSolver & s
                 hs.addSet(soln);
                 abstraction = hs.solve();
                 BOOST_REQUIRE(!abstraction.empty());
+                BOOST_REQUIRE(abstraction.size() >= last_abs_size);
+                last_abs_size = abstraction.size();
 
                 solver.setAbstraction(abstraction);
 
@@ -108,6 +112,8 @@ bool runBVC(VariableManager & vars, const TransitionRelation & tr, BVCSolver & s
                 BOOST_CHECK(!sat);
             }
         }
+
+        BOOST_REQUIRE(iters < MAX_ITERS);
 
         level++;
     }
@@ -288,24 +294,94 @@ BOOST_AUTO_TEST_CASE(bvc_single_block_unsafe)
     BOOST_CHECK(soln == expected);
 }
 
-BOOST_AUTO_TEST_CASE(basic_bvc_safe)
+BOOST_AUTO_TEST_CASE(block_safe)
 {
     BVCSolverSafeFixture f;
     bool safe = runBVC(f.vars, *f.tr, *f.solver);
     BOOST_CHECK(safe);
 }
 
-BOOST_AUTO_TEST_CASE(basic_bvc_unsafe_small)
+BOOST_AUTO_TEST_CASE(block_unsafe_small)
 {
     BVCSolverUnsafeFixture f(3);
     bool safe = runBVC(f.vars, *f.tr, *f.solver);
     BOOST_CHECK(!safe);
 }
 
-BOOST_AUTO_TEST_CASE(basic_bvc_unsafe_big)
+BOOST_AUTO_TEST_CASE(block_unsafe_big)
 {
     BVCSolverUnsafeFixture f(24);
     bool safe = runBVC(f.vars, *f.tr, *f.solver);
     BOOST_CHECK(!safe);
+}
+
+BOOST_AUTO_TEST_CASE(rec_block_safe)
+{
+    BVCSolverSafeFixture f;
+
+    Cube bad = {f.tr->bad()};
+    unsigned level = 0;
+    std::vector<ID> abstraction;
+
+    while (!isIVC(f.vars, *f.tr, abstraction) && level < 256)
+    {
+        BVCRecBlockResult result = f.solver->recursiveBlock(bad, level);
+        abstraction = f.solver->getAbstraction();
+        level++;
+
+        if (!result.safe) { break; }
+    }
+
+    BOOST_CHECK(isIVC(f.vars, *f.tr, abstraction));
+}
+
+BOOST_AUTO_TEST_CASE(rec_block_unsafe_small)
+{
+    BVCSolverUnsafeFixture f(3);
+
+    Cube bad = {f.tr->bad()};
+    unsigned level = 0;
+    std::vector<ID> abstraction;
+
+    BVCRecBlockResult result;
+
+    while (!isIVC(f.vars, *f.tr, abstraction) && level < 256)
+    {
+        result = f.solver->recursiveBlock(bad, level);
+        abstraction = f.solver->getAbstraction();
+        level++;
+
+        if (!result.safe) { break; }
+    }
+
+    BOOST_CHECK(!result.safe);
+    BOOST_CHECK(result.cex_obl != nullptr);
+
+    // TODO: check counter-example
+}
+
+BOOST_AUTO_TEST_CASE(rec_block_unsafe_large)
+{
+    BVCSolverUnsafeFixture f(24);
+
+    Cube bad = {f.tr->bad()};
+    unsigned level = 0;
+    std::vector<ID> abstraction;
+
+    BVCRecBlockResult result;
+
+    while (!isIVC(f.vars, *f.tr, abstraction) && level < 256)
+    {
+        result = f.solver->recursiveBlock(bad, level);
+        abstraction = f.solver->getAbstraction();
+        level++;
+
+        if (!result.safe) { break; }
+    }
+
+    BOOST_CHECK(!result.safe);
+    BOOST_CHECK(result.cex_obl != nullptr);
+
+    // TODO: check counter-example
 }
 
