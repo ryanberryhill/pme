@@ -49,9 +49,15 @@ namespace PME {
     {
         unsigned level;
         Cube cti;
+        BVCProofObligation * parent;
+        Cube state, inputs, pinputs;
 
         BVCProofObligation(const Cube & cti, unsigned level) :
-            level(level), cti(cti)
+            level(level), cti(cti), parent(nullptr)
+        { }
+
+        BVCProofObligation(const Cube & cti, unsigned level, BVCProofObligation * parent) :
+            level(level), cti(cti), parent(parent)
         { }
     };
 
@@ -97,12 +103,16 @@ namespace PME {
             BVCBlockResult blockInitial(const Cube & target);
 
             BVCProofObligation * newObligation(const Cube & cti, unsigned level);
+            BVCProofObligation * newObligation(const Cube & cti, unsigned level,
+                                               BVCProofObligation * parent);
             BVCProofObligation * popObligation(ObligationQueue & q) const;
             void clearObligationPool();
 
             void refineAbstraction(const BVCSolution & correction_set);
-
             bool checkAbstraction() const;
+
+            SafetyCounterExample buildCex(const BVCProofObligation * obl) const;
+            BVCResult counterExampleResult(const SafetyCounterExample & cex) const;
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;

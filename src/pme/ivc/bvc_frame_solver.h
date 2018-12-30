@@ -99,6 +99,7 @@ namespace PME {
             bool solverNReady() const { return m_solverN_inited; }
 
             BVCPredecessor extractPredecessor() const;
+            Cube extractState() const;
             Cube extractInputs() const;
             Cube extractPrimedInputs() const;
             Cube extract(const SATAdaptor & solver,const Cube & vars) const;

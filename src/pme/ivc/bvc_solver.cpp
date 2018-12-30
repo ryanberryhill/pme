@@ -54,13 +54,13 @@ namespace PME {
 
         while (!checkAbstraction())
         {
+            clearObligationPool();
             BVCRecBlockResult br = recursiveBlock(bad, level);
 
             if (!br.safe)
             {
-                // TODO: counter-example
-                result.safety.result = UNSAFE;
-                return result;
+                SafetyCounterExample cex = buildCex(br.cex_obl);
+                return counterExampleResult(cex);
             }
             else
             {
@@ -124,6 +124,11 @@ namespace PME {
             if (sat && !pred.empty())
             {
                 assert(std::is_sorted(pred.begin(), pred.end()));
+
+                obl->state = br.state;
+                obl->inputs = br.inputs;
+                obl->pinputs = br.pinputs;
+
                 if (level == 0)
                 {
                     // Counter-example found
@@ -133,7 +138,7 @@ namespace PME {
                 {
                     // Predecessor found. Add new obligation.
                     q.push(obl);
-                    q.push(newObligation(pred, level - 1));
+                    q.push(newObligation(pred, level - 1, obl));
                 }
             }
             else if (sat && !soln.empty())
@@ -207,6 +212,37 @@ namespace PME {
         return result;
     }
 
+    BVCResult BVCSolver::counterExampleResult(const SafetyCounterExample & cex) const
+    {
+        BVCResult result;
+
+        result.safety.result = UNSAFE;
+        result.safety.cex = cex;
+
+        return result;
+    }
+
+    SafetyCounterExample BVCSolver::buildCex(const BVCProofObligation * obl) const
+    {
+        SafetyCounterExample cex;
+
+        const BVCProofObligation * current = obl;
+        while (current != nullptr)
+        {
+            Cube inputs = current->inputs;
+            Cube state = current->state;
+
+            assert(std::is_sorted(inputs.begin(), inputs.end()));
+            assert(std::is_sorted(state.begin(), state.end()));
+
+            cex.push_back(Step(inputs, state));
+
+            current = current->parent;
+        }
+
+        return cex;
+    }
+
     bool BVCSolver::checkAbstraction() const
     {
         TransitionRelation abs_tr(m_tr, getAbstraction());
@@ -230,6 +266,13 @@ namespace PME {
     BVCProofObligation * BVCSolver::newObligation(const Cube & cti, unsigned level)
     {
         m_obls.emplace_front(cti, level);
+        return &m_obls.front();
+    }
+
+    BVCProofObligation * BVCSolver::newObligation(const Cube & cti, unsigned level,
+                                                  BVCProofObligation * parent)
+    {
+        m_obls.emplace_front(cti, level, parent);
         return &m_obls.front();
     }
 

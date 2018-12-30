@@ -226,8 +226,8 @@ namespace PME {
             BVCBlockResult result(true, empty_soln, pred);
 
             result.inputs = extractInputs();
-            result.state = pred;
-            result.inputs = extractPrimedInputs();
+            result.state = prime ? extractState() : pred;
+            result.pinputs = extractPrimedInputs();
 
             return result;
         }
@@ -255,6 +255,14 @@ namespace PME {
         assert(m_solver0.isSAT());
         Cube platches(m_tr.begin_latches(), m_tr.end_latches());
         platches = primeVec(platches, m_abstraction_frames);
+        return extract(m_solver0, platches);
+    }
+
+    Cube BVCFrameSolver::extractState() const
+    {
+        assert(m_solver0.isSAT());
+        Cube platches(m_tr.begin_latches(), m_tr.end_latches());
+        platches = primeVec(platches, m_abstraction_frames + 1);
         return extract(m_solver0, platches);
     }
 

@@ -24,12 +24,20 @@
 #include "pme/util/hitting_set_finder.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/util/ivc_checker.h"
+#include "pme/util/check_cex.h"
 
 #define BOOST_TEST_MODULE BVCSolverTest
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 using namespace PME;
+
+bool isCEX(VariableManager & vars,
+           const TransitionRelation & tr,
+           const SafetyCounterExample & cex)
+{
+    return checkCounterExample(vars, tr, cex);
+}
 
 bool isIVC(VariableManager & vars,
            const TransitionRelation & tr,
@@ -358,8 +366,6 @@ BOOST_AUTO_TEST_CASE(rec_block_unsafe_small)
     BOOST_CHECK(!result.safe);
     BOOST_CHECK(result.cex_obl != nullptr);
     BOOST_CHECK(level <= n);
-
-    // TODO: check counter-example
 }
 
 BOOST_AUTO_TEST_CASE(rec_block_unsafe_big)
@@ -386,8 +392,6 @@ BOOST_AUTO_TEST_CASE(rec_block_unsafe_big)
     BOOST_CHECK(!result.safe);
     BOOST_CHECK(result.cex_obl != nullptr);
     BOOST_CHECK(level <= n);
-
-    // TODO: check counter-example
 }
 
 BOOST_AUTO_TEST_CASE(prove_safe)
@@ -403,7 +407,8 @@ BOOST_AUTO_TEST_CASE(prove_unsafe_small)
     BVCSolverUnsafeFixture f(3);
     BVCResult result = f.solver->prove();
     BOOST_CHECK(result.unsafe());
-    // TODO: check counter-example
+
+    BOOST_CHECK(isCEX(f.vars, *f.tr, result.cex()));
 }
 
 BOOST_AUTO_TEST_CASE(prove_unsafe_large)
@@ -411,7 +416,8 @@ BOOST_AUTO_TEST_CASE(prove_unsafe_large)
     BVCSolverUnsafeFixture f(16);
     BVCResult result = f.solver->prove();
     BOOST_CHECK(result.unsafe());
-    // TODO: check counter-example
+
+    BOOST_CHECK(isCEX(f.vars, *f.tr, result.cex()));
 }
 
 

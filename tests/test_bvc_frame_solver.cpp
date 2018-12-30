@@ -143,8 +143,9 @@ BOOST_AUTO_TEST_CASE(bvc_extract_no_abs)
     std::sort(state.begin(), state.end());
     BOOST_CHECK(state == expected);
 
+    // I think the primed inputs are don't cares
     Cube pinp = result.pinputs;
-    BOOST_CHECK(pinp.empty());
+    BOOST_CHECK(pinp.size() == 1);
 
     // The input is a don't care here. Check for exactly one of i0 and !i0
     BOOST_CHECK_EQUAL(result.inputs.size(), 1);
@@ -166,11 +167,11 @@ BOOST_AUTO_TEST_CASE(bvc_extract_abs)
     f.solver->setAbs({a2});
 
     Cube test;
-    BVCSolution expected;
 
     test = { negate(l0), negate(l1), l2, negate(l3) };
-    expected = { negate(l0), l1, negate(l2), l3 };
-    std::sort(expected.begin(), expected.end());
+    Cube expected_pred = { negate(l0), l1, negate(l2), l3 };
+    std::sort(expected_pred.begin(), expected_pred.end());
+    std::sort(test.begin(), test.end());
 
     // There should be a predecessor (i.e., the initial state)
     BOOST_REQUIRE(f.solver->solutionExists(test));
@@ -184,14 +185,15 @@ BOOST_AUTO_TEST_CASE(bvc_extract_abs)
 
     BVCPredecessor pred = result.predecessor;
     std::sort(pred.begin(), pred.end());
-    BOOST_CHECK(pred == expected);
+    BOOST_CHECK(pred == expected_pred);
 
     Cube state = result.state;
     std::sort(state.begin(), state.end());
-    BOOST_CHECK(state == expected);
+    BOOST_CHECK(state == test);
 
+    // Primed input is a don't care
     Cube pinp = result.pinputs;
-    BOOST_CHECK(pinp.empty());
+    BOOST_CHECK(pinp.size() == 1);
 
     // The input should be false
     BOOST_CHECK_EQUAL(result.inputs.size(), 1);
