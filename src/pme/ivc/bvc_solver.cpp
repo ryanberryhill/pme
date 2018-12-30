@@ -52,7 +52,8 @@ namespace PME {
         Cube bad = { m_tr.bad() };
         unsigned level = 0;
 
-        while (!checkAbstraction())
+        SafetyProof proof;
+        while (!checkAbstraction(proof))
         {
             clearObligationPool();
             BVCRecBlockResult br = recursiveBlock(bad, level);
@@ -64,20 +65,24 @@ namespace PME {
             }
             else
             {
-                // TODO: record bounded core
+                m_bvcs.push_back(getAbstraction());
             }
 
             level++;
         }
 
-        // TODO: IVC and proof of safety
-        result.safety.result = SAFE;
-        return result;
+        return safeResult(proof);
     }
 
     std::vector<ID> BVCSolver::getAbstraction() const
     {
         return std::vector<ID>(m_abstraction_gates.begin(), m_abstraction_gates.end());
+    }
+
+    const BVC & BVCSolver::getBVC(unsigned i) const
+    {
+        assert(i < numBVCs());
+        return m_bvcs.at(i);
     }
 
     void BVCSolver::setAbstraction(const std::vector<ID> & gates)
@@ -222,6 +227,16 @@ namespace PME {
         return result;
     }
 
+    BVCResult BVCSolver::safeResult(const SafetyProof & proof) const
+    {
+        BVCResult result;
+
+        result.safety.result = SAFE;
+        result.safety.proof = proof;
+
+        return result;
+    }
+
     SafetyCounterExample BVCSolver::buildCex(const BVCProofObligation * obl) const
     {
         SafetyCounterExample cex;
@@ -243,13 +258,15 @@ namespace PME {
         return cex;
     }
 
-    bool BVCSolver::checkAbstraction() const
+    bool BVCSolver::checkAbstraction(SafetyProof & proof) const
     {
         TransitionRelation abs_tr(m_tr, getAbstraction());
 
         HybridSafetyChecker checker(m_vars, abs_tr);
         SafetyResult result = checker.prove();
         assert(!result.unknown());
+
+        if (result.safe()) { proof = result.proof; }
 
         return result.safe();
     }

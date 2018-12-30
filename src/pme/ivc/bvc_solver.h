@@ -33,6 +33,8 @@
 
 namespace PME {
 
+    typedef std::vector<ID> BVC;
+
     struct BVCResult
     {
         SafetyResult safety;
@@ -93,6 +95,9 @@ namespace PME {
 
             void blockSolution(const BVCSolution & soln);
 
+            unsigned numBVCs() const { return m_bvcs.size(); }
+            const BVC & getBVC(unsigned i) const;
+
         private:
             typedef std::forward_list<BVCProofObligation> ObligationPool;
             typedef std::priority_queue<const BVCProofObligation *,
@@ -109,10 +114,11 @@ namespace PME {
             void clearObligationPool();
 
             void refineAbstraction(const BVCSolution & correction_set);
-            bool checkAbstraction() const;
+            bool checkAbstraction(SafetyProof & proof) const;
 
             SafetyCounterExample buildCex(const BVCProofObligation * obl) const;
             BVCResult counterExampleResult(const SafetyCounterExample & cex) const;
+            BVCResult safeResult(const SafetyProof & proof) const;
 
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
@@ -122,6 +128,7 @@ namespace PME {
             std::vector<BVCSolution> m_solutions;
             ObligationPool m_obls;
             HittingSetFinder m_hs_solver;
+            std::vector<BVC> m_bvcs;
     };
 }
 

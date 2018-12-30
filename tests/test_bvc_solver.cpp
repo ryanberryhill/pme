@@ -24,7 +24,9 @@
 #include "pme/util/hitting_set_finder.h"
 #include "pme/ic3/ic3_solver.h"
 #include "pme/util/ivc_checker.h"
+#include "pme/util/proof_checker.h"
 #include "pme/util/check_cex.h"
+#include "pme/bmc/bmc_solver.h"
 
 #define BOOST_TEST_MODULE BVCSolverTest
 #define BOOST_TEST_DYN_LINK
@@ -45,6 +47,28 @@ bool isIVC(VariableManager & vars,
 {
     IVCChecker checker(vars, tr);
     return checker.checkSafe(abstraction);
+}
+
+bool isIVCWithProof(VariableManager & vars,
+                    const TransitionRelation & tr,
+                    const std::vector<ID> & abstraction,
+                    const SafetyProof & proof)
+{
+    TransitionRelation abs_tr(tr, abstraction);
+    ProofChecker pc(abs_tr, proof);
+    return pc.checkProof();
+}
+
+bool isBVC(VariableManager & vars,
+           const TransitionRelation & tr,
+           const std::vector<ID> & abstraction,
+           unsigned k)
+{
+    TransitionRelation abs_tr(tr, abstraction);
+    BMC::BMCSolver bmc(vars, abs_tr);
+    SafetyResult s = bmc.solve(k);
+
+    return s.result != UNSAFE;
 }
 
 // Primitive implementation of CBVC for testing the block function
@@ -399,7 +423,19 @@ BOOST_AUTO_TEST_CASE(prove_safe)
     BVCSolverSafeFixture f;
     BVCResult result = f.solver->prove();
     BOOST_CHECK(result.safe());
-    // TODO: check IVC and proof
+
+    BOOST_CHECK(f.solver->numBVCs() > 0);
+    for (unsigned i = 0; i < f.solver->numBVCs(); ++i)
+    {
+        const BVC & bvc = f.solver->getBVC(i);
+        bool is_bvc = isBVC(f.vars, *f.tr, bvc, i);
+        BOOST_CHECK(is_bvc);
+    }
+
+    const SafetyProof & proof = result.proof();
+    std::vector<ID> abstraction = f.solver->getAbstraction();
+    bool is_proof = isIVCWithProof(f.vars, *f.tr, abstraction, proof);
+    BOOST_CHECK(is_proof);
 }
 
 BOOST_AUTO_TEST_CASE(prove_unsafe_small)
@@ -409,6 +445,14 @@ BOOST_AUTO_TEST_CASE(prove_unsafe_small)
     BOOST_CHECK(result.unsafe());
 
     BOOST_CHECK(isCEX(f.vars, *f.tr, result.cex()));
+
+    BOOST_CHECK(f.solver->numBVCs() > 0);
+    for (unsigned i = 0; i < f.solver->numBVCs(); ++i)
+    {
+        const BVC & bvc = f.solver->getBVC(i);
+        bool is_bvc = isBVC(f.vars, *f.tr, bvc, i);
+        BOOST_CHECK(is_bvc);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(prove_unsafe_large)
@@ -418,6 +462,14 @@ BOOST_AUTO_TEST_CASE(prove_unsafe_large)
     BOOST_CHECK(result.unsafe());
 
     BOOST_CHECK(isCEX(f.vars, *f.tr, result.cex()));
+
+    BOOST_CHECK(f.solver->numBVCs() > 0);
+    for (unsigned i = 0; i < f.solver->numBVCs(); ++i)
+    {
+        const BVC & bvc = f.solver->getBVC(i);
+        bool is_bvc = isBVC(f.vars, *f.tr, bvc, i);
+        BOOST_CHECK(is_bvc);
+    }
 }
 
 
