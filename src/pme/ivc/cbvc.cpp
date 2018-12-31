@@ -46,6 +46,7 @@ namespace PME {
         if (br.safe())
         {
             log(2) << "The instance is safe" << std::endl;
+            addMIVC(br.abstraction);
         }
         else if (br.unsafe())
         {

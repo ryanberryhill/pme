@@ -61,8 +61,8 @@ namespace PME {
     {
         BVCResult result;
 
-        // Find small MCSes upfront as an optimization
-        //findUpfront();
+        // Find small MCSes upfront as an optimization (if enabled)
+        findUpfront();
 
         Cube bad = { m_tr.bad() };
         unsigned level = 0;
@@ -272,6 +272,7 @@ namespace PME {
                          const Cube & inp,
                          const Cube & pinp)
     {
+        if (!opts().cbvc_lift) { return pred; }
         if (pred.size() == 1) { return pred; }
         // s = pred, t = succ
         // s & inp & Tr & t' is SAT, and s & inp & Tr & !s' is UNSAT. The core
@@ -335,6 +336,7 @@ namespace PME {
 
         result.safety.result = SAFE;
         result.safety.proof = proof;
+        result.abstraction = getAbstraction();
 
         return result;
     }
