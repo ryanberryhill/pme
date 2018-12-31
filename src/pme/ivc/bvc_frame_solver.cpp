@@ -97,13 +97,6 @@ namespace PME {
         else
         {
             unrollAbstraction(m_solverN);
-
-            // Add "initial" state for debug latches
-            ClauseVec debug_init(m_debug_tr.begin_debug_latches(),
-                                 m_debug_tr.end_debug_latches());
-            debug_init = primeClauses(debug_init, m_abstraction_frames);
-
-            m_solverN.addClauses(debug_init);
         }
 
         // Add the final concrete frame (and primed form)
