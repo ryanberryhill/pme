@@ -41,6 +41,7 @@ typedef enum
     LOG_IC3,
     LOG_IVC,
     LOG_CAIVC,
+    LOG_CBVC,
     LOG_MARCOIVC,
     LOG_IVCBF,
     LOG_IVCUCBF,

@@ -42,12 +42,27 @@ namespace PME {
     }
 
     BVCSolver::BVCSolver(VariableManager & varman, const TransitionRelation & tr)
-        : m_vars(varman), m_tr(tr), m_hs_solver(varman)
-    { }
+        : m_vars(varman),
+          m_tr(tr),
+          m_hs_solver(varman),
+          m_debug_tr(tr),
+          m_mcs_finder(varman, m_debug_tr),
+          m_approx_mcs_finder(varman, m_debug_tr)
+    {
+       m_lift.addClauses(m_tr.unroll(2));
+    }
+
+    std::ostream & BVCSolver::log(int verbosity) const
+    {
+        return GlobalState::logger().log(LOG_CBVC, verbosity);
+    }
 
     BVCResult BVCSolver::prove()
     {
         BVCResult result;
+
+        // Find small MCSes upfront as an optimization
+        //findUpfront();
 
         Cube bad = { m_tr.bad() };
         unsigned level = 0;
@@ -55,6 +70,7 @@ namespace PME {
         SafetyProof proof;
         while (!checkAbstraction(proof))
         {
+            log(3) << "Level " << level << std::endl;
             clearObligationPool();
             BVCRecBlockResult br = recursiveBlock(bad, level);
 
@@ -115,6 +131,7 @@ namespace PME {
         while(!q.empty())
         {
             BVCProofObligation * obl = popObligation(q);
+            logObligation(obl);
 
             const Cube & s = obl->cti;
             unsigned level = obl->level;
@@ -141,7 +158,9 @@ namespace PME {
                 }
                 else
                 {
-                    // Predecessor found. Add new obligation.
+                    // Predecessor found. Add new (lifted) obligation.
+                    pred = lift(pred, s, br.inputs, br.pinputs);
+
                     q.push(obl);
                     q.push(newObligation(pred, level - 1, obl));
                 }
@@ -155,6 +174,8 @@ namespace PME {
                 refineAbstraction(soln);
 
                 q.push(obl);
+
+                log(4) << "At " << level << ": " << soln << std::endl;
             }
             else
             {
@@ -215,6 +236,87 @@ namespace PME {
         }
 
         return result;
+    }
+
+    void BVCSolver::findUpfront()
+    {
+       unsigned n_max = opts().cbvc_upfront_nmax;
+       for (unsigned n = 1; n <= n_max; ++n)
+       {
+           while (true)
+           {
+                bool found = false;
+                CorrectionSet corr;
+                if (opts().cbvc_upfront_approx_mcs)
+                {
+                    std::tie(found, corr) = m_approx_mcs_finder.findAndBlockWithBMC(n);
+                }
+                else
+                {
+                    std::tie(found, corr) = m_mcs_finder.findAndBlock();
+                }
+
+               if (!found) { break; }
+               if (corr.empty()) { log(3) << "Found unsafe early" << std::endl; break; }
+
+               log(3) << "Upfront: " << corr << std::endl;
+
+               blockSolution(corr);
+               refineAbstraction(corr);
+           }
+       }
+    }
+
+    Cube BVCSolver::lift(const Cube & pred,
+                         const Cube & succ,
+                         const Cube & inp,
+                         const Cube & pinp)
+    {
+        if (pred.size() == 1) { return pred; }
+        // s = pred, t = succ
+        // s & inp & Tr & t' is SAT, and s & inp & Tr & !s' is UNSAT. The core
+        // of s with respect to the latter query is the lifted version.
+
+        Cube assumps;
+        Cube pinp_p = primeVec(pinp);
+        Cube negsucc_p = negateVec(primeVec(succ));
+
+        assumps.insert(assumps.end(), pred.begin(), pred.end());
+        assumps.insert(assumps.end(), inp.begin(), inp.end());
+        assumps.insert(assumps.end(), pinp_p.begin(), pinp_p.end());
+
+        Cube crits;
+
+        if (succ.size() == 1)
+        {
+            // ~succ' is just a literal, assume it
+            assert(negsucc_p.size() == 1);
+            assumps.push_back(negsucc_p.at(0));
+
+            bool sat = m_lift.solve(assumps, &crits);
+            assert(!sat);
+        }
+        else
+        {
+            GroupID gid = m_lift.createGroup();
+            m_lift.addGroupClause(gid, negsucc_p);
+
+            bool sat = m_lift.groupSolve(gid, assumps, &crits);
+            assert(!sat);
+        }
+
+        std::sort(crits.begin(), crits.end());
+        assert(std::is_sorted(pred.begin(), pred.end()));
+        Cube lifted;
+
+        std::set_intersection(pred.begin(), pred.end(),
+                              crits.begin(), crits.end(),
+                              std::back_inserter(lifted));
+
+        assert(lifted.size() <= pred.size());
+
+        if (lifted.empty()) { return pred; }
+        else { return lifted; }
     }
 
     BVCResult BVCSolver::counterExampleResult(const SafetyCounterExample & cex) const
@@ -329,6 +431,13 @@ namespace PME {
         // Set the abstraction for the relevant one
         m_solvers.at(abstraction_frames)->setAbstraction(m_abstraction_gates);
         return *m_solvers.at(abstraction_frames);
+    }
+
+    void BVCSolver::logObligation(const BVCProofObligation * obl) const
+    {
+        log(4) << "Obligation at " << obl->level << ": "
+               << m_vars.stringOf(obl->cti)
+               << std::endl;
     }
 }
 

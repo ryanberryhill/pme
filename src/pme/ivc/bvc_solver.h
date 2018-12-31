@@ -27,6 +27,8 @@
 #include "pme/engine/transition_relation.h"
 #include "pme/ivc/bvc_frame_solver.h"
 #include "pme/util/hitting_set_finder.h"
+#include "pme/engine/global_state.h"
+#include "pme/ivc/correction_set_finder.h"
 
 #include <forward_list>
 #include <queue>
@@ -104,6 +106,9 @@ namespace PME {
                                         std::vector<const BVCProofObligation *>,
                                         BVCObligationComparator> ObligationQueue;
 
+            std::ostream & log(int verbosity) const;
+            const PMEOptions & opts() const { return GlobalState::options(); }
+
             BVCFrameSolver & frameSolver(unsigned level);
             BVCBlockResult blockInitial(const Cube & target);
 
@@ -120,6 +125,12 @@ namespace PME {
             BVCResult counterExampleResult(const SafetyCounterExample & cex) const;
             BVCResult safeResult(const SafetyProof & proof) const;
 
+            void findUpfront();
+
+            Cube lift(const Cube & pred, const Cube & succ, const Cube & inp, const Cube & pinp);
+
+            void logObligation(const BVCProofObligation * obl) const;
+
             VariableManager & m_vars;
             const TransitionRelation & m_tr;
             std::vector<std::unique_ptr<BVCFrameSolver>> m_solvers;
@@ -129,6 +140,11 @@ namespace PME {
             ObligationPool m_obls;
             HittingSetFinder m_hs_solver;
             std::vector<BVC> m_bvcs;
+            SATAdaptor m_lift;
+
+            DebugTransitionRelation m_debug_tr;
+            MCSFinder m_mcs_finder;
+            ApproximateMCSFinder m_approx_mcs_finder;
     };
 }
 

@@ -116,7 +116,7 @@ namespace PME {
     {
         Debugger::Result result = debugRange(k_min, k_max);
 
-        if (result.first)
+        if (result.first && !result.second.empty())
         {
             blockSolution(result.second);
         }
@@ -129,7 +129,7 @@ namespace PME {
     {
         Debugger::Result result = debugOverGatesRange(gates, k_min, k_max);
 
-        if (result.first)
+        if (result.first && !result.second.empty())
         {
             blockSolution(result.second);
         }

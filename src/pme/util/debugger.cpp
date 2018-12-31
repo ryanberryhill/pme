@@ -26,7 +26,7 @@ namespace PME {
     {
         Result result = debug();
 
-        if (result.first)
+        if (result.first && !result.second.empty())
         {
             blockSolution(result.second);
         }
@@ -38,7 +38,7 @@ namespace PME {
     {
         Result result = debugOverGates(gates);
 
-        if (result.first)
+        if (result.first && !result.second.empty())
         {
             blockSolution(result.second);
         }

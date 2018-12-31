@@ -33,8 +33,13 @@ namespace PME {
                        const TransitionRelation & tr);
 
             virtual void doFindIVCs() override;
+
+        protected:
+            virtual std::ostream & log(int verbosity) const override;
+
         private:
-            DebugTransitionRelation m_debug_tr;
+            VariableManager & m_vars;
+            const TransitionRelation & m_tr;
             std::vector<ID> m_gates;
     };
 

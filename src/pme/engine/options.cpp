@@ -77,6 +77,8 @@ namespace PME {
         caivc_ar_bmc_kmax(*this, 24, "caivc_ar_bmc_kmax"),
         caivc_ar_bmc_nmax(*this, 8, "caivc_ar_bmc_nmax"),
         caivc_ar_upfront_nmax(*this, 1, "caivc_ar_upfront_nmax"),
+        cbvc_upfront_nmax(*this, 1, "cbvc_upfront_nmax"),
+        cbvc_upfront_approx_mcs(*this, true, "cbvc_upfront_approx_mcs"),
         marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),

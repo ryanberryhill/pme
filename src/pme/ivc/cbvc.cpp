@@ -20,18 +20,37 @@
  */
 
 #include "pme/ivc/cbvc.h"
+#include "pme/ivc/bvc_solver.h"
 
 namespace PME {
     CBVCFinder::CBVCFinder(VariableManager & varman,
                             const TransitionRelation & tr)
         : IVCFinder(varman, tr),
-          m_debug_tr(tr),
+          m_vars(varman),
+          m_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids())
     { }
+
+    std::ostream & CBVCFinder::log(int verbosity) const
+    {
+        return IVCFinder::log(LOG_CBVC, verbosity);
+    }
 
     void CBVCFinder::doFindIVCs()
     {
         log(2) << "Starting CBVC (there are " << m_gates.size() << " gates)" << std::endl;
+
+        BVCSolver solver(m_vars, m_tr);
+        BVCResult br = solver.prove();
+
+        if (br.safe())
+        {
+            log(2) << "The instance is safe" << std::endl;
+        }
+        else if (br.unsafe())
+        {
+            log(2) << "The instance is unsafe" << std::endl;
+        }
     }
 }
 

@@ -175,7 +175,11 @@ namespace PME {
 
     std::pair<bool, CorrectionSet> CAIVCFinder::findCorrectionSet()
     {
-        return m_finder.findAndBlock();
+        auto result = m_finder.findAndBlock();
+
+        assert(!result.first || !result.second.empty());
+
+        return result;
     }
 
     CorrectionSet CAIVCFinder::findCorrectionSetOverGates(const std::vector<ID> & gates)
@@ -196,7 +200,9 @@ namespace PME {
     {
         if (opts().caivc_approx_mcs)
         {
-            return m_approx_finder.findAndBlockWithBMC(n);
+            auto result = m_approx_finder.findAndBlockWithBMC(n);
+            assert(!result.first || !result.second.empty());
+            return result;
         }
         else
         {
@@ -213,6 +219,7 @@ namespace PME {
 
         // This should only be called when we know a correction set exists
         assert(found);
+        assert(!found || !corr.empty());
         return corr;
     }
 
@@ -225,6 +232,7 @@ namespace PME {
             CorrectionSet corr;
             m_finder.setCardinality(cardinality);
             std::tie(found, corr) = m_finder.findAndBlockOverGates(gates);
+            assert(!found || !corr.empty());
             if (found) { return corr; }
         }
 
