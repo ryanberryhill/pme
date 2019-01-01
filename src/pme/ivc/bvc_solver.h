@@ -146,6 +146,8 @@ namespace PME {
             DebugTransitionRelation m_debug_tr;
             MCSFinder m_mcs_finder;
             ApproximateMCSFinder m_approx_mcs_finder;
+
+            unsigned m_lb;
     };
 }
 

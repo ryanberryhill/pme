@@ -203,7 +203,10 @@ namespace PME {
         if (n > 0 && n != CARDINALITY_INF)
         {
             unsigned c = std::min((size_t) n, m_debug_tr.numSuspects());
-            initCardinality(c);
+            if (c + 1 != m_cardinality_constraint.getOutputCardinality())
+            {
+                initCardinality(c);
+            }
             Cube cassumps = m_cardinality_constraint.assumeLEq(c);
             assumps.insert(assumps.end(), cassumps.begin(), cassumps.end());
         }

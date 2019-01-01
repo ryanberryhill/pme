@@ -47,7 +47,8 @@ namespace PME {
           m_hs_solver(varman),
           m_debug_tr(tr),
           m_mcs_finder(varman, m_debug_tr),
-          m_approx_mcs_finder(varman, m_debug_tr)
+          m_approx_mcs_finder(varman, m_debug_tr),
+          m_lb(0)
     {
        m_lift.addClauses(m_tr.unroll(2));
     }
@@ -65,7 +66,7 @@ namespace PME {
         findUpfront();
 
         Cube bad = { m_tr.bad() };
-        unsigned level = 0;
+        unsigned level = m_lb;
 
         while (true)
         {
@@ -89,6 +90,7 @@ namespace PME {
             {
                 // Bounded safe, BVC found
                 m_bvcs.push_back(getAbstraction());
+                m_lb = level + 1;
             }
 
             // Terminate if we reached the given bound
