@@ -564,6 +564,50 @@ void cpme_free_ivc(void * ivc)
     }
 }
 
+size_t cpme_bvc_bound(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return 0; }
+
+    return eng->getBVCBound();
+}
+
+size_t cpme_num_bvcs(void * pme, size_t bound)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return 0; }
+
+    return eng->getNumBVCs(bound);
+}
+
+void * cpme_get_bvc(void * pme, size_t bound, size_t i)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return NULL; }
+
+    assert(bound < eng->getBVCBound());
+    assert(i < eng->getNumBVCs(bound));
+    PME::ExternalIVC * bvc = new PME::ExternalIVC;
+    *bvc = eng->getBVCExternal(bound, i);
+
+    return bvc;
+}
+
+size_t cpme_bvc_num_gates(void * bvc)
+{
+    return cpme_ivc_num_gates(bvc);
+}
+
+unsigned cpme_bvc_get_gate(void * bvc, size_t i)
+{
+    return cpme_ivc_get_gate(bvc, i);
+}
+
+void cpme_free_bvc(void * bvc)
+{
+    cpme_free_ivc(bvc);
+}
+
 size_t cpme_proof_num_clauses(void * proof)
 {
     PME::ExternalClauseVec * p = static_cast<PME::ExternalClauseVec *>(proof);

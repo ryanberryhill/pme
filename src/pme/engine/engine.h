@@ -68,6 +68,12 @@ namespace PME
             ExternalIVC getIVCExternal(size_t i) const;
             ExternalIVC getMinimumIVCExternal() const;
 
+            size_t getBVCBound() const;
+            size_t getNumBVCs(size_t bound) const;
+            IVC getBVC(size_t bound, size_t i) const;
+
+            ExternalIVC getBVCExternal(size_t bound, size_t i) const;
+
             SafetyCounterExample getCounterExample() const;
             ExternalCounterExample getExternalCounterExample() const;
 

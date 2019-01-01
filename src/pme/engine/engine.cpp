@@ -271,6 +271,32 @@ namespace PME
         return vec;
     }
 
+    size_t Engine::getBVCBound() const
+    {
+        if (!m_ivc_finder) { return 0; }
+        return m_ivc_finder->numBVCBounds();
+    }
+
+    size_t Engine::getNumBVCs(size_t bound) const
+    {
+        if (!m_ivc_finder) { return 0; }
+        return m_ivc_finder->numBVCsAtBound(bound);
+    }
+
+    IVC Engine::getBVC(size_t bound, size_t i) const
+    {
+        IVC bvc;
+        if (!m_ivc_finder) { return bvc; }
+        return m_ivc_finder->getBVC(bound, i);
+    }
+
+    ExternalIVC Engine::getBVCExternal(size_t bound, size_t i) const
+    {
+        IVC bvc = getBVC(bound, i);
+        ExternalIVC vec = m_tr.makeExternal(bvc);
+        return vec;
+    }
+
     void Engine::removeProperty(ClauseVec & proof) const
     {
         for (unsigned i = 0; i < proof.size(); ++i)

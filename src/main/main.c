@@ -182,7 +182,7 @@ void save_proof(void * pme, size_t pindex, const char * filepath)
     cpme_free_proof(proof);
 }
 
-void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
+void save_subcircuit(aiger * ckt, void * subckt, size_t subckt_size, const char * filepath)
 {
     FILE * fp = fopen(filepath, "w");
     if (fp == NULL)
@@ -193,26 +193,24 @@ void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
 
     aiger * ivc_aig = aiger_init();
 
-    void * ivc = cpme_get_ivc(pme, pindex);
-    size_t size = cpme_ivc_num_gates(ivc);
-    size_t num_vars = aig->maxvar + 1;
+    size_t num_vars = ckt->maxvar + 1;
     unsigned char * relevant = calloc(num_vars, sizeof(unsigned char));
 
-    for (size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < subckt_size; ++i)
     {
-        unsigned gate_id = cpme_ivc_get_gate(ivc, i);
+        unsigned gate_id = cpme_ivc_get_gate(subckt, i);
 
         // Find the AND gate in the original aig
         // NOTE: and gates apparently are not sorted by lhs
-        for (size_t and_index = 0; and_index < aig->num_ands; ++and_index)
+        for (size_t and_index = 0; and_index < ckt->num_ands; ++and_index)
         {
-            unsigned lhs = aig->ands[and_index].lhs;
+            unsigned lhs = ckt->ands[and_index].lhs;
 
             if (lhs == gate_id)
             {
                 // We've found it
-                unsigned rhs0 = aig->ands[and_index].rhs0;
-                unsigned rhs1 = aig->ands[and_index].rhs1;
+                unsigned rhs0 = ckt->ands[and_index].rhs0;
+                unsigned rhs1 = ckt->ands[and_index].rhs1;
 
                 // Mark the variables as relevant
                 unsigned l = aiger_lit2var(lhs);
@@ -245,7 +243,7 @@ void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
             aiger_symbol * sym = NULL;
 
             // If it's a latch, copy it and the reset
-            sym = aiger_is_latch(aig, lit);
+            sym = aiger_is_latch(ckt, lit);
             if (sym)
             {
                 unsigned next = aiger_lit2var(sym->next);
@@ -269,7 +267,7 @@ void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
         aiger_symbol * sym = NULL;
 
         // If it's a latch, copy it and the reset
-        sym = aiger_is_latch(aig, lit);
+        sym = aiger_is_latch(ckt, lit);
         if (sym)
         {
             unsigned next = sym->next;
@@ -281,7 +279,7 @@ void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
         }
 
         // If it's an input, copy it with its name
-        sym = aiger_is_input(aig, lit);
+        sym = aiger_is_input(ckt, lit);
         if (sym)
         {
             const char * name = sym->name;
@@ -299,9 +297,9 @@ void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
     }
 
     // Copy the first output
-    assert(aig->num_outputs == 1);
-    unsigned o_lit = aig->outputs[0].lit;
-    const char * o_name = aig->outputs[0].name;
+    assert(ckt->num_outputs == 1);
+    unsigned o_lit = ckt->outputs[0].lit;
+    const char * o_name = ckt->outputs[0].name;
     aiger_add_output(ivc_aig, o_lit, o_name);
 
     aiger_write_to_file(ivc_aig, aiger_binary_mode, fp);
@@ -309,9 +307,28 @@ void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
     fclose(fp); fp = NULL;
     aiger_reset(ivc_aig); ivc_aig = NULL;
 
-    cpme_free_ivc(ivc); ivc = NULL;
 
     free(relevant); relevant = NULL;
+}
+
+void save_ivc(aiger * aig, void * pme, size_t pindex, const char * filepath)
+{
+    void * ivc = cpme_get_ivc(pme, pindex);
+    size_t size = cpme_ivc_num_gates(ivc);
+
+    save_subcircuit(aig, ivc, size, filepath);
+
+    cpme_free_ivc(ivc); ivc = NULL;
+}
+
+void save_bvc(aiger * aig, void * pme, size_t bound, size_t index, const char * filepath)
+{
+    void * bvc = cpme_get_bvc(pme, bound, index);
+    size_t size = cpme_bvc_num_gates(bvc);
+
+    save_subcircuit(aig, bvc, size, filepath);
+
+    cpme_free_bvc(bvc); bvc = NULL;
 }
 
 char g_save_path[512];
@@ -352,6 +369,25 @@ void save_ivcs(aiger * aig, void * pme, char * name)
         }
 
         save_ivc(aig, pme, i, filepath);
+    }
+
+    unsigned bvc_bound = cpme_bvc_bound(pme);
+    for (size_t k = 0; k < bvc_bound; ++k)
+    {
+        size_t num_bvcs = cpme_num_bvcs(pme, k);
+        for (size_t i = 0; i < num_bvcs; ++i)
+        {
+            size_t len = snprintf(filepath, sizeof(filepath), "%s.%s.bound%lu.%lu.aig",
+                                  g_save_path, name, k, i);
+
+            if (len >= sizeof(filepath))
+            {
+                fprintf(stderr, "Filepath ``%s...'' is too long\n", filepath);
+                continue;
+            }
+
+            save_bvc(aig, pme, k, i, filepath);
+        }
     }
 }
 

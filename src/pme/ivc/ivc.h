@@ -32,6 +32,7 @@ namespace PME {
 
     // A vector of IDs corresponding to the LHS of AndGates
     typedef std::vector<ID> IVC;
+    typedef std::vector<ID> BVC;
     typedef std::vector<ID> Seed;
 
     class IVCFinder
@@ -50,9 +51,15 @@ namespace PME {
             bool minimumIVCKnown() const;
             const IVC & getMinimumIVC() const;
 
+            size_t numBVCBounds() const { return m_bvcs.size(); }
+            size_t numBVCsAtBound(size_t i) const { return m_bvcs.at(i).size(); }
+            const BVC & getBVC(size_t bound, size_t i) const { return m_bvcs.at(bound).at(i); }
+
         protected:
             void addMIVC(const IVC & ivc);
             void setMinimumIVC(const IVC & ivc);
+
+            void addBVC(unsigned bound, const BVC & bvc);
 
             virtual std::ostream & log(int verbosity) const;
             std::ostream & log(LogChannelID channel, int verbosity) const;
@@ -68,6 +75,7 @@ namespace PME {
             const TransitionRelation & m_tr;
 
             std::vector<IVC> m_mivcs;
+            std::vector<std::vector<BVC>> m_bvcs;
             IVC m_minimum_ivc;
     };
 }

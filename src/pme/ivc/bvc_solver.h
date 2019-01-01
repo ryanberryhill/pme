@@ -29,13 +29,12 @@
 #include "pme/util/hitting_set_finder.h"
 #include "pme/engine/global_state.h"
 #include "pme/ivc/correction_set_finder.h"
+#include "pme/ivc/ivc.h"
 
 #include <forward_list>
 #include <queue>
 
 namespace PME {
-
-    typedef std::vector<ID> BVC;
 
     struct BVCResult
     {
@@ -87,6 +86,7 @@ namespace PME {
             BVCSolver(VariableManager & varman, const TransitionRelation & tr);
 
             BVCResult prove();
+            BVCResult prove(unsigned bound);
 
             BVCRecBlockResult recursiveBlock(const Cube & target, unsigned target_level);
             BVCBlockResult block(unsigned level);
@@ -124,6 +124,7 @@ namespace PME {
             SafetyCounterExample buildCex(const BVCProofObligation * obl) const;
             BVCResult counterExampleResult(const SafetyCounterExample & cex) const;
             BVCResult safeResult(const SafetyProof & proof) const;
+            BVCResult unknownResult() const;
 
             void findUpfront();
 

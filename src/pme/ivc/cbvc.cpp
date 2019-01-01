@@ -22,6 +22,8 @@
 #include "pme/ivc/cbvc.h"
 #include "pme/ivc/bvc_solver.h"
 
+#include <cassert>
+
 namespace PME {
     CBVCFinder::CBVCFinder(VariableManager & varman,
                             const TransitionRelation & tr)
@@ -41,16 +43,29 @@ namespace PME {
         log(2) << "Starting CBVC (there are " << m_gates.size() << " gates)" << std::endl;
 
         BVCSolver solver(m_vars, m_tr);
-        BVCResult br = solver.prove();
 
-        if (br.safe())
+        for (unsigned k = 0; ; k++)
         {
-            log(2) << "The instance is safe" << std::endl;
-            addMIVC(br.abstraction);
-        }
-        else if (br.unsafe())
-        {
-            log(2) << "The instance is unsafe" << std::endl;
+            BVCResult br = solver.prove(k);
+
+            if (br.safe())
+            {
+                log(2) << "The instance is safe (at " << k << ")" << std::endl;
+                addMIVC(br.abstraction);
+                break;
+            }
+            else if (br.unsafe())
+            {
+                log(2) << "The instance is unsafe (at " << k << ")" << std::endl;
+                break;
+            }
+            else
+            {
+                const BVC & bvc = br.abstraction;
+                log(2) << "Found BVC of size " << bvc.size() << " at " << k << std::endl;
+                assert(br.unknown());
+                addBVC(k, bvc);
+            }
         }
     }
 }

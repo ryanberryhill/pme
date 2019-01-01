@@ -57,7 +57,7 @@ namespace PME {
         return GlobalState::logger().log(LOG_CBVC, verbosity);
     }
 
-    BVCResult BVCSolver::prove()
+    BVCResult BVCSolver::prove(unsigned bound)
     {
         BVCResult result;
 
@@ -67,27 +67,44 @@ namespace PME {
         Cube bad = { m_tr.bad() };
         unsigned level = 0;
 
-        SafetyProof proof;
-        while (!checkAbstraction(proof))
+        while (true)
         {
+            SafetyProof proof;
             log(3) << "Level " << level << std::endl;
             clearObligationPool();
             BVCRecBlockResult br = recursiveBlock(bad, level);
 
             if (!br.safe)
             {
+                // Unsafe, counter-example found
                 SafetyCounterExample cex = buildCex(br.cex_obl);
                 return counterExampleResult(cex);
             }
+            else if (checkAbstraction(proof))
+            {
+                // Safe, IVC found
+                return safeResult(proof);
+            }
             else
             {
+                // Bounded safe, BVC found
                 m_bvcs.push_back(getAbstraction());
             }
+
+            // Terminate if we reached the given bound
+            if (level >= bound) { return unknownResult(); }
 
             level++;
         }
 
-        return safeResult(proof);
+        assert(false);
+        return unknownResult();
+    }
+
+    BVCResult BVCSolver::prove()
+    {
+        unsigned bound = std::numeric_limits<unsigned>::max();
+        return prove(bound);
     }
 
     std::vector<ID> BVCSolver::getAbstraction() const
@@ -336,6 +353,16 @@ namespace PME {
 
         result.safety.result = SAFE;
         result.safety.proof = proof;
+        result.abstraction = getAbstraction();
+
+        return result;
+    }
+
+    BVCResult BVCSolver::unknownResult() const
+    {
+        BVCResult result;
+
+        result.safety.result = UNKNOWN;
         result.abstraction = getAbstraction();
 
         return result;

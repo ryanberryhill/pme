@@ -102,6 +102,13 @@ size_t cpme_ivc_num_gates(void * ivc);
 unsigned cpme_ivc_get_gate(void * ivc, size_t i);
 void cpme_free_ivc(void * ivc);
 
+size_t cpme_bvc_bound(void * pme);
+size_t cpme_num_bvcs(void * pme, size_t bound);
+void * cpme_get_bvc(void * pme, size_t bound, size_t i);
+size_t cpme_bvc_num_gates(void * bvc);
+unsigned cpme_bvc_get_gate(void * bvc, size_t i);
+void cpme_free_bvc(void * bvc);
+
 int cpme_check_proof(void * pme);
 int cpme_run_marco(void * pme);
 int cpme_run_camsis(void * pme);

@@ -83,5 +83,15 @@ namespace PME {
         m_minimum_ivc = ivc;
         stats().smallest_mivc_size = ivc.size();
     }
+
+    void IVCFinder::addBVC(unsigned bound, const BVC & bvc)
+    {
+        if (m_bvcs.size() <= bound)
+        {
+            m_bvcs.resize(bound + 1);
+        }
+
+        m_bvcs.at(bound).push_back(bvc);
+    }
 }
 
