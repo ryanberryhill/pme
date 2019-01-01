@@ -147,8 +147,12 @@ namespace PME {
 
         q.push(newObligation(target, target_level));
 
+        unsigned iters = 0;
         while(!q.empty())
         {
+            if (iters % 1000 == 0) { m_hs_solver.renew(); }
+            iters++;
+
             BVCProofObligation * obl = popObligation(q);
             logObligation(obl);
 
@@ -200,6 +204,12 @@ namespace PME {
             {
                 // Obligation discharged
                 assert(!sat);
+                // Re-enqueue if enabled
+                if (opts().cbvc_reenq && obl->level < target_level)
+                {
+                    obl->level = level + 1;
+                    q.push(obl);
+                }
             }
         }
 

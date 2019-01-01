@@ -80,6 +80,7 @@ namespace PME {
         cbvc_upfront_nmax(*this, 0, "cbvc_upfront_nmax"),
         cbvc_upfront_approx_mcs(*this, true, "cbvc_upfront_approx_mcs"),
         cbvc_lift(*this, true, "cbvc_lift"),
+        cbvc_reenq(*this, true, "cbvc_reenq"),
         marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),

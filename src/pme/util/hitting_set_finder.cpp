@@ -22,22 +22,59 @@
 #include "pme/util/hitting_set_finder.h"
 
 #include <cassert>
+#include <algorithm>
 
 namespace PME {
 
     HittingSetFinder::HittingSetFinder(VariableManager & varman)
-        : m_vars(varman), m_solver(varman)
+        : m_vars(varman), m_solver(new MSU4MaxSATSolver(varman))
     { }
+
+    bool HittingSetFinder::checkSubsumption(const std::vector<ID> & s)
+    {
+        assert(std::is_sorted(s.begin(), s.end()));
+
+        for (auto it = m_sets.begin(); it != m_sets.end(); )
+        {
+            const std::vector<ID> & t = *it;
+            assert(std::is_sorted(t.begin(), t.end()));
+
+            if (subsumes(s, t))
+            {
+                // s is a subset of t, delete t
+                it = m_sets.erase(it);
+            }
+            else if (subsumes(t, s))
+            {
+                // s is a superset of t, ignore s
+                return false;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        return true;
+    }
 
     void HittingSetFinder::addSet(const std::vector<ID> & s)
     {
-        for (ID lit : s)
+        // Cleanup subsumed sets, or ignore s because it is subsumed
+        if (checkSubsumption(s))
         {
-            assert(!is_negated(lit));
-            addVar(lit);
-        }
+            std::vector<ID> copy = s;
+            std::sort(copy.begin(), copy.end());
 
-        m_solver.addClause(s);
+            for (ID lit : copy)
+            {
+                assert(!is_negated(lit));
+                addVar(lit);
+            }
+
+            m_solver->addClause(copy);
+            m_sets.push_back(copy);
+        }
     }
 
     void HittingSetFinder::addVar(ID lit)
@@ -45,13 +82,13 @@ namespace PME {
         if (m_known.count(lit) == 0)
         {
             m_known.insert(lit);
-            m_solver.addForOptimization(negate(lit));
+            m_solver->addForOptimization(negate(lit));
         }
     }
 
     std::vector<ID> HittingSetFinder::solve()
     {
-        bool sat = m_solver.solve();
+        bool sat = m_solver->solve();
 
         if (sat)
         {
@@ -59,7 +96,7 @@ namespace PME {
 
             for (ID lit : m_known)
             {
-                if (m_solver.getAssignment(lit) == SAT::TRUE)
+                if (m_solver->getAssignment(lit) == SAT::TRUE)
                 {
                     soln.push_back(lit);
                 }
@@ -76,8 +113,30 @@ namespace PME {
 
     void HittingSetFinder::blockSolution(const std::vector<ID> & soln)
     {
+        m_blocked.push_back(soln);
         Clause block = negateVec(soln);
-        m_solver.addClause(block);
+        m_solver->addClause(block);
+    }
+
+    void HittingSetFinder::renew()
+    {
+        m_solver.reset(new MSU4MaxSATSolver(m_vars));
+
+        for (ID lit : m_known)
+        {
+            m_solver->addForOptimization(negate(lit));
+        }
+
+        for (const auto & s : m_sets)
+        {
+            m_solver->addClause(s);
+        }
+
+        for (const auto & soln : m_blocked)
+        {
+            Clause block = negateVec(soln);
+            m_solver->addClause(block);
+        }
     }
 }
 

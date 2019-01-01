@@ -60,6 +60,60 @@ BOOST_AUTO_TEST_CASE(basic_hitting_sets)
     BOOST_CHECK(soln.empty());
 }
 
+BOOST_AUTO_TEST_CASE(subsumption)
+{
+    VariableManager varman;
+    HittingSetFinder finder(varman);
+
+    ID a = varman.getNewID("a");
+    ID b = varman.getNewID("b");
+    ID c = varman.getNewID("c");
+    ID d = varman.getNewID("d");
+
+    finder.addSet({a, b});
+    finder.addSet({b, c});
+    finder.addSet({b, d});
+
+    std::vector<ID> soln = finder.solve();
+    std::vector<ID> expected = {b};
+
+    BOOST_REQUIRE(!soln.empty());
+    BOOST_REQUIRE(soln == expected);
+
+    finder.addSet({a, b, c});
+    finder.addSet({b, c, d});
+    soln = finder.solve();
+    expected = {b};
+
+    BOOST_REQUIRE(!soln.empty());
+    BOOST_REQUIRE(soln == expected);
+
+    finder.renew();
+    soln = finder.solve();
+
+    BOOST_REQUIRE(!soln.empty());
+    BOOST_REQUIRE(soln == expected);
+
+    finder.addSet({d});
+    finder.addSet({b});
+    soln = finder.solve();
+    expected = {b, d};
+
+    std::sort(soln.begin(), soln.end());
+    std::sort(expected.begin(), expected.end());
+
+    BOOST_REQUIRE(!soln.empty());
+    BOOST_REQUIRE(soln == expected);
+
+    finder.renew();
+    soln = finder.solve();
+
+    std::sort(soln.begin(), soln.end());
+
+    BOOST_REQUIRE(!soln.empty());
+    BOOST_REQUIRE(soln == expected);
+}
+
 BOOST_AUTO_TEST_CASE(incremental_hitting_sets)
 {
     VariableManager varman;

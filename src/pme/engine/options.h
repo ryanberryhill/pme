@@ -93,6 +93,7 @@ namespace PME {
             PMEOption<unsigned> cbvc_upfront_nmax;
             PMEOption<bool> cbvc_upfront_approx_mcs;
             PMEOption<bool> cbvc_lift;
+            PMEOption<bool> cbvc_reenq;
 
             // MARCO-IVC
             PMEOption<bool> marcoivc_use_ivcucbf;

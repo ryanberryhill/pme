@@ -37,12 +37,17 @@ namespace PME {
             std::vector<ID> solve();
             void blockSolution(const std::vector<ID> & soln);
 
+            void renew();
+
         private:
             void addVar(ID lit);
+            bool checkSubsumption(const std::vector<ID> & s);
 
             VariableManager & m_vars;
             std::unordered_set<ID> m_known;
-            MSU4MaxSATSolver m_solver;
+            std::vector<std::vector<ID>> m_sets;
+            std::vector<std::vector<ID>> m_blocked;
+            std::unique_ptr<MSU4MaxSATSolver> m_solver;
     };
 }
 
