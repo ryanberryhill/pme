@@ -34,7 +34,7 @@ namespace PME {
           m_seedSolver(varman),
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
-          m_bmc(varman, m_debug_tr)
+          m_ivc_checker(varman, m_debug_tr)
     {
         initSolvers();
     }
@@ -116,54 +116,51 @@ namespace PME {
         return result;
     }
 
-    Cube MARCOIVCFinder::debugAssumps(const Seed & seed) const
+    Seed MARCOIVCFinder::negateSeed(const Seed & seed) const
     {
-        Cube assumps;
-        std::set<ID> seed_set(seed.begin(), seed.end());
+        std::set<ID> gate_set(seed.begin(), seed.end());
 
-        for (auto it = m_debug_tr.begin_gate_ids() ; it != m_debug_tr.end_gate_ids(); ++it)
+        Seed neg;
+        for (ID gate : m_gates)
         {
-            ID gate = *it;
-            ID dl = m_debug_tr.debugLatchForGate(gate);
-            if (seed_set.count(gate) > 0)
+            if (gate_set.count(gate) == 0)
             {
-                // In seed, enable
-                assumps.push_back(negate(dl));
-            }
-            else
-            {
-                // Not in seed, disable
-                assumps.push_back(dl);
+                neg.push_back(gate);
             }
         }
 
-        return assumps;
+        return neg;
     }
 
     bool MARCOIVCFinder::isSafe(const Seed & seed)
     {
         if (opts().marcoivc_incr_issafe)
         {
-            SafetyResult bmc = isSafeBMC(seed);
-            if (bmc.result == UNSAFE) { return false; }
+            return isSafeHybrid(seed);
         }
-
-        SafetyResult ic3 = isSafeIC3(seed);
-        return ic3.result == SAFE;
+        else
+        {
+            return isSafeIC3(seed);
+        }
     }
 
-    SafetyResult MARCOIVCFinder::isSafeIC3(const Seed & seed)
+    bool MARCOIVCFinder::isSafeIC3(const Seed & seed)
     {
         TransitionRelation partial(tr(), seed);
         IC3::IC3Solver ic3(vars(), partial);
-        return ic3.prove();
+        SafetyResult safe = ic3.prove();
+
+        return safe.result == SAFE;
     }
 
-    SafetyResult MARCOIVCFinder::isSafeBMC(const Seed & seed)
+    bool MARCOIVCFinder::isSafeHybrid(const Seed & seed)
     {
-        Cube assumps = debugAssumps(seed);
-        unsigned k_max = opts().marcoivc_issafe_kmax;
-        return m_bmc.solve(k_max, assumps);
+        Seed neg = negateSeed(seed);
+
+        bool unsafe;
+        std::tie(unsafe, std::ignore) = m_ivc_checker.debugOverGates(neg);
+
+        return !unsafe;
     }
 
     void MARCOIVCFinder::grow(Seed & seed)
