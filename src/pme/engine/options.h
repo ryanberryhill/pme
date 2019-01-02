@@ -97,6 +97,8 @@ namespace PME {
 
             // MARCO-IVC
             PMEOption<bool> marcoivc_use_ivcucbf;
+            PMEOption<bool> marcoivc_incr_issafe;
+            PMEOption<unsigned> marcoivc_issafe_kmax;
 
             // IVC_UCBF
             PMEOption<bool> ivc_ucbf_use_core;

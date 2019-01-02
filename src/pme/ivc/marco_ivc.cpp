@@ -33,7 +33,8 @@ namespace PME {
         : IVCFinder(varman, tr),
           m_seedSolver(varman),
           m_debug_tr(tr),
-          m_gates(tr.begin_gate_ids(), tr.end_gate_ids())
+          m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
+          m_bmc(varman, m_debug_tr)
     {
         initSolvers();
     }
@@ -115,22 +116,60 @@ namespace PME {
         return result;
     }
 
+    Cube MARCOIVCFinder::debugAssumps(const Seed & seed) const
+    {
+        Cube assumps;
+        std::set<ID> seed_set(seed.begin(), seed.end());
+
+        for (auto it = m_debug_tr.begin_gate_ids() ; it != m_debug_tr.end_gate_ids(); ++it)
+        {
+            ID gate = *it;
+            ID dl = m_debug_tr.debugLatchForGate(gate);
+            if (seed_set.count(gate) > 0)
+            {
+                // In seed, enable
+                assumps.push_back(negate(dl));
+            }
+            else
+            {
+                // Not in seed, disable
+                assumps.push_back(dl);
+            }
+        }
+
+        return assumps;
+    }
+
     bool MARCOIVCFinder::isSafe(const Seed & seed)
     {
-        // TODO: incremental debugging-based version
-        // TODO: non-incremental hybrid BMC/IC3 version
+        if (opts().marcoivc_incr_issafe)
+        {
+            SafetyResult bmc = isSafeBMC(seed);
+            if (bmc.result == UNSAFE) { return false; }
+        }
+
+        SafetyResult ic3 = isSafeIC3(seed);
+        return ic3.result == SAFE;
+    }
+
+    SafetyResult MARCOIVCFinder::isSafeIC3(const Seed & seed)
+    {
         TransitionRelation partial(tr(), seed);
         IC3::IC3Solver ic3(vars(), partial);
+        return ic3.prove();
+    }
 
-        SafetyResult safe = ic3.prove();
-        return (safe.result == SAFE);
+    SafetyResult MARCOIVCFinder::isSafeBMC(const Seed & seed)
+    {
+        Cube assumps = debugAssumps(seed);
+        unsigned k_max = opts().marcoivc_issafe_kmax;
+        return m_bmc.solve(k_max, assumps);
     }
 
     void MARCOIVCFinder::grow(Seed & seed)
     {
         // grow is implemented in the obvious way. Try to add a gate
         // and see if it's still unsafe. If unsafe, keep the gate, otherwise
-        // TODO: incremental version, possibly in conjunction with isSafe
         std::set<ID> seed_set(seed.begin(), seed.end());
 
         for (ID gate : m_gates)

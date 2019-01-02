@@ -29,6 +29,7 @@
 #include "pme/util/maxsat_solver.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
+#include "pme/bmc/bmc_solver.h"
 
 namespace PME {
     class MARCOIVCFinder : public IVCFinder {
@@ -44,6 +45,8 @@ namespace PME {
             UnexploredResult getUnexplored();
             void recordMIVC(const Seed & mivc);
             bool isSafe(const Seed & seed);
+            SafetyResult isSafeIC3(const Seed & seed);
+            SafetyResult isSafeBMC(const Seed & seed);
             void grow(Seed & seed);
             void shrink(Seed & seed);
             void blockUp(const Seed & seed);
@@ -52,6 +55,8 @@ namespace PME {
             void initSolvers();
             ID debugVarOf(ID gate) const;
 
+            Cube debugAssumps(const Seed & seed) const;
+
             id_iterator begin_gates() const { return m_debug_tr.begin_gate_ids(); }
             id_iterator end_gates() const { return m_debug_tr.end_gate_ids(); }
 
@@ -59,6 +64,7 @@ namespace PME {
             DebugTransitionRelation m_debug_tr;
             Seed m_smallestIVC;
             std::vector<ID> m_gates;
+            BMC::BMCSolver m_bmc;
     };
 }
 
