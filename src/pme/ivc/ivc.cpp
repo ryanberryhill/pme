@@ -76,12 +76,12 @@ namespace PME {
         m_mivcs.push_back(ivc);
         stats().num_mivcs_found++;
         stats().largest_mivc_size = std::max(stats().largest_mivc_size, ivc.size());
+        stats().smallest_mivc_size = std::min(stats().smallest_mivc_size, ivc.size());
     }
 
     void IVCFinder::setMinimumIVC(const IVC & ivc)
     {
         m_minimum_ivc = ivc;
-        stats().smallest_mivc_size = ivc.size();
     }
 
     void IVCFinder::addBVC(unsigned bound, const BVC & bvc)
