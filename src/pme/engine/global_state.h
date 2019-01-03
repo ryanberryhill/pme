@@ -61,9 +61,11 @@ namespace PME
         double caivc_more_mcs_time;
 
         // MARCO-IVC
+        unsigned marcoivc_get_unexplored_calls;
         unsigned marcoivc_issafe_calls;
         unsigned marcoivc_shrink_calls;
         unsigned marcoivc_grow_calls;
+        double marcoivc_get_unexplored_time;
         double marcoivc_issafe_time;
         double marcoivc_shrink_time;
         double marcoivc_grow_time;

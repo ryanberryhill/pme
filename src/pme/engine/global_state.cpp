@@ -47,9 +47,11 @@ namespace PME
         caivc_find_candidate_time(0.0),
         caivc_find_mcs_time(0.0),
         caivc_more_mcs_time(0.0),
+        marcoivc_get_unexplored_calls(0),
         marcoivc_issafe_calls(0),
         marcoivc_shrink_calls(0),
         marcoivc_grow_calls(0),
+        marcoivc_get_unexplored_time(0.0),
         marcoivc_issafe_time(0.0),
         marcoivc_shrink_time(0.0),
         marcoivc_grow_time(0.0)
@@ -92,6 +94,8 @@ namespace PME
         os << "CAIVC More Correction Sets Time: " << caivc_more_mcs_time << std::endl;
 
         // MARCO-IVC specific
+        os << "MARCO-IVC getUnexplored Calls: " << marcoivc_get_unexplored_calls << std::endl;
+        os << "MARCO-IVC getUnexplored Time: " << marcoivc_get_unexplored_time << std::endl;
         os << "MARCO-IVC isSafe Calls: " << marcoivc_issafe_calls << std::endl;
         os << "MARCO-IVC isSafe Time: " << marcoivc_issafe_time << std::endl;
         os << "MARCO-IVC grow Calls: " << marcoivc_grow_calls << std::endl;

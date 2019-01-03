@@ -97,6 +97,8 @@ namespace PME {
 
     MARCOIVCFinder::UnexploredResult MARCOIVCFinder::getUnexplored()
     {
+        stats().marcoivc_get_unexplored_calls++;
+        AutoTimer timer(stats().marcoivc_get_unexplored_time);
         UnexploredResult result;
         Seed & seed = result.second;
         if (m_seedSolver.solve())
