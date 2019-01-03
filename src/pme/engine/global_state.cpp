@@ -21,6 +21,8 @@
 
 #include "pme/engine/global_state.h"
 
+#include <limits>
+
 namespace PME
 {
     PMEStats::PMEStats() :
@@ -34,7 +36,7 @@ namespace PME
         sat_calls(0),
         sat_runtime(0.0),
         num_mivcs_found(0),
-        smallest_mivc_size(0),
+        smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
         ivc_prep_time(0.0)
     { }
@@ -58,8 +60,11 @@ namespace PME
 
         // IVCs
         os << "MIVCs Found: " << num_mivcs_found << std::endl;
-        os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
-        os << "Largest MIVC: " << largest_mivc_size << std::endl;
+        if (num_mivcs_found > 0)
+        {
+            os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
+            os << "Largest MIVC: " << largest_mivc_size << std::endl;
+        }
         os << "Preparation Time: " << ivc_prep_time << std::endl;
     }
 
