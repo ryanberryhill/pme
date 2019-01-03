@@ -181,6 +181,8 @@ namespace PME {
 
         assert(!result.first || !result.second.empty());
 
+        if (result.first) { stats().caivc_correction_sets_found++; }
+
         return result;
     }
 
@@ -225,6 +227,9 @@ namespace PME {
         // This should only be called when we know a correction set exists
         assert(found);
         assert(!found || !corr.empty());
+
+        stats().caivc_correction_sets_found++;
+
         return corr;
     }
 
@@ -239,8 +244,12 @@ namespace PME {
             bool found;
             CorrectionSet corr;
             m_finder.setCardinality(cardinality);
+
             std::tie(found, corr) = m_finder.findAndBlockOverGates(gates);
             assert(!found || !corr.empty());
+
+            stats().caivc_correction_sets_found++;
+
             if (found) { return corr; }
         }
 

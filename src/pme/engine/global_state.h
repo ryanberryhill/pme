@@ -54,6 +54,7 @@ namespace PME
         unsigned caivc_find_candidate_calls;
         unsigned caivc_find_mcs_calls;
         unsigned caivc_more_mcs_calls;
+        unsigned caivc_correction_sets_found;
         double caivc_prep_time;
         double caivc_isivc_time;
         double caivc_find_candidate_time;

@@ -42,6 +42,7 @@ namespace PME
         caivc_find_candidate_calls(0),
         caivc_find_mcs_calls(0),
         caivc_more_mcs_calls(0),
+        caivc_correction_sets_found(0),
         caivc_prep_time(0.0),
         caivc_isivc_time(0.0),
         caivc_find_candidate_time(0.0),
@@ -83,6 +84,7 @@ namespace PME
         }
 
         // CAIVC specific
+        os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;
         os << "CAIVC Preparation Time: " << caivc_prep_time << std::endl;
         os << "CAIVC isIVC Calls: " << caivc_isivc_calls << std::endl;
         os << "CAIVC isIVC Time: " << caivc_isivc_time << std::endl;
