@@ -134,6 +134,7 @@ namespace PME {
 
     bool MARCOIVCFinder::isSafe(const Seed & seed)
     {
+        stats().marcoivc_issafe_calls++;
         AutoTimer timer(stats().marcoivc_issafe_time);
 
         if (opts().marcoivc_incr_issafe)
@@ -169,6 +170,7 @@ namespace PME {
     {
         // grow is implemented in the obvious way. Try to add a gate
         // and see if it's still unsafe. If unsafe, keep the gate, otherwise
+        stats().marcoivc_grow_calls++;
         AutoTimer timer(stats().marcoivc_grow_time);
 
         std::set<ID> seed_set(seed.begin(), seed.end());
@@ -186,6 +188,7 @@ namespace PME {
 
     void MARCOIVCFinder::shrink(Seed & seed)
     {
+        stats().marcoivc_shrink_calls++;
         AutoTimer timer(stats().marcoivc_shrink_time);
 
         if (opts().marcoivc_use_ivcucbf)

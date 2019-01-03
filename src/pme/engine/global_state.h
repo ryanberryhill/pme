@@ -48,7 +48,22 @@ namespace PME
         size_t num_mivcs_found;
         size_t smallest_mivc_size;
         size_t largest_mivc_size;
-        double ivc_prep_time;
+
+        // CAIVC
+        unsigned caivc_isivc_calls;
+        unsigned caivc_find_candidate_calls;
+        unsigned caivc_find_mcs_calls;
+        unsigned caivc_more_mcs_calls;
+        double caivc_prep_time;
+        double caivc_isivc_time;
+        double caivc_find_candidate_time;
+        double caivc_find_mcs_time;
+        double caivc_more_mcs_time;
+
+        // MARCO-IVC
+        unsigned marcoivc_issafe_calls;
+        unsigned marcoivc_shrink_calls;
+        unsigned marcoivc_grow_calls;
         double marcoivc_issafe_time;
         double marcoivc_shrink_time;
         double marcoivc_grow_time;

@@ -74,7 +74,7 @@ namespace PME {
         // Typically, we want to start by finding all cardinality 1 MCSes
         // An option allows us to start with even higher cardinalities
         {
-            AutoTimer timer(stats().ivc_prep_time);
+            AutoTimer timer(stats().caivc_prep_time);
 
             unsigned n_max = opts().caivc_ar_upfront_nmax;
             for (unsigned n = 1; n <= n_max; ++n)
@@ -128,9 +128,8 @@ namespace PME {
     {
         unsigned cardinality = 1;
 
-        double prep_time = 0.0;
         {
-            AutoTimer timer(prep_time);
+            AutoTimer timer(stats().caivc_prep_time);
             unsigned count = 0;
             do {
                 m_finder.setCardinality(cardinality);
@@ -153,8 +152,6 @@ namespace PME {
             log(2) << "Done finding correction sets (" << count << " found)" << std::endl;
         }
 
-        log(1) << "Preparation time: " << prep_time << std::endl;
-
         while (true)
         {
             bool found;
@@ -170,11 +167,16 @@ namespace PME {
 
     bool CAIVCFinder::moreCorrectionSets()
     {
+        stats().caivc_more_mcs_calls++;
+        AutoTimer timer(stats().caivc_more_mcs_time);
         return m_finder.moreCorrectionSets();
     }
 
     std::pair<bool, CorrectionSet> CAIVCFinder::findCorrectionSet()
     {
+        stats().caivc_find_mcs_calls++;
+        AutoTimer timer(stats().caivc_find_mcs_time);
+
         auto result = m_finder.findAndBlock();
 
         assert(!result.first || !result.second.empty());
@@ -213,6 +215,9 @@ namespace PME {
 
     CorrectionSet CAIVCFinder::findApproxMCSOverGates(const std::vector<ID> & gates)
     {
+        stats().caivc_find_mcs_calls++;
+        AutoTimer timer(stats().caivc_find_mcs_time);
+
         bool found;
         CorrectionSet corr;
         std::tie(found, corr) = m_approx_finder.findAndBlockOverGates(gates);
@@ -225,6 +230,9 @@ namespace PME {
 
     CorrectionSet CAIVCFinder::findMCSOverGates(const std::vector<ID> & gates)
     {
+        stats().caivc_find_mcs_calls++;
+        AutoTimer timer(stats().caivc_find_mcs_time);
+
         // Assuming we already found all cardinality 1 MCSes
         for (unsigned cardinality = 2; cardinality <= gates.size(); ++cardinality)
         {
@@ -255,6 +263,8 @@ namespace PME {
 
     std::pair<bool, IVC> CAIVCFinder::findCandidateMIVC(bool block)
     {
+        stats().caivc_find_candidate_calls++;
+        AutoTimer timer(stats().caivc_find_candidate_time);
         bool found;
         IVC mivc;
 
@@ -298,6 +308,9 @@ namespace PME {
 
     bool CAIVCFinder::isIVC(const IVC & candidate)
     {
+        stats().caivc_isivc_calls++;
+        AutoTimer timer(stats().caivc_isivc_time);
+
         if (opts().caivc_check_with_debug)
         {
             // Debug over the gates not in candidate with unlimited cardinality

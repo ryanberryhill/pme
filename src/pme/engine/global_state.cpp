@@ -38,7 +38,18 @@ namespace PME
         num_mivcs_found(0),
         smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
-        ivc_prep_time(0.0),
+        caivc_isivc_calls(0),
+        caivc_find_candidate_calls(0),
+        caivc_find_mcs_calls(0),
+        caivc_more_mcs_calls(0),
+        caivc_prep_time(0.0),
+        caivc_isivc_time(0.0),
+        caivc_find_candidate_time(0.0),
+        caivc_find_mcs_time(0.0),
+        caivc_more_mcs_time(0.0),
+        marcoivc_issafe_calls(0),
+        marcoivc_shrink_calls(0),
+        marcoivc_grow_calls(0),
         marcoivc_issafe_time(0.0),
         marcoivc_shrink_time(0.0),
         marcoivc_grow_time(0.0)
@@ -70,11 +81,22 @@ namespace PME
         }
 
         // CAIVC specific
-        os << "Preparation Time: " << ivc_prep_time << std::endl;
+        os << "CAIVC Preparation Time: " << caivc_prep_time << std::endl;
+        os << "CAIVC isIVC Calls: " << caivc_isivc_calls << std::endl;
+        os << "CAIVC isIVC Time: " << caivc_isivc_time << std::endl;
+        os << "CAIVC Find Candidate Calls: " << caivc_find_candidate_calls << std::endl;
+        os << "CAIVC Find Candidate Time: " << caivc_find_candidate_time << std::endl;
+        os << "CAIVC Find Correction Set Calls: " << caivc_find_mcs_calls << std::endl;
+        os << "CAIVC Find Correction Set Time: " << caivc_find_mcs_time << std::endl;
+        os << "CAIVC More Correction Sets Calls: " << caivc_more_mcs_calls << std::endl;
+        os << "CAIVC More Correction Sets Time: " << caivc_more_mcs_time << std::endl;
 
         // MARCO-IVC specific
+        os << "MARCO-IVC isSafe Calls: " << marcoivc_issafe_calls << std::endl;
         os << "MARCO-IVC isSafe Time: " << marcoivc_issafe_time << std::endl;
+        os << "MARCO-IVC grow Calls: " << marcoivc_grow_calls << std::endl;
         os << "MARCO-IVC grow Time: " << marcoivc_grow_time << std::endl;
+        os << "MARCO-IVC shrink Calls: " << marcoivc_shrink_calls << std::endl;
         os << "MARCO-IVC shrink Time: " << marcoivc_shrink_time << std::endl;
     }
 
