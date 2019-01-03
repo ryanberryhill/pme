@@ -27,6 +27,18 @@
 #include <iostream>
 #include <algorithm>
 
+#define handle_exceptions(errval) \
+    catch (const std::bad_alloc & e) \
+    { \
+        std::cerr << "Out of memory (std::bad_alloc)" << std::endl; \
+        return errval; \
+    } \
+    catch (...) \
+    { \
+        if (errno == ENOMEM) { std::cerr << "Out of memory (ENOMEM)" << std::endl; } \
+        return errval; \
+    }
+
 const char * cpme_version()
 {
     return PME::pme_version().c_str();
@@ -48,10 +60,7 @@ void * cpme_init(aiger * aig, void * proof)
         if (p) { engine->setProof(*p); }
         return engine;
     }
-    catch(...)
-    {
-        return NULL;
-    }
+    handle_exceptions(NULL);
 }
 
 void * cpme_alloc_proof()
@@ -60,10 +69,7 @@ void * cpme_alloc_proof()
     {
         return new PME::ExternalClauseVec;
     }
-    catch (...)
-    {
-        return NULL;
-    }
+    handle_exceptions(NULL);
 }
 
 void * cpme_copy_proof(void * pme)
@@ -76,10 +82,7 @@ void * cpme_copy_proof(void * pme)
     {
         copy = new PME::ExternalClauseVec;
     }
-    catch (...)
-    {
-        return NULL;
-    }
+    handle_exceptions(NULL);
 
     *copy = eng->getOriginalProofExternal();
 
@@ -97,10 +100,7 @@ void * cpme_copy_cex(void * pme)
     {
         copy = new ExternalCounterExample;
     }
-    catch (...)
-    {
-        return NULL;
-    }
+    handle_exceptions(NULL);
 
     *copy = eng->getExternalCounterExample();
 
@@ -284,10 +284,7 @@ int cpme_check_proof(void * pme)
         bool result = eng->checkProof();
         return result ? 1 : 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
 }
 
 int cpme_run_marco(void * pme)
@@ -298,12 +295,10 @@ int cpme_run_marco(void * pme)
     try
     {
         eng->minimize(PME_MINIMIZATION_MARCO);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_camsis(void * pme)
@@ -314,12 +309,10 @@ int cpme_run_camsis(void * pme)
     try
     {
         eng->minimize(PME_MINIMIZATION_CAMSIS);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_sisi(void * pme)
@@ -330,12 +323,10 @@ int cpme_run_sisi(void * pme)
     try
     {
         eng->minimize(PME_MINIMIZATION_SISI);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_bfmin(void * pme)
@@ -346,12 +337,10 @@ int cpme_run_bfmin(void * pme)
     try
     {
         eng->minimize(PME_MINIMIZATION_BRUTEFORCE);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_simplemin(void * pme)
@@ -362,12 +351,10 @@ int cpme_run_simplemin(void * pme)
     try
     {
         eng->minimize(PME_MINIMIZATION_SIMPLE);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_caivc(void * pme)
@@ -378,12 +365,10 @@ int cpme_run_caivc(void * pme)
     try
     {
         eng->findIVCs(PME_IVC_CAIVC);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_cbvc(void * pme)
@@ -394,12 +379,10 @@ int cpme_run_cbvc(void * pme)
     try
     {
         eng->findIVCs(PME_IVC_CBVC);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_marcoivc(void * pme)
@@ -410,12 +393,10 @@ int cpme_run_marcoivc(void * pme)
     try
     {
         eng->findIVCs(PME_IVC_MARCO);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_ivcbf(void * pme)
@@ -426,12 +407,10 @@ int cpme_run_ivcbf(void * pme)
     try
     {
         eng->findIVCs(PME_IVC_BF);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_ivcucbf(void * pme)
@@ -442,12 +421,10 @@ int cpme_run_ivcucbf(void * pme)
     try
     {
         eng->findIVCs(PME_IVC_UCBF);
-        return 0;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
+
+    return 0;
 }
 
 int cpme_run_ic3(void * pme)
@@ -460,10 +437,7 @@ int cpme_run_ic3(void * pme)
         bool safe = eng->runIC3();
         return safe;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
 }
 
 int cpme_run_bmc(void * pme, unsigned k_max)
@@ -476,10 +450,7 @@ int cpme_run_bmc(void * pme, unsigned k_max)
         bool safe = eng->runBMC(k_max);
         return safe;
     }
-    catch(...)
-    {
-        return -1;
-    }
+    handle_exceptions(-1);
 }
 
 size_t cpme_num_proofs(void * pme)

@@ -1074,12 +1074,12 @@ int main(int argc, char ** argv)
         }
     }
 
-    if (g_printstats)
+cleanup:
+    if (g_printstats && pme != NULL)
     {
         cpme_print_stats(pme);
     }
 
-cleanup:
     // NULL out the outside pointer to PME, which is used by the atexit handler
     // to print out stats in cases where we get terminated.
     g_pme = NULL;
