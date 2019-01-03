@@ -144,6 +144,7 @@ namespace PME {
                     count++;
                     logMCS(corr);
                     if (corr.size() == 1) { m_necessary_gates.insert(corr.at(0)); }
+                    else { m_solver.addClause(corr); }
                 }
 
                 cardinality++;
