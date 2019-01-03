@@ -641,6 +641,7 @@ void cpme_print_stats(void * pme)
     PME::Engine * eng = static_cast<PME::Engine *>(pme);
     assert(eng);
     eng->printStats();
+    fflush(stdout);
 }
 
 const char * cpme_set_option(void * pme, const char * option)
