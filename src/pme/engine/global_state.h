@@ -49,6 +49,9 @@ namespace PME
         size_t smallest_mivc_size;
         size_t largest_mivc_size;
         double ivc_prep_time;
+        double marcoivc_issafe_time;
+        double marcoivc_shrink_time;
+        double marcoivc_grow_time;
 
         void printAll(std::ostream & os) const;
 

@@ -38,7 +38,10 @@ namespace PME
         num_mivcs_found(0),
         smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
-        ivc_prep_time(0.0)
+        ivc_prep_time(0.0),
+        marcoivc_issafe_time(0.0),
+        marcoivc_shrink_time(0.0),
+        marcoivc_grow_time(0.0)
     { }
 
     void PMEStats::printAll(std::ostream & os) const
@@ -65,7 +68,14 @@ namespace PME
             os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
             os << "Largest MIVC: " << largest_mivc_size << std::endl;
         }
+
+        // CAIVC specific
         os << "Preparation Time: " << ivc_prep_time << std::endl;
+
+        // MARCO-IVC specific
+        os << "MARCO-IVC isSafe Time: " << marcoivc_issafe_time << std::endl;
+        os << "MARCO-IVC grow Time: " << marcoivc_grow_time << std::endl;
+        os << "MARCO-IVC shrink Time: " << marcoivc_shrink_time << std::endl;
     }
 
     GlobalState& GlobalState::instance()
