@@ -324,6 +324,7 @@ namespace PME {
             assumps.push_back(negsucc_p.at(0));
 
             bool sat = m_lift.solve(assumps, &crits);
+            ((void)(sat));
             assert(!sat);
         }
         else
@@ -332,6 +333,7 @@ namespace PME {
             m_lift.addGroupClause(gid, negsucc_p);
 
             bool sat = m_lift.groupSolve(gid, assumps, &crits);
+            ((void)(sat));
             assert(!sat);
         }
 

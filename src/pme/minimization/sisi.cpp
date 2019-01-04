@@ -85,9 +85,12 @@ namespace PME
                     m_indSolver.supportSolve(m_all, cls, support);
                     minimizeSupport(support, cls);
                     size_t old_size = m_feas.size();
+                    ((void)(old_size));
                     m_feas.insert(support.begin(), support.end());
                     size_t new_size = m_feas.size();
+                    ((void)(new_size));
                     assert(new_size > old_size);
+
                     it = m_feas.begin();
 
                     feas_vec.clear();

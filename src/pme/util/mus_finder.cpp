@@ -96,6 +96,7 @@ namespace PME {
 
         // Find UNSAT core
         bool unsat = isUNSAT(core);
+        ((void)(unsat));
         assert(unsat);
 
         return core;

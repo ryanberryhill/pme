@@ -101,6 +101,7 @@ namespace PME
                     log(3) << "Attempting refinement with unsupported clause " << c
                            << std::endl;
                     bool refined = attemptRefinement(c);
+                    ((void)(refined));
                     assert(refined);
                 }
             }

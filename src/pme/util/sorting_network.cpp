@@ -476,7 +476,9 @@ namespace PME {
             size_t l = n / 2;
 
             size_t size_left = std::min(l, (size_t) m);
+            ((void)(size_left));
             size_t size_right = std::min(n - l, (size_t) m);
+            ((void)(size_right));
 
             std::vector<ID> outputs_left, outputs_right;
             ClauseVec cnf_left, cnf_right;

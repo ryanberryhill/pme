@@ -56,6 +56,7 @@ namespace PME {
         SafetyProof proof;
 
         bool safe = isSafe(seed, proof);
+        ((void)(safe));
         assert(safe);
 
         return shrink(seed, proof);

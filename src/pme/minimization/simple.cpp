@@ -66,6 +66,7 @@ namespace PME {
         else
         {
             bool ind = m_solver.supportSolve(id, support);
+            ((void)(ind));
             assert(ind);
         }
 

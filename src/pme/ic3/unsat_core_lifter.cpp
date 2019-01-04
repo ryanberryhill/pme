@@ -98,6 +98,7 @@ namespace PME { namespace IC3 {
             assumps.push_back(negsucc_p.at(0));
 
             bool sat = solver().solve(assumps, &crits);
+            ((void)(sat));
             assert(!sat);
         }
         else
@@ -113,6 +114,7 @@ namespace PME { namespace IC3 {
             // smaller cube representing a set of states all of which can be
             // reach succ in one step
             bool sat = solver().groupSolve(gid, assumps, &crits);
+            ((void)(sat));
             assert(!sat);
         }
 

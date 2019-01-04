@@ -843,6 +843,7 @@ int main(int argc, char ** argv)
         }
 
         size_t num_proofs = cpme_num_proofs(pme);
+        ((void)(num_proofs));
         assert(num_proofs == 1);
 
         void * min_proof = cpme_get_proof(pme, 0);

@@ -204,6 +204,7 @@ namespace PME { namespace IC3 {
     void Frames::removeLemmaFromFrame(const LemmaID id, unsigned level)
     {
         size_t erased = getMutableFrame(level).erase(id);
+        ((void)(erased));
         assert(erased == 1);
     }
 
