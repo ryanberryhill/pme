@@ -38,6 +38,7 @@ namespace PME
         num_mivcs_found(0),
         smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
+        num_gates(0),
         caivc_isivc_calls(0),
         caivc_find_candidate_calls(0),
         caivc_find_mcs_calls(0),
@@ -82,6 +83,7 @@ namespace PME
             os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
             os << "Largest MIVC: " << largest_mivc_size << std::endl;
         }
+        os << "Gate Count: " << num_gates << std::endl;
 
         // CAIVC specific
         os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;
