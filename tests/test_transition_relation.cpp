@@ -351,6 +351,27 @@ BOOST_AUTO_TEST_CASE(sequential_nounroll)
     BOOST_CHECK(sat.solve({negate(o0)}));
 }
 
+BOOST_AUTO_TEST_CASE(basic_accessors)
+{
+    AigFixture f;
+    f.buildTR();
+    TransitionRelation & tr = *f.tr;
+
+    ID i0 = tr.toInternal(f.i0);
+    ID l0 = tr.toInternal(f.l0);
+    ID l1 = tr.toInternal(f.l1);
+    ID l2 = tr.toInternal(f.l2);
+    ID l3 = tr.toInternal(f.l3);
+    ID a0 = tr.toInternal(f.a0);
+
+    BOOST_CHECK(tr.isInput(i0));
+    BOOST_CHECK(tr.isLatch(l0));
+    BOOST_CHECK(tr.isLatch(l1));
+    BOOST_CHECK(tr.isLatch(l2));
+    BOOST_CHECK(tr.isLatch(l3));
+    BOOST_CHECK(tr.isGate(a0));
+}
+
 BOOST_AUTO_TEST_CASE(sequential_nounroll_initzero)
 {
     AigFixture f;
