@@ -29,6 +29,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 namespace PME
 {
@@ -100,6 +101,13 @@ namespace PME
             virtual ClauseVec initState() const;
 
             size_t numGates() const { return m_gates.size(); }
+            const AndGate & getGate(ID id) const { return m_gates.at(id); }
+            bool isGate(ID id) const { return m_gates.count(id) > 0; }
+            bool isLatch(ID id) const { return m_latches.count(id) > 0; }
+            bool isInput(ID id) const
+            {
+                return std::find(m_inputIDs.begin(), m_inputIDs.end(), id) != m_inputIDs.end();
+            }
 
         private:
             VariableManager & m_vars;

@@ -254,10 +254,31 @@ namespace PME {
 
     void MARCOIVCFinder::initSolvers()
     {
-        for (ID gate : m_gates)
+        for (ID gate_id : m_gates)
         {
-            ID dv_id = debugVarOf(gate);
-            m_seedSolver.addForOptimization(dv_id);
+            ID lhs_dv_id = debugVarOf(gate_id);
+            m_seedSolver.addForOptimization(lhs_dv_id);
+
+            if (opts().marcoivc_explore_hints)
+            {
+                const AndGate & gate = tr().getGate(gate_id);
+                ID rhs0 = gate.rhs0;
+                ID rhs1 = gate.rhs1;
+
+                if (tr().isGate(rhs0))
+                {
+                    ID rhs_dv_id = debugVarOf(rhs0);
+                    Clause cls = { lhs_dv_id, negate(rhs_dv_id) };
+                    m_seedSolver.addClause(cls);
+                }
+
+                if (tr().isGate(rhs1))
+                {
+                    ID rhs_dv_id = debugVarOf(rhs1);
+                    Clause cls = { lhs_dv_id, negate(rhs_dv_id) };
+                    m_seedSolver.addClause(cls);
+                }
+            }
         }
     }
 

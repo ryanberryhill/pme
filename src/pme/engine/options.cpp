@@ -83,6 +83,7 @@ namespace PME {
         cbvc_reenq(*this, true, "cbvc_reenq"),
         marcoivc_use_ivcucbf(*this, true, "marcoivc_use_ivcucbf"),
         marcoivc_incr_issafe(*this, false, "marcoivc_incr_issafe"),
+        marcoivc_explore_hints(*this, false, "marcoivc_explore_hints"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),
         ivc_ucbf_use_simple_min(*this, false, "ivc_ucbf_use_simple_min"),
