@@ -141,7 +141,7 @@ namespace PME {
 
         if (opts().marcoivc_incr_issafe)
         {
-            return isSafeHybrid(seed);
+            return isSafeIncremental(seed);
         }
         else
         {
@@ -158,7 +158,7 @@ namespace PME {
         return safe.result == SAFE;
     }
 
-    bool MARCOIVCFinder::isSafeHybrid(const Seed & seed)
+    bool MARCOIVCFinder::isSafeIncremental(const Seed & seed)
     {
         Seed neg = negateSeed(seed);
 
