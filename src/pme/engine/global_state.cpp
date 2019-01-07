@@ -67,6 +67,7 @@ namespace PME
 
         // Global
         os << "Runtime in seconds: " << runtime << std::endl;
+        os << "Gate Count: " << num_gates << std::endl;
         os << "IC3 Calls: " << ic3_calls << std::endl;
         os << "IC3 Runtime: " << ic3_runtime << std::endl;
         os << "BMC Calls: " << bmc_calls << std::endl;
@@ -83,7 +84,6 @@ namespace PME
             os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
             os << "Largest MIVC: " << largest_mivc_size << std::endl;
         }
-        os << "Gate Count: " << num_gates << std::endl;
 
         // CAIVC specific
         os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;
