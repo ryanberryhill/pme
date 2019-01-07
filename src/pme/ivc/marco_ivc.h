@@ -46,6 +46,7 @@ namespace PME {
             void recordMIVC(const Seed & mivc);
             bool isSafe(const Seed & seed);
             bool isSafeIC3(const Seed & seed);
+            bool isSafeHybrid(const Seed & seed);
             bool isSafeIncremental(const Seed & seed);
             void grow(Seed & seed);
             void shrink(Seed & seed);
@@ -64,7 +65,7 @@ namespace PME {
             DebugTransitionRelation m_debug_tr;
             Seed m_smallestIVC;
             std::vector<ID> m_gates;
-            HybridDebugger m_ivc_checker;
+            HybridDebugger m_incr_ivc_checker;
     };
 }
 

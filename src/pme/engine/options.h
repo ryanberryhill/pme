@@ -98,6 +98,7 @@ namespace PME {
             // MARCO-IVC
             PMEOption<bool> marcoivc_use_ivcucbf;
             PMEOption<bool> marcoivc_incr_issafe;
+            PMEOption<bool> marcoivc_hybrid_issafe;
             PMEOption<bool> marcoivc_explore_hints;
 
             // IVC_UCBF

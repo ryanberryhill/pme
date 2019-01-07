@@ -23,6 +23,7 @@
 #include "pme/ivc/ivc_bf.h"
 #include "pme/ivc/ivc_ucbf.h"
 #include "pme/ic3/ic3_solver.h"
+#include "pme/util/hybrid_safety_checker.h"
 
 #include <cassert>
 
@@ -34,7 +35,7 @@ namespace PME {
           m_seedSolver(varman),
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
-          m_ivc_checker(varman, m_debug_tr)
+          m_incr_ivc_checker(varman, m_debug_tr)
     {
         initSolvers();
     }
@@ -143,6 +144,10 @@ namespace PME {
         {
             return isSafeIncremental(seed);
         }
+        else if (opts().marcoivc_hybrid_issafe)
+        {
+            return isSafeHybrid(seed);
+        }
         else
         {
             return isSafeIC3(seed);
@@ -158,12 +163,21 @@ namespace PME {
         return safe.result == SAFE;
     }
 
+    bool MARCOIVCFinder::isSafeHybrid(const Seed & seed)
+    {
+        TransitionRelation partial(tr(), seed);
+        HybridSafetyChecker checker(vars(), partial);
+        SafetyResult safe = checker.prove();
+
+        return safe.result == SAFE;
+    }
+
     bool MARCOIVCFinder::isSafeIncremental(const Seed & seed)
     {
         Seed neg = negateSeed(seed);
 
         bool unsafe;
-        std::tie(unsafe, std::ignore) = m_ivc_checker.debugOverGates(neg);
+        std::tie(unsafe, std::ignore) = m_incr_ivc_checker.debugOverGates(neg);
 
         return !unsafe;
     }
