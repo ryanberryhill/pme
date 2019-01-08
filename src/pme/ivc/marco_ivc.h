@@ -54,6 +54,7 @@ namespace PME {
             void blockDown(const Seed & seed);
 
             void initSolvers();
+            void addExploreHints();
             ID debugVarOf(ID gate) const;
 
             Seed negateSeed(const Seed & seed) const;

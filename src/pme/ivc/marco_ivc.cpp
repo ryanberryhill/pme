@@ -270,28 +270,72 @@ namespace PME {
     {
         for (ID gate_id : m_gates)
         {
+            ID dv_id = debugVarOf(gate_id);
+            m_seedSolver.addForOptimization(dv_id);
+        }
+
+        if (opts().marcoivc_explore_basic_hints ||
+            opts().marcoivc_explore_complex_hints)
+        {
+            addExploreHints();
+        }
+    }
+
+    void MARCOIVCFinder::addExploreHints()
+    {
+        // Map each gate to its fanout (if any)
+        //
+        // Basic hints: add binary clauses for gates with no fanout.
+        // If g_b's only output is g_a, then we have !g_a => !g_b
+        // which is the same as g_a V !g_b
+        //
+        // Complex hints: add larger clauses for gates with fanout.
+        // If g_c has g_b and g_a as output, then we have !g_b & !g_a => !g_c
+        // or equivalently g_b V g_a V !g_c
+        std::map<ID, std::vector<ID>> gate_to_fanout;
+        for (ID gate_id : m_gates)
+        {
             ID lhs_dv_id = debugVarOf(gate_id);
-            m_seedSolver.addForOptimization(lhs_dv_id);
 
-            if (opts().marcoivc_explore_hints)
+            const AndGate & gate = tr().getGate(gate_id);
+            ID rhs0 = gate.rhs0;
+            ID rhs1 = gate.rhs1;
+
+            if (tr().isGate(rhs0))
             {
-                const AndGate & gate = tr().getGate(gate_id);
-                ID rhs0 = gate.rhs0;
-                ID rhs1 = gate.rhs1;
+                ID rhs_dv_id = debugVarOf(rhs0);
+                gate_to_fanout[rhs_dv_id].push_back(lhs_dv_id);
+            }
 
-                if (tr().isGate(rhs0))
-                {
-                    ID rhs_dv_id = debugVarOf(rhs0);
-                    Clause cls = { lhs_dv_id, negate(rhs_dv_id) };
-                    m_seedSolver.addClause(cls);
-                }
+            if (tr().isGate(rhs1))
+            {
+                ID rhs_dv_id = debugVarOf(rhs1);
+                gate_to_fanout[rhs_dv_id].push_back(lhs_dv_id);
+            }
+        }
 
-                if (tr().isGate(rhs1))
-                {
-                    ID rhs_dv_id = debugVarOf(rhs1);
-                    Clause cls = { lhs_dv_id, negate(rhs_dv_id) };
-                    m_seedSolver.addClause(cls);
-                }
+        for (const auto & p : gate_to_fanout)
+        {
+            ID gate = p.first;
+            const std::vector<ID> & fanout = p.second;
+
+            assert(!fanout.empty());
+
+            Clause cls;
+            cls.reserve(fanout.size() + 1);
+            cls.push_back(negate(gate));
+            for (ID gate_fanout : fanout)
+            {
+                cls.push_back(gate_fanout);
+            }
+
+            if (fanout.size() == 1 && opts().marcoivc_explore_basic_hints)
+            {
+                m_seedSolver.addClause(cls);
+            }
+            else if (opts().marcoivc_explore_complex_hints)
+            {
+                m_seedSolver.addClause(cls);
             }
         }
     }
