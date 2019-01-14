@@ -478,6 +478,9 @@ int g_caivc = 0, g_cbvc = 0, g_marcoivc = 0, g_ivcbf = 0, g_ivcucbf = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
 int g_printstats = 0, g_nocex = 0;
 
+char * g_saveivc_name = NULL;
+char * g_saveproof_name = NULL;
+
 int needs_proof_arg()
 {
     return !(g_ic3 || g_bmc ||
@@ -500,16 +503,27 @@ int ic3_should_be_quiet()
 // I don't think this scheme for printing out stats on a failure is truly safe
 // but it's good enough for now.
 void * g_pme = NULL;
+aiger * g_aig = NULL;
 void term_int_handler(const int sig) {
     (void)(sig);
     exit(EXIT_FAILURE);
 }
 
-void exit_stats()
+void exit_save()
 {
     if (g_printstats && g_pme)
     {
         cpme_print_stats(g_pme);
+    }
+
+    if (g_saveproofs && g_pme)
+    {
+        save_proofs(g_pme, g_saveproof_name);
+    }
+
+    if (g_saveivcs && g_pme && g_aig)
+    {
+        save_ivcs(g_aig, g_pme, g_saveivc_name);
     }
 }
 
@@ -651,7 +665,7 @@ int main(int argc, char ** argv)
 
     // Set up exit handler to print stats on exit, signal handlers to call
     // exit on SIGTERM or SIGINT
-    atexit(exit_stats);
+    atexit(exit_save);
     struct sigaction sa;
     sa.sa_handler = term_int_handler;
     sigemptyset(&sa.sa_mask);
@@ -736,6 +750,8 @@ int main(int argc, char ** argv)
     // External pointer to the same PME instance, used by the atexit
     // handler to print stats
     g_pme = pme;
+    // Same thing for the AIG, used by atexit to save IVCs, proofs, etc.
+    g_aig = aig;
 
     // Set PME internal options if any were given
     for (size_t i = 0; i < g_pme_opt_index; ++i)
@@ -902,11 +918,11 @@ int main(int argc, char ** argv)
             print(1, "The IVC (size %lu) is minimal.\n", ivc_size);
             goto cleanup;
         }
-
     }
 
     if (g_bfmin)
     {
+        g_saveproof_name = "bfmin";
         int bfmin_ok = cpme_run_bfmin(pme);
         if (bfmin_ok < 0)
         {
@@ -915,15 +931,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "BFMIN");
-
-        if (g_saveproofs)
-        {
-            save_proofs(pme, "bfmin");
-        }
     }
 
     if (g_sisi)
     {
+        g_saveproof_name = "sisi";
         int sisi_ok = cpme_run_sisi(pme);
         if (sisi_ok < 0)
         {
@@ -932,15 +944,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "SISI");
-
-        if (g_saveproofs)
-        {
-            save_proofs(pme, "sisi");
-        }
     }
 
     if (g_simplemin)
     {
+        g_saveproof_name = "simplemin";
         int simplemin_ok = cpme_run_simplemin(pme);
         if (simplemin_ok < 0)
         {
@@ -949,15 +957,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "SIMPLEMIN");
-
-        if (g_saveproofs)
-        {
-            save_proofs(pme, "simplemin");
-        }
     }
 
     if (g_marco)
     {
+        g_saveproof_name = "marco";
         int marco_ok = cpme_run_marco(pme);
         if (marco_ok < 0)
         {
@@ -966,15 +970,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "MARCO");
-
-        if (g_saveproofs)
-        {
-            save_proofs(pme, "marco");
-        }
     }
 
     if (g_camsis)
     {
+        g_saveproof_name = "camsis";
         int camsis_ok = cpme_run_camsis(pme);
         if (camsis_ok < 0)
         {
@@ -983,15 +983,11 @@ int main(int argc, char ** argv)
         }
 
         report_run(pme, "CAMSIS");
-
-        if (g_saveproofs)
-        {
-            save_proofs(pme, "camsis");
-        }
     }
 
     if (g_marcoivc)
     {
+        g_saveivc_name = "marcoivc";
         int marcoivc_ok = cpme_run_marcoivc(pme);
         if (marcoivc_ok < 0)
         {
@@ -1000,15 +996,11 @@ int main(int argc, char ** argv)
         }
 
         report_ivc_run(pme, "MARCOIVC");
-
-        if (g_saveivcs)
-        {
-            save_ivcs(aig, pme, "marcoivc");
-        }
     }
 
     if (g_ivcbf)
     {
+        g_saveivc_name = "ivcbf";
         int ivcbf_ok = cpme_run_ivcbf(pme);
         if (ivcbf_ok < 0)
         {
@@ -1017,15 +1009,11 @@ int main(int argc, char ** argv)
         }
 
         report_ivc_run(pme, "IVC_BF");
-
-        if (g_saveivcs)
-        {
-            save_ivcs(aig, pme, "ivcbf");
-        }
     }
 
     if (g_ivcucbf)
     {
+        g_saveivc_name = "ivcucbf";
         int ivcucbf_ok = cpme_run_ivcucbf(pme);
         if (ivcucbf_ok < 0)
         {
@@ -1034,15 +1022,11 @@ int main(int argc, char ** argv)
         }
 
         report_ivc_run(pme, "IVC_UCBF");
-
-        if (g_saveivcs)
-        {
-            save_ivcs(aig, pme, "ivcucbf");
-        }
     }
 
     if (g_caivc)
     {
+        g_saveivc_name = "caivc";
         int caivc_ok = cpme_run_caivc(pme);
         if (caivc_ok < 0)
         {
@@ -1051,15 +1035,11 @@ int main(int argc, char ** argv)
         }
 
         report_ivc_run(pme, "CAIVC");
-
-        if (g_saveivcs)
-        {
-            save_ivcs(aig, pme, "caivc");
-        }
     }
 
     if (g_cbvc)
     {
+        g_saveivc_name = "cbvc";
         int cbvc_ok = cpme_run_cbvc(pme);
         if (cbvc_ok < 0)
         {
@@ -1068,17 +1048,22 @@ int main(int argc, char ** argv)
         }
 
         report_ivc_run(pme, "CBVC");
-
-        if (g_saveivcs)
-        {
-            save_ivcs(aig, pme, "cbvc");
-        }
     }
 
 cleanup:
     if (g_printstats && pme != NULL)
     {
         cpme_print_stats(pme);
+    }
+
+    if (g_saveproofs && pme != NULL)
+    {
+        save_proofs(pme, g_saveproof_name);
+    }
+
+    if (g_saveivcs && pme != NULL && aig != NULL)
+    {
+        save_ivcs(aig, pme, g_saveivc_name);
     }
 
     // NULL out the outside pointer to PME, which is used by the atexit handler
