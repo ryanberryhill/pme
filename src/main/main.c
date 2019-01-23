@@ -228,6 +228,15 @@ void save_subcircuit(aiger * ckt, void * subckt, size_t subckt_size, const char 
         }
     }
 
+    // If the output is a latch, it is relevant
+    assert(ckt->num_outputs == 1);
+    unsigned o_lit = ckt->outputs[0].lit;
+    unsigned o_var = aiger_lit2var(o_lit);
+    if (aiger_is_latch(ckt, aiger_strip(o_lit)))
+    {
+        relevant[o_var] = 1;
+    }
+
     // For all relevant latches, their next-states must also be relevant,
     // and their next-states, and so forth
     char fixpoint = 0;
@@ -297,8 +306,6 @@ void save_subcircuit(aiger * ckt, void * subckt, size_t subckt_size, const char 
     }
 
     // Copy the first output
-    assert(ckt->num_outputs == 1);
-    unsigned o_lit = ckt->outputs[0].lit;
     const char * o_name = ckt->outputs[0].name;
     aiger_add_output(ivc_aig, o_lit, o_name);
 
