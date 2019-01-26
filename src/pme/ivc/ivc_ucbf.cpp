@@ -87,6 +87,15 @@ namespace PME {
             shrunk_proof = proof;
         }
 
+        // Sometimes the proof comes back empty, meaning the property is
+        // inductive on its own. In that case, we still need the property
+        // for the below MUS call to work.
+        if (shrunk_proof.empty())
+        {
+            Clause cls = { negate(tr().bad()) };
+            shrunk_proof.push_back(cls);
+        }
+
         log(2) << "Shrunk proof from " << proof.size()
                << " clauses down to " << shrunk_proof.size()
                << std::endl;
