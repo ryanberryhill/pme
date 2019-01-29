@@ -30,6 +30,7 @@
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
 #include "pme/util/hybrid_debugger.h"
+#include "pme/ivc/correction_set_finder.h"
 
 namespace PME {
     class MARCOIVCFinder : public IVCFinder {
@@ -49,6 +50,8 @@ namespace PME {
             bool isSafeHybrid(const Seed & seed);
             bool isSafeIncremental(const Seed & seed);
             void grow(Seed & seed);
+            void bruteForceGrow(Seed & seed);
+            void debugGrow(Seed & seed);
             void shrink(Seed & seed);
             void blockUp(const Seed & seed);
             void blockDown(const Seed & seed);
@@ -62,11 +65,12 @@ namespace PME {
             id_iterator begin_gates() const { return m_debug_tr.begin_gate_ids(); }
             id_iterator end_gates() const { return m_debug_tr.end_gate_ids(); }
 
-            MSU4MaxSATSolver m_seedSolver;
+            MSU4MaxSATSolver m_seed_solver;
             DebugTransitionRelation m_debug_tr;
-            Seed m_smallestIVC;
+            Seed m_smallest_ivc;
             std::vector<ID> m_gates;
             HybridDebugger m_incr_ivc_checker;
+            ApproximateMCSFinder m_mcs;
     };
 }
 

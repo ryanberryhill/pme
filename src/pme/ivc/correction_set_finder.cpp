@@ -104,6 +104,14 @@ namespace PME {
     }
 
     ApproximateMCSFinder::FindResult
+    ApproximateMCSFinder::findAndBlockOverGatesWithBMC(const std::vector<ID> & gates, unsigned n)
+    {
+        m_solver.setCardinality(n);
+        unsigned k_max = GlobalState::options().caivc_ar_bmc_kmax;
+        return m_solver.debugOverGatesRangeAndBlock(gates, 0, k_max);
+    }
+
+    ApproximateMCSFinder::FindResult
     ApproximateMCSFinder::findAndBlockOverGates(const std::vector<ID> & gates)
     {
         bool found;

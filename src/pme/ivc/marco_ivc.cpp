@@ -32,10 +32,11 @@ namespace PME {
     MARCOIVCFinder::MARCOIVCFinder(VariableManager & varman,
                                    const TransitionRelation & tr)
         : IVCFinder(varman, tr),
-          m_seedSolver(varman),
+          m_seed_solver(varman),
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
-          m_incr_ivc_checker(varman, m_debug_tr)
+          m_incr_ivc_checker(varman, m_debug_tr),
+          m_mcs(varman, m_debug_tr)
     {
         initSolvers();
     }
@@ -82,15 +83,15 @@ namespace PME {
             }
         }
 
-        assert(!m_smallestIVC.empty());
-        setMinimumIVC(m_smallestIVC);
+        assert(!m_smallest_ivc.empty());
+        setMinimumIVC(m_smallest_ivc);
     }
 
     void MARCOIVCFinder::recordMIVC(const Seed & mivc)
     {
-        if (m_smallestIVC.empty() || mivc.size() < m_smallestIVC.size())
+        if (m_smallest_ivc.empty() || mivc.size() < m_smallest_ivc.size())
         {
-            m_smallestIVC = mivc;
+            m_smallest_ivc = mivc;
         }
 
         addMIVC(mivc);
@@ -102,13 +103,13 @@ namespace PME {
         AutoTimer timer(stats().marcoivc_get_unexplored_time);
         UnexploredResult result;
         Seed & seed = result.second;
-        if (m_seedSolver.solve())
+        if (m_seed_solver.solve())
         {
             result.first = true;
             for (ID gate : m_gates)
             {
                 ID seed_var = debugVarOf(gate);
-                ModelValue assignment = m_seedSolver.getAssignmentToVar(seed_var);
+                ModelValue assignment = m_seed_solver.getAssignmentToVar(seed_var);
                 if (assignment == SAT::TRUE) { seed.push_back(gate); }
             }
         }
@@ -185,10 +186,23 @@ namespace PME {
     void MARCOIVCFinder::grow(Seed & seed)
     {
         // grow is implemented in the obvious way. Try to add a gate
-        // and see if it's still unsafe. If unsafe, keep the gate, otherwise
+        // and see if it's still unsafe.
+        // If unsafe, keep the gate, otherwise, remove it.
         stats().marcoivc_grow_calls++;
         AutoTimer timer(stats().marcoivc_grow_time);
 
+        if (opts().marcoivc_debug_grow)
+        {
+            debugGrow(seed);
+        }
+        else
+        {
+            bruteForceGrow(seed);
+        }
+    }
+
+    void MARCOIVCFinder::bruteForceGrow(Seed & seed)
+    {
         std::set<ID> seed_set(seed.begin(), seed.end());
 
         for (ID gate : m_gates)
@@ -199,6 +213,27 @@ namespace PME {
             {
                 seed.pop_back();
             }
+        }
+    }
+
+    void MARCOIVCFinder::debugGrow(Seed & seed)
+    {
+        // TODO: magic number should be a parameter
+        unsigned n_max = 5;
+        Seed neg = negateSeed(seed);
+        bool found = false;
+        Seed mcs;
+
+        std::tie(found, mcs) = m_mcs.findAndBlockOverGatesWithBMC(neg, n_max);
+
+        if (found)
+        {
+            assert(!mcs.empty());
+            seed = negateSeed(mcs);
+        }
+        else
+        {
+            bruteForceGrow(seed);
         }
     }
 
@@ -232,7 +267,7 @@ namespace PME {
             cls.push_back(negate(svar));
         }
 
-        m_seedSolver.addClause(cls);
+        m_seed_solver.addClause(cls);
     }
 
     void MARCOIVCFinder::blockDown(const Seed & seed)
@@ -258,11 +293,11 @@ namespace PME {
         // MaxSATSolver doesn't like empty clauses.
         if (cls.empty())
         {
-            m_seedSolver.addClause({ID_FALSE});
+            m_seed_solver.addClause({ID_FALSE});
         }
         else
         {
-            m_seedSolver.addClause(cls);
+            m_seed_solver.addClause(cls);
         }
     }
 
@@ -271,7 +306,7 @@ namespace PME {
         for (ID gate_id : m_gates)
         {
             ID dv_id = debugVarOf(gate_id);
-            m_seedSolver.addForOptimization(dv_id);
+            m_seed_solver.addForOptimization(dv_id);
         }
 
         if (opts().marcoivc_explore_basic_hints ||
@@ -331,11 +366,11 @@ namespace PME {
 
             if (fanout.size() == 1 && opts().marcoivc_explore_basic_hints)
             {
-                m_seedSolver.addClause(cls);
+                m_seed_solver.addClause(cls);
             }
             else if (opts().marcoivc_explore_complex_hints)
             {
-                m_seedSolver.addClause(cls);
+                m_seed_solver.addClause(cls);
             }
         }
     }

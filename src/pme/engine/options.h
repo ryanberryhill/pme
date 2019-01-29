@@ -101,6 +101,7 @@ namespace PME {
             PMEOption<bool> marcoivc_hybrid_issafe;
             PMEOption<bool> marcoivc_explore_basic_hints;
             PMEOption<bool> marcoivc_explore_complex_hints;
+            PMEOption<bool> marcoivc_debug_grow;
 
             // IVC_UCBF
             PMEOption<bool> ivc_ucbf_use_core;

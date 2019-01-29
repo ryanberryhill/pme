@@ -86,6 +86,7 @@ namespace PME {
         marcoivc_hybrid_issafe(*this, false, "marcoivc_hybrid_issafe"),
         marcoivc_explore_basic_hints(*this, false, "marcoivc_explore_basic_hints"),
         marcoivc_explore_complex_hints(*this, false, "marcoivc_explore_complex_hints"),
+        marcoivc_debug_grow(*this, false, "marcoivc_debug_grow"),
         ivc_ucbf_use_core(*this, true, "ivc_ucbf_use_core"),
         ivc_ucbf_use_mus(*this, false, "ivc_ucbf_use_mus"),
         ivc_ucbf_use_simple_min(*this, false, "ivc_ucbf_use_simple_min"),
