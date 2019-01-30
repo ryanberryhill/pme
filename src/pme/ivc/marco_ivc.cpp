@@ -75,8 +75,10 @@ namespace PME {
             }
             else
             {
-                log(3) << "Found a non-IVC seed of size " << seed.size() << std::endl;
-                grow(seed);
+                // There is no need to call grow in the current implementation,
+                // as we search from the top-down
+                //log(3) << "Found a non-IVC seed of size " << seed.size() << std::endl;
+                //grow(seed);
                 log(1) << "MNVC of size " << seed.size() << std::endl;
                 log(4) << "MNVC: " << seed << std::endl;
                 blockDown(seed);
