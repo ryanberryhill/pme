@@ -58,6 +58,7 @@ namespace PME {
             CorrectionSet findCorrectionSetOverGates(const std::vector<ID> & gates);
             CorrectionSet findApproxMCSOverGates(const std::vector<ID> & gates);
             CorrectionSet findMCSOverGates(const std::vector<ID> & gates);
+            CorrectionSet findMCSOverGatesByGrow(const std::vector<ID> & gates);
             std::pair<bool, IVC> findCandidateMIVC();
             std::pair<bool, IVC> findAndBlockCandidateMIVC();
             std::pair<bool, IVC> findCandidateMIVC(bool block);

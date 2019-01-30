@@ -73,6 +73,7 @@ namespace PME {
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
+        caivc_grow_mcs(*this, false, "caivc_grow_mcs"),
         caivc_check_with_debug(*this, false, "caivc_check_with_debug"),
         caivc_ar_bmc_kmax(*this, 24, "caivc_ar_bmc_kmax"),
         caivc_ar_bmc_nmax(*this, 8, "caivc_ar_bmc_nmax"),

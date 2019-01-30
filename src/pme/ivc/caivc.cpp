@@ -191,7 +191,14 @@ namespace PME {
     {
         assert(!gates.empty());
 
-        if (opts().caivc_approx_mcs)
+        stats().caivc_find_mcs_calls++;
+        AutoTimer timer(stats().caivc_find_mcs_time);
+
+        if (opts().caivc_grow_mcs)
+        {
+            return findMCSOverGatesByGrow(gates);
+        }
+        else if (opts().caivc_approx_mcs)
         {
             return findApproxMCSOverGates(gates);
         }
@@ -216,11 +223,32 @@ namespace PME {
         }
     }
 
+    CorrectionSet CAIVCFinder::findMCSOverGatesByGrow(const std::vector<ID> & gates)
+    {
+        std::vector<ID> mss = negateGateSet(gates);
+        std::set<ID> mss_set(mss.begin(), mss.end());
+
+        for (ID gate : m_gates)
+        {
+            if (mss_set.count(gate) > 0) { continue; }
+
+            // Try to add to mss
+            std::vector<ID> candidate = mss;
+            candidate.push_back(gate);
+
+            if (!isIVC(candidate))
+            {
+                // No need to add to mss_set, since we'll never see this
+                // gate again
+                mss.push_back(gate);
+            }
+        }
+
+        return negateGateSet(mss);
+    }
+
     CorrectionSet CAIVCFinder::findApproxMCSOverGates(const std::vector<ID> & gates)
     {
-        stats().caivc_find_mcs_calls++;
-        AutoTimer timer(stats().caivc_find_mcs_time);
-
         bool found;
         CorrectionSet corr;
         std::tie(found, corr) = m_approx_finder.findAndBlockOverGates(gates);
@@ -236,9 +264,6 @@ namespace PME {
 
     CorrectionSet CAIVCFinder::findMCSOverGates(const std::vector<ID> & gates)
     {
-        stats().caivc_find_mcs_calls++;
-        AutoTimer timer(stats().caivc_find_mcs_time);
-
         // Assuming we already found all cardinality 1 MCSes
         for (unsigned cardinality = 2; cardinality <= gates.size(); ++cardinality)
         {
