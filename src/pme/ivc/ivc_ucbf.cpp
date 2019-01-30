@@ -25,6 +25,7 @@
 #include "pme/util/mus_finder.h"
 #include "pme/util/cardinality_constraint.h"
 #include "pme/util/simplify_tr.h"
+#include "pme/bmc/bmc_solver.h"
 
 #include <cassert>
 
@@ -149,6 +150,17 @@ namespace PME {
             log(2) << "Did not shrink seed due to settings, size is " << seed.size() << std::endl;
         }
 
+        // In rare cases, because the proof contains ~Bad and not just clauses
+        // over the latches, it may be the case that removing gates makes the
+        // inital state unsafe and violates initation. If this case occurs,
+        // just do IVC_BF
+        bool init_safe = initStatesSafe(core);
+        if (!init_safe)
+        {
+            log(2) << "Initial states unsafe, falling back to IVC_BF" << std::endl;
+            core = seed;
+        }
+
         // Run IVC_BF
         m_ivcbf.shrink(core);
         log(2) << "Further shrunk down to " << core.size() << " using IVC_BF" << std::endl;
@@ -161,6 +173,13 @@ namespace PME {
         Seed seed(tr().begin_gate_ids(), tr().end_gate_ids());
         shrink(seed);
         addMIVC(seed);
+    }
+
+    bool IVCUCBFFinder::initStatesSafe(Seed & seed)
+    {
+        TransitionRelation partial(tr(), seed);
+        BMC::BMCSolver bmc(vars(), partial);
+        return bmc.solve(0).result != UNSAFE;
     }
 
     ClauseVec IVCUCBFFinder::negatePrimeAndCNFize(const ClauseVec & vec)

@@ -43,6 +43,8 @@ namespace PME {
             virtual std::ostream & log(int verbosity) const override;
         private:
             ClauseVec negatePrimeAndCNFize(const ClauseVec & vec);
+            bool initStatesSafe(Seed & seed);
+
             IVCBFFinder m_ivcbf;
             DebugTransitionRelation m_debugTR;
     };
