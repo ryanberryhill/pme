@@ -198,6 +198,10 @@ namespace PME {
         {
             return findMCSOverGatesByGrow(gates);
         }
+        else if (opts().caivc_simple_mcs)
+        {
+            return gates;
+        }
         else if (opts().caivc_approx_mcs)
         {
             return findApproxMCSOverGates(gates);

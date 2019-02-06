@@ -85,6 +85,7 @@ namespace PME {
             PMEOption<bool> caivc_abstraction_refinement;
             PMEOption<bool> caivc_approx_mcs;
             PMEOption<bool> caivc_grow_mcs;
+            PMEOption<bool> caivc_simple_mcs;
             PMEOption<bool> caivc_check_with_debug;
             PMEOption<unsigned> caivc_ar_bmc_kmax;
             PMEOption<unsigned> caivc_ar_bmc_nmax;
