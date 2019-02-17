@@ -883,7 +883,7 @@ int main(int argc, char ** argv)
 
     if (g_checkmin)
     {
-        int bfmin_ok = cpme_run_bfmin(pme);
+        int bfmin_ok = cpme_run_sisi(pme);
 
         if (bfmin_ok < 0)
         {
