@@ -656,13 +656,39 @@ int main(int argc, char ** argv)
     if (argc == optind + 2)
     {
         // Given an AIG and a proof
-        aig_path = argv[optind];
-        proof_path = argv[optind + 1];
+        aig_path = strdup(argv[optind]);
+        proof_path = strdup(argv[optind + 1]);
     }
     else if (argc == optind + 1 && !needs_proof_arg())
     {
         // Given an AIG and --ic3 or --bmc
-        aig_path = argv[optind];
+        aig_path = strdup(argv[optind]);
+    }
+    else if (argc == optind + 1)
+    {
+        // Given a proof and --camsis, --marco, etc.
+        // Assume the aig is proof with pme removed
+        proof_path = strdup(argv[optind]);
+        aig_path = strdup(argv[optind]);
+
+        // Find the last occurrence of .pme
+        char * extension = strstr(aig_path, ".pme");
+
+        if (extension == NULL)
+        {
+            print_usage(argv);
+            failure = 1; goto cleanup;
+        }
+
+        char * prev_extension = extension;
+        while((extension = strstr(extension + 1, ".pme")) != NULL)
+        {
+            prev_extension = extension;
+        }
+        extension = prev_extension;
+
+        // Remove it
+        *extension = '\0';
     }
     else
     {
@@ -1072,6 +1098,10 @@ cleanup:
     {
         save_ivcs(aig, pme, g_saveivc_name);
     }
+
+    // aig_path and proof_path are strdup'ed
+    if (aig_path != NULL) { free(aig_path) ; aig_path = NULL; }
+    if (proof_path != NULL) { free(proof_path) ; proof_path = NULL; }
 
     // NULL out the outside pointer to PME, which is used by the atexit handler
     // to print out stats in cases where we get terminated.
