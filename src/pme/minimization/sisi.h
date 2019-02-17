@@ -60,9 +60,9 @@ namespace PME
             SISIMinimizer(VariableManager & vars,
                           const TransitionRelation & tr,
                           const ClauseVec & proof);
-            void minimize() override;
 
         protected:
+            void doMinimize() override;
             std::ostream & log(int verbosity) const override;
 
         private:

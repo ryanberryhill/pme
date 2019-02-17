@@ -26,6 +26,7 @@
 #include "pme/id.h"
 #include "pme/engine/global_state.h"
 #include "pme/engine/transition_relation.h"
+#include "pme/util/timer.h"
 
 namespace PME
 {
@@ -39,7 +40,7 @@ namespace PME
                            const ClauseVec & proof);
             virtual ~ProofMinimizer() { }
 
-            virtual void minimize() = 0;
+            void minimize();
 
             size_t numProofs() const;
             ClauseVec getProof(size_t i) const;
@@ -47,6 +48,7 @@ namespace PME
             ClauseVec getMinimumProof() const;
 
         protected:
+            virtual void doMinimize() = 0;
             const TransitionRelation & tr() const;
             VariableManager & vars();
 
@@ -63,6 +65,7 @@ namespace PME
             virtual std::ostream & log(int verbosity) const;
             std::ostream & log(LogChannelID channel, int verbosity) const;
 
+            PMEStats & stats() const { return GlobalState::stats(); }
             const PMEOptions & opts() const { return GlobalState::options(); }
 
         private:
@@ -73,6 +76,7 @@ namespace PME
             ClauseID m_property;
             std::vector<std::vector<ClauseID>> m_minimalProofs;
             std::vector<ClauseID> m_minimumProof;
+            Timer m_timer;
     };
 
     class DummyMinimizer : public ProofMinimizer
@@ -81,7 +85,8 @@ namespace PME
             DummyMinimizer(VariableManager & vars,
                            const TransitionRelation & tr,
                            const ClauseVec & proof);
-            void minimize() override;
+        protected:
+            void doMinimize() override;
     };
 }
 

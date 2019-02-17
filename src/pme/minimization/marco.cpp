@@ -21,6 +21,7 @@
 
 #include "pme/minimization/marco.h"
 #include "pme/util/find_safe_mis.h"
+#include "pme/util/timer.h"
 
 #include <algorithm>
 #include <cassert>
@@ -64,7 +65,7 @@ namespace PME
         return ProofMinimizer::log(LOG_MARCO, verbosity);
     }
 
-    void MARCOMinimizer::minimize()
+    void MARCOMinimizer::doMinimize()
     {
         while (true)
         {
@@ -79,7 +80,7 @@ namespace PME
             {
                 log(3) << "Found a SIS seed of size " << mis.size() << std::endl;
                 shrink(mis);
-                log(1) << "MSIS of size " << mis.size() << std::endl;
+                log(2) << "MSIS of size " << mis.size() << std::endl;
                 log(3) << "MSIS: " << seed << std::endl;
                 blockUp(mis);
                 updateProofs(mis);
@@ -88,7 +89,7 @@ namespace PME
             {
                 log(3) << "Found a non-SIS seed of size " << seed.size() << std::endl;
                 grow(seed);
-                log(1) << "MNIS of size " << seed.size() << std::endl;
+                log(2) << "MNIS of size " << seed.size() << std::endl;
                 log(3) << "MNIS: " << seed << std::endl;
                 blockDown(seed);
             }
@@ -159,6 +160,8 @@ namespace PME
 
     bool MARCOMinimizer::isSIS(const Seed & seed)
     {
+        stats().marco_issis_calls++;
+        AutoTimer t(stats().marco_issis_time);
         // We don't need to check initiation, we always assume all clauses
         // are initiated. We only check for induction and safety
         bool safe = std::find(seed.begin(), seed.end(), propertyID()) != seed.end();
@@ -167,6 +170,8 @@ namespace PME
 
     void MARCOMinimizer::grow(Seed & seed)
     {
+        stats().marco_grow_calls++;
+        AutoTimer t(stats().marco_grow_time);
         // Grow is implemented in the obvious way. Add clauses and check for
         // induction. If non-inductive, add the clause. If inductive, back it
         // out.
@@ -200,6 +205,9 @@ namespace PME
 
     void MARCOMinimizer::shrink(Seed & seed)
     {
+        stats().marco_shrink_calls++;
+        AutoTimer t(stats().marco_shrink_time);
+
         Seed seed_copy = seed;
         std::sort(seed_copy.begin(), seed_copy.end());
         assert(std::adjacent_find(seed_copy.begin(), seed_copy.end()) == seed_copy.end());
@@ -234,6 +242,8 @@ namespace PME
 
     bool MARCOMinimizer::findSIS(Seed & seed)
     {
+        stats().marco_findsis_calls++;
+        AutoTimer t(stats().marco_findsis_time);
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
         return findSafeMIS(m_indSolver, seed, propertyID());
@@ -241,6 +251,9 @@ namespace PME
 
     MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexplored()
     {
+        stats().marco_get_unexplored_calls++;
+        AutoTimer t(stats().marco_get_unexplored_time);
+
         UnexploredResult result;
         Seed & seed = result.second;
         if (m_seedSolver.solve())

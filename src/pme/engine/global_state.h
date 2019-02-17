@@ -44,6 +44,32 @@ namespace PME
         size_t sat_calls;
         double sat_runtime;
 
+        // Proof Minimization
+        size_t num_msis_found;
+        size_t smallest_msis_size;
+        size_t largest_msis_size;
+
+        // MARCO-MSIS
+        unsigned marco_get_unexplored_calls;
+        unsigned marco_issis_calls;
+        unsigned marco_findsis_calls;
+        unsigned marco_shrink_calls;
+        unsigned marco_grow_calls;
+        double marco_get_unexplored_time;
+        double marco_issis_time;
+        double marco_findsis_time;
+        double marco_shrink_time;
+        double marco_grow_time;
+
+        // CAMSIS
+        unsigned camsis_extract_calls;
+        unsigned camsis_issis_calls;
+        unsigned camsis_find_collapse_calls;
+        double camsis_prep_time;
+        double camsis_extract_time;
+        double camsis_issis_time;
+        double camsis_find_collapse_time;
+
         // IVCs
         size_t num_mivcs_found;
         size_t smallest_mivc_size;

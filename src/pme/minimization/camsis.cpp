@@ -20,6 +20,7 @@
  */
 
 #include "pme/minimization/camsis.h"
+#include "pme/util/timer.h"
 
 #include <cassert>
 #include <sstream>
@@ -64,7 +65,7 @@ namespace PME
         addMinimalProof(msis);
     }
 
-    void CAMSISMinimizer::minimize()
+    void CAMSISMinimizer::doMinimize()
     {
         if (opts().camsis_abstraction_refinement)
         {
@@ -85,7 +86,7 @@ namespace PME
             std::vector<ClauseID> unsupported;
             if (isSIS(candidate, unsupported))
             {
-                log(1) << "Found MSIS of size " << candidate.size() << std::endl;
+                log(2) << "Found MSIS of size " << candidate.size() << std::endl;
                 blockMSIS(candidate);
                 recordMSIS(candidate);
             }
@@ -113,6 +114,7 @@ namespace PME
         // The naive version of CAMSIS finds every collapse set of every clause
         for (ClauseID c = 0; c < numClauses(); ++c)
         {
+            AutoTimer t(stats().camsis_prep_time);
             while (attemptRefinement(c)) { }
         }
 
@@ -120,7 +122,7 @@ namespace PME
         std::vector<ClauseID> msis;
         while (extractCandidate(msis))
         {
-            log(1) << "Found MSIS of size " << msis.size() << std::endl;
+            log(2) << "Found MSIS of size " << msis.size() << std::endl;
             blockMSIS(msis);
             recordMSIS(msis);
         }
@@ -129,6 +131,9 @@ namespace PME
     bool CAMSISMinimizer::isSIS(const MSISCandidate & candidate,
                                 std::vector<ClauseID> & unsupported)
     {
+        stats().camsis_issis_calls++;
+        AutoTimer t(stats().camsis_issis_time);
+
         unsupported.clear();
 
         for (ClauseID c : candidate)
@@ -144,6 +149,9 @@ namespace PME
 
     bool CAMSISMinimizer::extractCandidate(MSISCandidate & msis)
     {
+        stats().camsis_extract_calls++;
+        AutoTimer t(stats().camsis_extract_time);
+
         msis.clear();
         bool sat = m_solver.solve();
 
@@ -222,6 +230,9 @@ namespace PME
 
     bool CAMSISMinimizer::findCollapse(ClauseID c, CollapseSet & collapse)
     {
+        stats().camsis_find_collapse_calls++;
+        AutoTimer t(stats().camsis_find_collapse_time);
+
         return m_collapseFinder.findAndBlock(c, collapse);
     }
 

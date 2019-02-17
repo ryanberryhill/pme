@@ -35,6 +35,20 @@ namespace PME
         maxsat_runtime(0.0),
         sat_calls(0),
         sat_runtime(0.0),
+        num_msis_found(0),
+        smallest_msis_size(std::numeric_limits<size_t>::max()),
+        largest_msis_size(0),
+        marco_get_unexplored_calls(0),
+        marco_issis_calls(0),
+        marco_shrink_calls(0),
+        marco_grow_calls(0),
+        marco_get_unexplored_time(0.0),
+        marco_issis_time(0.0),
+        marco_shrink_time(0.0),
+        marco_grow_time(0.0),
+        camsis_extract_calls(0),
+        camsis_prep_time(0.0),
+        camsis_extract_time(0.0),
         num_mivcs_found(0),
         smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
@@ -76,6 +90,35 @@ namespace PME
         os << "MaxSAT Runtime: " << maxsat_runtime << std::endl;
         os << "SAT Calls: " << sat_calls << std::endl;
         os << "SAT Runtime: " << sat_runtime << std::endl;
+
+        // Proof Minimization
+        os << "MSISes Found: " << num_msis_found << std::endl;
+        if (num_msis_found > 0)
+        {
+            os << "Smallest MSIS: " << smallest_msis_size << std::endl;
+            os << "Largest MSIS: " << largest_msis_size << std::endl;
+        }
+
+        // MARCO-MSIS
+        os << "MARCO-MSIS getUnexplored Calls: " << marco_get_unexplored_calls << std::endl;
+        os << "MARCO-MSIS getUnexplored Time: " << marco_get_unexplored_time << std::endl;
+        os << "MARCO-MSIS isSIS Calls: " << marco_issis_calls << std::endl;
+        os << "MARCO-MSIS isSIS Time: " << marco_issis_time << std::endl;
+        os << "MARCO-MSIS findSIS Calls: " << marco_findsis_calls << std::endl;
+        os << "MARCO-MSIS findSIS Time: " << marco_findsis_time << std::endl;
+        os << "MARCO-MSIS grow Calls: " << marco_grow_calls << std::endl;
+        os << "MARCO-MSIS grow Time: " << marco_grow_time << std::endl;
+        os << "MARCO-MSIS shrink Calls: " << marco_shrink_calls << std::endl;
+        os << "MARCO-MSIS shrink Time: " << marco_shrink_time << std::endl;
+
+        // CAMSIS
+        os << "CAMSIS Preparation Time: " << camsis_prep_time << std::endl;
+        os << "CAMSIS extractCandidate Calls: " << camsis_extract_calls << std::endl;
+        os << "CAMSIS extractCandidate Time: " << camsis_extract_time << std::endl;
+        os << "CAMSIS isSIS Calls: " << camsis_issis_calls << std::endl;
+        os << "CAMSIS isSIS Time: " << camsis_issis_time << std::endl;
+        os << "CAMSIS findCollapse Calls: " << camsis_find_collapse_calls << std::endl;
+        os << "CAMSIS findCollapse Time: " << camsis_find_collapse_time << std::endl;
 
         // IVCs
         os << "MIVCs Found: " << num_mivcs_found << std::endl;

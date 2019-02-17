@@ -80,7 +80,7 @@ namespace PME {
 
     // Starting from NEC = {(~Bad)}, recursively compute support of NEC and
     // add to NEC until a fixpoint is reached
-    void SimpleMinimizer::minimize()
+    void SimpleMinimizer::doMinimize()
     {
         std::set<ClauseID> supported, nec;
         std::queue<ClauseID> to_process;

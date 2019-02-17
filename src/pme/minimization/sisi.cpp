@@ -194,7 +194,7 @@ namespace PME
         return ProofMinimizer::log(LOG_SISI, verbosity);
     }
 
-    void SISIMinimizer::minimize()
+    void SISIMinimizer::doMinimize()
     {
         // FEAS = { all }
         for (ClauseID id = 0; id < numClauses(); ++id)
@@ -205,23 +205,23 @@ namespace PME
         // NEC = { ~Bad }
         m_sisi.addToNEC(propertyID());
 
-        log(1) << "Proof size: " << numClauses() << std::endl;
+        log(2) << "Proof size: " << numClauses() << std::endl;
 
         m_sisi.refineNEC();
 
-        log(1) << "NEC size: " << m_sisi.sizeNEC() << std::endl;
+        log(2) << "NEC size: " << m_sisi.sizeNEC() << std::endl;
 
         m_sisi.refineFEAS();
 
-        log(1) << "FEAS size: " << m_sisi.sizeFEAS() << std::endl;
+        log(2) << "FEAS size: " << m_sisi.sizeFEAS() << std::endl;
 
         m_sisi.refineNEC();
 
-        log(1) << "Refined NEC size: " << m_sisi.sizeNEC() << std::endl;
+        log(2) << "Refined NEC size: " << m_sisi.sizeNEC() << std::endl;
 
         ClauseIDVec minimized = m_sisi.bruteForceMinimize();
 
-        log(1) << "Minimized proof size: " << minimized.size() << std::endl;
+        log(2) << "Minimized proof size: " << minimized.size() << std::endl;
 
         addMinimalProof(minimized);
     }

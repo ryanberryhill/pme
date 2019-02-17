@@ -26,7 +26,7 @@
 
 namespace PME
 {
-    void DummyMinimizer::minimize()
+    void DummyMinimizer::doMinimize()
     {
         std::vector<ClauseID> proof;
         for (ClauseID id = 0; id < numClauses(); ++id)
@@ -60,6 +60,14 @@ namespace PME
     std::ostream & ProofMinimizer::log(LogChannelID channel, int verbosity) const
     {
         return GlobalState::logger().log(channel, verbosity);
+    }
+
+    void ProofMinimizer::minimize()
+    {
+        m_timer.start();
+        stats().num_gates = tr().numGates();
+
+        doMinimize();
     }
 
     void ProofMinimizer::addPropertyIfMissing()
@@ -101,10 +109,20 @@ namespace PME
 
     void ProofMinimizer::addMinimalProof(const std::vector<ClauseID> & proof)
     {
+        double time = m_timer.elapsed();
+
+        log(1) << "MSIS #" << m_minimalProofs.size() + 1
+               << " found, time: " << time << std::endl;
+
         std::vector<ClauseID> proof_copy = proof;
         std::sort(proof_copy.begin(), proof_copy.end());
-        log(2) << "Minimal proof: " << proof_copy << std::endl;
         m_minimalProofs.push_back(proof_copy);
+
+        log(4) << "MSIS: " << proof_copy << std::endl;
+
+        stats().num_msis_found++;
+        stats().smallest_msis_size = std::min(stats().smallest_msis_size, proof.size());
+        stats().largest_msis_size = std::max(stats().largest_msis_size, proof.size());
     }
 
     void ProofMinimizer::setMinimumProof(const std::vector<ClauseID> & proof)
