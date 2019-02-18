@@ -340,11 +340,16 @@ void save_bvc(aiger * aig, void * pme, size_t bound, size_t index, const char * 
 
 char g_save_path[512];
 
-void save_proofs(void * pme, char * name)
+void save_proofs(void * pme, char * name, int savemax)
 {
     char filepath[1024];
 
     unsigned num_proofs = cpme_num_proofs(pme);
+    if (savemax > 0 && num_proofs > savemax)
+    {
+        num_proofs = savemax;
+    }
+
     for (size_t i = 0; i < num_proofs; ++i)
     {
         size_t len = snprintf(filepath, sizeof(filepath),
@@ -359,11 +364,16 @@ void save_proofs(void * pme, char * name)
     }
 }
 
-void save_ivcs(aiger * aig, void * pme, char * name)
+void save_ivcs(aiger * aig, void * pme, char * name, int savemax)
 {
     char filepath[1024];
 
     unsigned num_ivcs = cpme_num_ivcs(pme);
+    if (savemax > 0 && num_ivcs > savemax)
+    {
+        num_ivcs = savemax;
+    }
+
     for (size_t i = 0; i < num_ivcs; ++i)
     {
         size_t len = snprintf(filepath, sizeof(filepath),
@@ -484,6 +494,7 @@ int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_simplemin = 0;
 int g_caivc = 0, g_cbvc = 0, g_marcoivc = 0, g_ivcbf = 0, g_ivcucbf = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
 int g_printstats = 0, g_nocex = 0;
+int g_savemax = 0;
 
 char * g_saveivc_name = NULL;
 char * g_saveproof_name = NULL;
@@ -525,12 +536,12 @@ void exit_save()
 
     if (g_saveproofs && g_pme)
     {
-        save_proofs(g_pme, g_saveproof_name);
+        save_proofs(g_pme, g_saveproof_name, g_savemax);
     }
 
     if (g_saveivcs && g_pme && g_aig)
     {
-        save_ivcs(g_aig, g_pme, g_saveivc_name);
+        save_ivcs(g_aig, g_pme, g_saveivc_name, g_savemax);
     }
 }
 
@@ -555,6 +566,7 @@ int main(int argc, char ** argv)
             {"check-minimal-ivc",   no_argument,        &g_checkmivc,  1 },
             {"save-proofs",         required_argument,  &g_saveproofs, 1 },
             {"save-ivcs",           required_argument,  &g_saveivcs,   1 },
+            {"save-max",            required_argument,  0,             0 },
             {"marco",               no_argument,        &g_marco,      1 },
             {"camsis",              no_argument,        &g_camsis,     1 },
             {"sisi",                no_argument,        &g_sisi,       1 },
@@ -625,6 +637,18 @@ int main(int argc, char ** argv)
                         print_usage(argv);
                         failure = 1; goto cleanup;
                     }
+                }
+                else if (strcmp(long_opts[option_index].name, "save-max") == 0)
+                {
+                    char *endptr = NULL;
+                    int savemax = strtoul(optarg, &endptr, 0);
+                    if (*endptr != '\0' && *optarg != '\0')
+                    {
+                        fprintf(stderr, "--save-max argument %s not understood\n", optarg);
+                        print_usage(argv);
+                        failure = 1; goto cleanup;
+                    }
+                    g_savemax = savemax;
                 }
                 break;
             case 'v':
@@ -1080,12 +1104,12 @@ cleanup:
 
     if (g_saveproofs && pme != NULL)
     {
-        save_proofs(pme, g_saveproof_name);
+        save_proofs(pme, g_saveproof_name, g_savemax);
     }
 
     if (g_saveivcs && pme != NULL && aig != NULL)
     {
-        save_ivcs(aig, pme, g_saveivc_name);
+        save_ivcs(aig, pme, g_saveivc_name, g_savemax);
     }
 
     // aig_path and proof_path are strdup'ed
