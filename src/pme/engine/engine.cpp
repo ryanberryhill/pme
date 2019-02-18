@@ -62,6 +62,12 @@ namespace PME
         return ind.checkProof();
     }
 
+    bool Engine::proofIsMinimal()
+    {
+        BruteForceMinimizer checker(m_vars, m_tr, m_proof);
+        return checker.isMinimal();
+    }
+
     void Engine::minimize(PMEMinimizationAlgorithm algorithm)
     {
         AutoTimer timer(GlobalState::stats().runtime);

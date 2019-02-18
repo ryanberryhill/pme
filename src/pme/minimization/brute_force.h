@@ -33,6 +33,7 @@ namespace PME
             BruteForceMinimizer(VariableManager & vars,
                                const TransitionRelation & tr,
                                const ClauseVec & proof);
+            bool isMinimal();
 
         protected:
             void doMinimize() override;
@@ -40,6 +41,7 @@ namespace PME
 
         private:
             void initSolver();
+            void initSISI();
             ConsecutionChecker m_indSolver;
             SISI m_sisi;
     };

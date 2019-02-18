@@ -40,6 +40,7 @@ namespace PME
             void refineNEC();
             void refineFEAS();
             ClauseIDVec bruteForceMinimize();
+            bool isMinimal();
             void minimizeSupport(ClauseIDVec & vec, ClauseID cls);
             void addToFEAS(ClauseID id);
             void addToNEC(ClauseID id);

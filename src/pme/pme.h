@@ -110,6 +110,7 @@ unsigned cpme_bvc_get_gate(void * bvc, size_t i);
 void cpme_free_bvc(void * bvc);
 
 int cpme_check_proof(void * pme);
+int cpme_check_minimal(void * pme);
 int cpme_run_marco(void * pme);
 int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);

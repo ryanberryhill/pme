@@ -42,12 +42,7 @@ namespace PME
         }
     }
 
-    std::ostream & BruteForceMinimizer::log(int verbosity) const
-    {
-        return ProofMinimizer::log(LOG_BFMIN, verbosity);
-    }
-
-    void BruteForceMinimizer::doMinimize()
+    void BruteForceMinimizer::initSISI()
     {
         // FEAS = { all }
         for (ClauseID id = 0; id < numClauses(); ++id)
@@ -57,6 +52,16 @@ namespace PME
         }
         // NEC = { ~Bad }
         m_sisi.addToNEC(propertyID());
+    }
+
+    std::ostream & BruteForceMinimizer::log(int verbosity) const
+    {
+        return ProofMinimizer::log(LOG_BFMIN, verbosity);
+    }
+
+    void BruteForceMinimizer::doMinimize()
+    {
+        initSISI();
 
         log(2) << "Proof size: " << numClauses() << std::endl;
 
@@ -65,6 +70,12 @@ namespace PME
         log(2) << "Minimized proof size: " << minimized.size() << std::endl;
 
         addMinimalProof(minimized);
+    }
+
+    bool BruteForceMinimizer::isMinimal()
+    {
+        initSISI();
+        return m_sisi.isMinimal();
     }
 }
 

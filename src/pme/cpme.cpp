@@ -287,6 +287,21 @@ int cpme_check_proof(void * pme)
     handle_exceptions(-1);
 }
 
+int cpme_check_minimal(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    int result = 0;
+    try
+    {
+        result = eng->proofIsMinimal();
+    }
+    handle_exceptions(-1);
+
+    return result;
+}
+
 int cpme_run_marco(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

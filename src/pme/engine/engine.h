@@ -46,6 +46,7 @@ namespace PME
             void setProof(const ExternalClauseVec & proof);
 
             bool checkProof();
+            bool proofIsMinimal();
             void minimize(PMEMinimizationAlgorithm algorithm);
             void findIVCs(PMEIVCAlgorithm algorithm);
             bool runIC3();

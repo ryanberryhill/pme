@@ -883,34 +883,23 @@ int main(int argc, char ** argv)
 
     if (g_checkmin)
     {
-        int bfmin_ok = cpme_run_sisi(pme);
+        int is_minimal = cpme_check_minimal(pme);
 
-        if (bfmin_ok < 0)
+        if (is_minimal < 0)
         {
-            fprintf(stderr, "Error running brute force minimization\n");
+            fprintf(stderr, "Error checking proof for minimality\n");
             failure = 1; goto cleanup;
         }
 
-        size_t num_proofs = cpme_num_proofs(pme);
-        ((void)(num_proofs));
-        assert(num_proofs == 1);
-
-        void * min_proof = cpme_get_proof(pme, 0);
-        size_t min_size = cpme_proof_num_clauses(min_proof);
-
-        cpme_free_proof(min_proof); min_proof = NULL;
-        assert(min_size <= proof_size);
-
-        if (min_size < proof_size)
-        {
-            print(1, "The proof (size %lu) is non-minimal. "
-                     "A proof with %lu clauses was found.\n", proof_size, min_size);
-            failure = 1; goto cleanup;
-        }
-        else
+        if (is_minimal)
         {
             print(1, "The proof (size %lu) is minimal.\n", proof_size);
             goto cleanup;
+        }
+        else
+        {
+            print(1, "The proof (size %lu) is non-minimal.\n", proof_size);
+            failure = 1; goto cleanup;
         }
     }
 

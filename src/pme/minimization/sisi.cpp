@@ -137,6 +137,38 @@ namespace PME
         return proof;
     }
 
+    bool SISI::isMinimal()
+    {
+        std::vector<ClauseID> feas(m_feas.begin(), m_feas.end());
+        std::set<ClauseID> keep = m_nec;
+
+        auto it = feas.begin();
+        while (keep.size() < feas.size())
+        {
+            ClauseID id = *it;
+
+            if (keep.count(id) > 0) { ++it; continue; }
+
+            std::vector<ClauseID> test_feas;
+            test_feas.reserve(feas.size());
+            std::remove_copy(feas.begin(), feas.end(),
+                             std::back_inserter(test_feas), id);
+
+            if (findSIS(test_feas))
+            {
+                assert(test_feas.size() < feas.size());
+                return false;
+            }
+            else
+            {
+                keep.insert(id);
+                ++it;
+            }
+        }
+
+        return true;
+    }
+
     bool SISI::findSIS(ClauseIDVec & vec)
     {
         std::vector<ClauseID> nec_vec(m_nec.begin(), m_nec.end());
