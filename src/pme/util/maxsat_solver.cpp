@@ -53,8 +53,11 @@ namespace PME
         m_solver.addClauses(m_clauses);
 
         // TODO: avoid needing to do the full size up front
-        m_cardinality.setCardinality(m_optimizationSet.size());
-        m_solver.addClauses(m_cardinality.CNFize());
+        if (!m_optimizationSet.empty())
+        {
+            m_cardinality.setCardinality(m_optimizationSet.size());
+            m_solver.addClauses(m_cardinality.CNFize());
+        }
 
         m_solverInited = true;
     }
@@ -91,7 +94,6 @@ namespace PME
 
     unsigned PBOMaxSATSolver::lastCardinality(const Cube & assumps) const
     {
-        assert(!m_optimizationSet.empty());
         assert(std::is_sorted(assumps.begin(), assumps.end()));
         auto it = m_lastCardinality.find(assumps);
         if (it == m_lastCardinality.end())
@@ -167,6 +169,18 @@ namespace PME
     {
         assert(isSAT());
         return m_solver.getAssignmentToVar(var);
+    }
+
+    ModelValue PBOMaxSATSolver::safeGetAssignment(ID lit) const
+    {
+        assert(isSAT());
+        return m_solver.safeGetAssignment(lit);
+    }
+
+    ModelValue PBOMaxSATSolver::safeGetAssignmentToVar(ID var) const
+    {
+        assert(isSAT());
+        return m_solver.safeGetAssignmentToVar(var);
     }
 
     MSU4MaxSATSolver::MSU4MaxSATSolver(VariableManager & varman)

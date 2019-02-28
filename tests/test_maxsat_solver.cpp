@@ -315,3 +315,24 @@ BOOST_AUTO_TEST_CASE(maxsat_with_assumptions)
     BOOST_CHECK(!solver.solve());
 }
 
+BOOST_AUTO_TEST_CASE(pbo_safe_get_assignment)
+{
+    VariableManager vars;
+    PBOMaxSATSolver solver(vars);
+
+    ID a = vars.getNewID();
+    ID b = vars.getNewID();
+    ID c = vars.getNewID();
+    ID d = vars.getNewID();
+
+    solver.addForOptimization(a);
+    solver.addForOptimization(b);
+
+    solver.addClause({negate(a), negate(b)});
+    solver.addClause({c});
+
+    solver.solve();
+
+    BOOST_CHECK_EQUAL(solver.safeGetAssignment(c), SAT::TRUE);
+    BOOST_CHECK_EQUAL(solver.safeGetAssignment(d), SAT::UNDEF);
+}

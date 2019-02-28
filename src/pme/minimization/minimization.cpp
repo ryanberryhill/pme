@@ -127,6 +127,11 @@ namespace PME
 
     void ProofMinimizer::setMinimumProof(const std::vector<ClauseID> & proof)
     {
+        assert(m_minimumProof.empty());
+
+        double time = m_timer.elapsed();
+        log(1) << "SMSIS found, time: " << time << std::endl;
+
         m_minimumProof = proof;
     }
 

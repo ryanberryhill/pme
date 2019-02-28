@@ -58,12 +58,21 @@ namespace PME
 
             void updateProofs(const Seed & seed);
 
-            VariableManager m_vars;
-            PBOMaxSATSolver m_seedSolver;
-            ConsecutionChecker m_indSolver;
-            std::unordered_map<ClauseID, ID> m_clauseToSeedVar;
+            bool isDirectionUp() const;
+            bool isDirectionDown() const;
+            bool isDirectionZigZag() const;
+            bool isDirectionArbitrary() const;
+            bool isNextSeedMinimum() const;
+            bool isNextSeedMaximum() const;
+            PBOMaxSATSolver & getSeedSolver();
 
-            Seed m_smallestProof;
+            VariableManager m_vars;
+            PBOMaxSATSolver m_seed_solver_down, m_seed_solver_up;
+            ConsecutionChecker m_ind_solver;
+            std::unordered_map<ClauseID, ID> m_clause_to_seed_var;
+            Seed m_smallest_proof;
+            unsigned m_seed_count;
+            unsigned m_lower_bound;
     };
 }
 

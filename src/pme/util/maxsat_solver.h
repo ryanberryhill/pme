@@ -59,6 +59,8 @@ namespace PME
             virtual bool isSAT() const override;
             virtual ModelValue getAssignment(ID lit) const override;
             virtual ModelValue getAssignmentToVar(ID var) const override;
+            ModelValue safeGetAssignment(ID lit) const;
+            ModelValue safeGetAssignmentToVar(ID var) const;
 
             bool assumpSolve(const Cube & assumps);
 

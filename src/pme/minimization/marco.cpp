@@ -32,30 +32,120 @@ namespace PME
                                    const TransitionRelation & tr,
                                    const ClauseVec & proof)
         : ProofMinimizer(vars, tr, proof),
-          m_seedSolver(vars),
-          m_indSolver(vars, tr)
+          m_seed_solver_down(vars),
+          m_seed_solver_up(vars),
+          m_ind_solver(vars, tr),
+          m_seed_count(0),
+          m_lower_bound(0)
     {
         initSolvers();
+    }
+
+    bool MARCOMinimizer::isDirectionUp() const
+    {
+        return opts().marco_direction_up &&
+               !opts().marco_direction_down;
+    }
+
+    bool MARCOMinimizer::isDirectionDown() const
+    {
+        return opts().marco_direction_down &&
+               !opts().marco_direction_up;
+    }
+
+    bool MARCOMinimizer::isDirectionZigZag() const
+    {
+        return opts().marco_direction_down &&
+               opts().marco_direction_up;
+    }
+
+    bool MARCOMinimizer::isDirectionArbitrary() const
+    {
+        return !opts().marco_direction_down &&
+               !opts().marco_direction_up;
+    }
+
+    bool MARCOMinimizer::isNextSeedMinimum() const
+    {
+        if (isDirectionUp())
+        {
+            return true;
+        }
+        else
+        {
+            bool odd = (m_seed_count % 2) == 1;
+            return isDirectionZigZag() && odd;
+        }
+    }
+
+    bool MARCOMinimizer::isNextSeedMaximum() const
+    {
+        if (isDirectionDown())
+        {
+            return true;
+        }
+        else
+        {
+            bool odd = (m_seed_count % 2) == 1;
+            return isDirectionZigZag() && !odd;
+        }
+    }
+
+    PBOMaxSATSolver & MARCOMinimizer::getSeedSolver()
+    {
+        if (isDirectionUp() || isDirectionArbitrary())
+        {
+            return m_seed_solver_up;
+        }
+        else if (isDirectionDown())
+        {
+            return m_seed_solver_down;
+        }
+        else if (isDirectionZigZag())
+        {
+            if (isNextSeedMinimum())
+            {
+                return m_seed_solver_up;
+            }
+            else
+            {
+                assert(isNextSeedMaximum());
+                return m_seed_solver_down;
+            }
+        }
+        else
+        {
+            assert(false);
+        }
     }
 
     void MARCOMinimizer::initSolvers()
     {
         for (ClauseID id = 0; id < numClauses(); ++id)
         {
-            // Add clauses to m_indSolver
+            // Add clauses to m_ind_solver
             const Clause & cls = clauseOf(id);
-            m_indSolver.addClause(id, cls);
+            m_ind_solver.addClause(id, cls);
 
-            // Add variables to m_seedSolver.
+            // Add variables to m_seed_solver.
             ID cls_seed = vars().getNewID("seed");
-            m_seedSolver.addForOptimization(cls_seed);
-            m_clauseToSeedVar[id] = cls_seed;
+
+            // In MARCO-ARB, we use one solver with no MaxSAT
+            // In other modes, we use one or both with MaxSAT
+            if (!isDirectionArbitrary())
+            {
+                m_seed_solver_up.addForOptimization(negate(cls_seed));
+                m_seed_solver_down.addForOptimization(cls_seed);
+            }
+
+            m_clause_to_seed_var[id] = cls_seed;
 
             // Add a clause to the seed solver enforcing that the property is
             // always present
             if (cls.size() == 1 && cls.at(0) == negate(tr().bad()))
             {
-                m_seedSolver.addClause({cls_seed});
+                m_seed_solver_up.addClause({cls_seed});
+                m_seed_solver_down.addClause({cls_seed});
             }
         }
     }
@@ -71,6 +161,10 @@ namespace PME
         {
             bool sat;
             Seed seed;
+
+            bool minimum = isNextSeedMinimum();
+            bool maximum = isNextSeedMaximum();
+            assert(!(minimum && maximum));
             std::tie(sat, seed) = getUnexplored();
 
             Seed mis = seed;
@@ -78,8 +172,11 @@ namespace PME
             if (!sat) { break; }
             else if (findSIS(mis))
             {
-                log(3) << "Found a SIS seed of size " << mis.size() << std::endl;
-                shrink(mis);
+                log(3) << "Found a SIS seed of size " << mis.size()
+                       << (minimum ? " [minimum]" : maximum ? " [maximum]" : "")
+                       << std::endl;
+                if (!minimum) { shrink(mis); }
+
                 log(2) << "MSIS of size " << mis.size() << std::endl;
                 log(3) << "MSIS: " << seed << std::endl;
                 blockUp(mis);
@@ -87,27 +184,33 @@ namespace PME
             }
             else
             {
-                log(3) << "Found a non-SIS seed of size " << seed.size() << std::endl;
-                grow(seed);
+                log(3) << "Found a non-SIS seed of size " << seed.size()
+                       << (minimum ? " [minimum]" : maximum ? " [maximum]" : "")
+                       << std::endl;
+                if (!maximum) { grow(seed); }
                 log(2) << "MNIS of size " << seed.size() << std::endl;
                 log(3) << "MNIS: " << seed << std::endl;
                 blockDown(seed);
             }
         }
 
-        assert(!m_smallestProof.empty());
-        setMinimumProof(m_smallestProof);
+        assert(!m_smallest_proof.empty());
+        if (!minimumProofKnown()) { setMinimumProof(m_smallest_proof); }
     }
 
     void MARCOMinimizer::updateProofs(const Seed & seed)
     {
         assert(!seed.empty());
-        if (m_smallestProof.empty() || seed.size() < m_smallestProof.size())
+        if (m_smallest_proof.empty() || seed.size() < m_smallest_proof.size())
         {
-            m_smallestProof = seed;
+            m_smallest_proof = seed;
         }
 
         addMinimalProof(seed);
+        if (!minimumProofKnown() && m_smallest_proof.size() <= m_lower_bound)
+        {
+            setMinimumProof(m_smallest_proof);
+        }
     }
 
     void MARCOMinimizer::blockUp(const Seed & seed)
@@ -124,7 +227,8 @@ namespace PME
             cls.push_back(negate(svar));
         }
 
-        m_seedSolver.addClause(cls);
+        m_seed_solver_up.addClause(cls);
+        m_seed_solver_down.addClause(cls);
     }
 
     void MARCOMinimizer::blockDown(const Seed & seed)
@@ -150,11 +254,13 @@ namespace PME
         // clause (false) in that case
         if (cls.empty())
         {
-            m_seedSolver.addClause({ID_FALSE});
+            m_seed_solver_up.addClause({ID_FALSE});
+            m_seed_solver_down.addClause({ID_FALSE});
         }
         else
         {
-            m_seedSolver.addClause(cls);
+            m_seed_solver_up.addClause(cls);
+            m_seed_solver_down.addClause(cls);
         }
     }
 
@@ -165,7 +271,7 @@ namespace PME
         // We don't need to check initiation, we always assume all clauses
         // are initiated. We only check for induction and safety
         bool safe = std::find(seed.begin(), seed.end(), propertyID()) != seed.end();
-        return safe && m_indSolver.isInductive(seed);
+        return safe && m_ind_solver.isInductive(seed);
     }
 
     void MARCOMinimizer::grow(Seed & seed)
@@ -193,7 +299,7 @@ namespace PME
             std::vector<ClauseID> to_try(notseed.begin(), notseed.end());
             for (ClauseID id : to_try)
             {
-                if (!m_indSolver.solve(seed, id))
+                if (!m_ind_solver.solve(seed, id))
                 {
                     added = true;
                     seed.push_back(id);
@@ -246,7 +352,7 @@ namespace PME
         AutoTimer t(stats().marco_findsis_time);
         // Given a potentially non-inductive seed, find the a maximal inductive
         // subset (MIS) that is safe, if any exist
-        return findSafeMIS(m_indSolver, seed, propertyID());
+        return findSafeMIS(m_ind_solver, seed, propertyID());
     }
 
     MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexplored()
@@ -254,16 +360,39 @@ namespace PME
         stats().marco_get_unexplored_calls++;
         AutoTimer t(stats().marco_get_unexplored_time);
 
+        PBOMaxSATSolver & seed_solver = getSeedSolver();
+        bool minimum = isNextSeedMinimum();
+        m_seed_count++;
+
         UnexploredResult result;
         Seed & seed = result.second;
-        if (m_seedSolver.solve())
+        if (seed_solver.solve())
         {
             result.first = true;
             for (ClauseID id = 0; id < numClauses(); ++id)
             {
                 ID seed_var = seedVarOf(id);
-                ModelValue assignment = m_seedSolver.getAssignmentToVar(seed_var);
+                ModelValue assignment = seed_solver.safeGetAssignmentToVar(seed_var);
                 if (assignment == SAT::TRUE) { seed.push_back(id); }
+
+                // UNDEF should only be possible in MARCO-ARB
+                // We treat it as true (it indicates variable does not yet
+                // appear in the map, so it's a don't care)
+                if (assignment == SAT::UNDEF)
+                {
+                    assert(isDirectionArbitrary());
+                    seed.push_back(id);
+                }
+            }
+
+            if (minimum)
+            {
+                assert(seed.size() >= m_lower_bound);
+                m_lower_bound = seed.size();
+                if (!minimumProofKnown() && m_smallest_proof.size() <= m_lower_bound)
+                {
+                    setMinimumProof(m_smallest_proof);
+                }
             }
         }
         else
@@ -275,7 +404,7 @@ namespace PME
 
     ID MARCOMinimizer::seedVarOf(ClauseID cls) const
     {
-        return m_clauseToSeedVar.at(cls);
+        return m_clause_to_seed_var.at(cls);
     }
 }
 

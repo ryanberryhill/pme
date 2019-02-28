@@ -70,6 +70,8 @@ namespace PME {
         msu4_use_hint_clauses(*this, true, "msu4_use_hint_clauses"),
         simple_min_use_min_supp(*this, true, "simple_min_use_min_supp"),
         camsis_abstraction_refinement(*this, true, "camsis_ar"),
+        marco_direction_down(*this, true, "marco_direction_down"),
+        marco_direction_up(*this, false, "marco_direction_up"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),

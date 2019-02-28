@@ -78,6 +78,10 @@ namespace PME {
             // CAMSIS
             PMEOption<bool> camsis_abstraction_refinement;
 
+            // MARCO-MSIS
+            PMEOption<bool> marco_direction_down;
+            PMEOption<bool> marco_direction_up;
+
             // --- IVC Extraction ---
 
             // CAIVC
