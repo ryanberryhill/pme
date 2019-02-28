@@ -389,7 +389,8 @@ namespace PME
             {
                 assert(seed.size() >= m_lower_bound);
                 m_lower_bound = seed.size();
-                if (!minimumProofKnown() && m_smallest_proof.size() <= m_lower_bound)
+                if (!minimumProofKnown() && !m_smallest_proof.empty() &&
+                        m_smallest_proof.size() <= m_lower_bound)
                 {
                     setMinimumProof(m_smallest_proof);
                 }
