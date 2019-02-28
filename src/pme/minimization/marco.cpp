@@ -116,6 +116,7 @@ namespace PME
         else
         {
             assert(false);
+            return m_seed_solver_down;
         }
     }
 
