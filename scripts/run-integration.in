@@ -477,9 +477,8 @@ if ((limited_run == 0 || run_min == 1)) ; then
                                         --opt marco_direction_up=false
     run_all_msis_test MARCO-ZIGZAG --marco --opt marco_direction_down=true \
                                            --opt marco_direction_up=true
-    # MARCO-UP is way too slow
-    #run_all_msis_test MARCO-UP --marco --opt marco_direction_down=false \
-    #                                   --opt marco_direction_up=true
+    run_all_msis_test MARCO-UP --marco --opt marco_direction_down=false \
+                                       --opt marco_direction_up=true
     run_all_msis_test CAMSIS --camsis
     run_shrink_proof_test SIMPLEMIN --simplemin
 fi

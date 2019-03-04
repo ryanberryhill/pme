@@ -280,7 +280,7 @@ namespace PME
         stats().marco_grow_calls++;
         AutoTimer t(stats().marco_grow_time);
         // Grow is implemented in the obvious way. Add clauses and check for
-        // induction. If non-inductive, add the clause. If inductive, back it
+        // SIS containment. If not, add the clause. If a SIS is found, back it
         // out.
         std::set<ClauseID> seed_set(seed.begin(), seed.end());
         std::set<ClauseID> notseed;
@@ -292,20 +292,13 @@ namespace PME
             }
         }
 
-        bool added = true;
-        while (added)
+        for (ClauseID id : notseed)
         {
-            added = false;
-            // Copy the ones to try since we'll be deleting from notseed
-            std::vector<ClauseID> to_try(notseed.begin(), notseed.end());
-            for (ClauseID id : to_try)
+            std::vector<ID> test_seed = seed;
+            test_seed.push_back(id);
+            if (!findSIS(test_seed))
             {
-                if (!m_ind_solver.solve(seed, id))
-                {
-                    added = true;
-                    seed.push_back(id);
-                    notseed.erase(id);
-                }
+                seed.push_back(id);
             }
         }
     }
