@@ -32,7 +32,7 @@ namespace PME
                                      const ClauseVec & proof)
         : ProofMinimizer(vars, tr, proof),
           m_cons(vars, tr),
-          m_collapseFinder(vars, tr),
+          m_collapse_finder(vars, tr),
           m_solver(vars)
     {
         // Set up collapse set finder and consecution checker and clause-select
@@ -42,7 +42,7 @@ namespace PME
             const Clause & cls = clauseOf(c);
             ID select = createClauseSelect(c);
 
-            m_collapseFinder.addClause(c, cls);
+            m_collapse_finder.addClause(c, cls);
 
             m_clausedb.addClause(c, select, cls);
             m_solver.addForOptimization(negate(select));
@@ -202,7 +202,7 @@ namespace PME
 
     Clause CAMSISMinimizer::collapseClause(ClauseID c, const CollapseSet & collapse) const
     {
-        // One element of collapse is selected or c is not select
+        // One element of collapse is selected or c is not selected
         // i.e., ~c V (c_i for i in collapse)
         assert(!collapse.empty());
 
@@ -233,7 +233,7 @@ namespace PME
         stats().camsis_find_collapse_calls++;
         AutoTimer t(stats().camsis_find_collapse_time);
 
-        return m_collapseFinder.findAndBlock(c, collapse);
+        return m_collapse_finder.findAndBlock(c, collapse);
     }
 
     std::ostream & CAMSISMinimizer::log(int verbosity) const

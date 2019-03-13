@@ -72,6 +72,8 @@ namespace PME {
         camsis_abstraction_refinement(*this, true, "camsis_ar"),
         marco_direction_down(*this, true, "marco_direction_down"),
         marco_direction_up(*this, false, "marco_direction_up"),
+        marco_mcs(*this, true, "marco_mcs"),
+        marco_collapse(*this, false, "marco_collapse"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),

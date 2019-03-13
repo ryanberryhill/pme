@@ -42,10 +42,12 @@ namespace PME
         marco_issis_calls(0),
         marco_shrink_calls(0),
         marco_grow_calls(0),
+        marco_find_collapse_calls(0),
         marco_get_unexplored_time(0.0),
         marco_issis_time(0.0),
         marco_shrink_time(0.0),
         marco_grow_time(0.0),
+        marco_find_collapse_time(0.0),
         camsis_extract_calls(0),
         camsis_prep_time(0.0),
         camsis_extract_time(0.0),
@@ -110,6 +112,8 @@ namespace PME
         os << "MARCO-MSIS grow Time: " << marco_grow_time << std::endl;
         os << "MARCO-MSIS shrink Calls: " << marco_shrink_calls << std::endl;
         os << "MARCO-MSIS shrink Time: " << marco_shrink_time << std::endl;
+        os << "MARCO-MSIS findCollapse Calls: " << marco_find_collapse_calls << std::endl;
+        os << "MARCO-MSIS findCollapse Time: " << marco_find_collapse_time << std::endl;
 
         // CAMSIS
         os << "CAMSIS Preparation Time: " << camsis_prep_time << std::endl;

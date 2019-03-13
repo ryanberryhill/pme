@@ -62,7 +62,7 @@ namespace PME
             void abstractionRefinementMinimize();
 
             ConsecutionChecker m_cons;
-            CollapseSetFinder m_collapseFinder;
+            CollapseSetFinder m_collapse_finder;
             PBOMaxSATSolver m_solver;
             ClauseDatabase m_clausedb;
             VariableManager m_vars;

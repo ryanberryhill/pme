@@ -55,11 +55,13 @@ namespace PME
         unsigned marco_findsis_calls;
         unsigned marco_shrink_calls;
         unsigned marco_grow_calls;
+        unsigned marco_find_collapse_calls;
         double marco_get_unexplored_time;
         double marco_issis_time;
         double marco_findsis_time;
         double marco_shrink_time;
         double marco_grow_time;
+        double marco_find_collapse_time;
 
         // CAMSIS
         unsigned camsis_extract_calls;

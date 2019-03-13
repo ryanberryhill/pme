@@ -32,6 +32,7 @@ namespace PME
                                    const TransitionRelation & tr,
                                    const ClauseVec & proof)
         : ProofMinimizer(vars, tr, proof),
+          m_collapse_finder(vars, tr),
           m_seed_solver_down(vars),
           m_seed_solver_up(vars),
           m_ind_solver(vars, tr),
@@ -39,6 +40,16 @@ namespace PME
           m_lower_bound(0)
     {
         initSolvers();
+    }
+
+    bool MARCOMinimizer::useMCS() const
+    {
+        return opts().marco_mcs;
+    }
+
+    bool MARCOMinimizer::useCollapse() const
+    {
+        return opts().marco_collapse;
     }
 
     bool MARCOMinimizer::isDirectionUp() const
@@ -148,6 +159,9 @@ namespace PME
                 m_seed_solver_up.addClause({cls_seed});
                 m_seed_solver_down.addClause({cls_seed});
             }
+
+            // In MARCO-FORQES, we use use the collapse set finder as well
+            m_collapse_finder.addClause(id, cls);
         }
     }
 
@@ -165,21 +179,30 @@ namespace PME
 
             bool minimum = isNextSeedMinimum();
             bool maximum = isNextSeedMaximum();
+
             assert(!(minimum && maximum));
             std::tie(sat, seed) = getUnexplored();
 
-            Seed mis = seed;
-
             if (!sat) { break; }
-            else if (findSIS(mis))
+
+            // If the seed is a minimum, we can use the simpler isSIS predicate
+            bool found_sis = false;
+            Seed mis = seed;
+            std::vector<ClauseID> unsupported;
+            if (!minimum) { found_sis = findSIS(mis); }
+            else if (!useCollapse()) { found_sis = isSIS(seed); }
+            else { found_sis = isSIS(seed, unsupported); }
+
+            if (found_sis)
             {
-                log(3) << "Found a SIS seed of size " << mis.size()
+                log(3) << "Found a SIS seed of size " << seed.size()
                        << (minimum ? " [minimum]" : maximum ? " [maximum]" : "")
                        << std::endl;
+
                 if (!minimum) { shrink(mis); }
 
                 log(2) << "MSIS of size " << mis.size() << std::endl;
-                log(3) << "MSIS: " << seed << std::endl;
+                log(3) << "MSIS: " << mis << std::endl;
                 blockUp(mis);
                 updateProofs(mis);
             }
@@ -188,10 +211,30 @@ namespace PME
                 log(3) << "Found a non-SIS seed of size " << seed.size()
                        << (minimum ? " [minimum]" : maximum ? " [maximum]" : "")
                        << std::endl;
-                if (!maximum) { grow(seed); }
-                log(2) << "MNIS of size " << seed.size() << std::endl;
-                log(3) << "MNIS: " << seed << std::endl;
-                blockDown(seed);
+
+                log(2) << "MSS of size " << seed.size() << std::endl;
+                log(3) << "MSS: " << seed << std::endl;
+
+                if (useMCS())
+                {
+                    if (!maximum) { grow(seed); }
+                    blockDown(seed);
+                }
+
+                if (useCollapse())
+                {
+                    // In this case, we had to use findSIS, which doesn't find
+                    // the unsupported clauses. Rerun isSIS.
+                    if (!minimum)
+                    {
+                        assert(unsupported.empty());
+                        bool is_sis = isSIS(seed, unsupported);
+                        (void) is_sis;
+                        assert(!is_sis);
+                    }
+                    assert(!unsupported.empty());
+                    collapseRefine(unsupported);
+                }
             }
         }
 
@@ -273,6 +316,26 @@ namespace PME
         // are initiated. We only check for induction and safety
         bool safe = std::find(seed.begin(), seed.end(), propertyID()) != seed.end();
         return safe && m_ind_solver.isInductive(seed);
+    }
+
+    bool MARCOMinimizer::isSIS(const Seed & seed, std::vector<ClauseID> & unsupported)
+    {
+        stats().marco_issis_calls++;
+        AutoTimer t(stats().marco_issis_time);
+
+        bool safe = std::find(seed.begin(), seed.end(), propertyID()) != seed.end();
+
+        unsupported.clear();
+
+        for (ClauseID c : seed)
+        {
+            if (!m_ind_solver.solve(seed, c))
+            {
+                unsupported.push_back(c);
+            }
+        }
+
+        return safe && unsupported.empty();
     }
 
     void MARCOMinimizer::grow(Seed & seed)
@@ -400,6 +463,50 @@ namespace PME
     ID MARCOMinimizer::seedVarOf(ClauseID cls) const
     {
         return m_clause_to_seed_var.at(cls);
+    }
+
+    void MARCOMinimizer::collapseRefine(const std::vector<ClauseID> & unsupported)
+    {
+        for (ClauseID c : unsupported)
+        {
+            CollapseSet collapse;
+            bool found = findCollapse(c, collapse);
+
+            (void)(found);
+            assert(found);
+
+            Clause cls = collapseClause(c, collapse);
+            m_seed_solver_up.addClause(cls);
+            m_seed_solver_down.addClause(cls);
+        }
+    }
+
+    Clause MARCOMinimizer::collapseClause(ClauseID c, const CollapseSet & collapse) const
+    {
+        // One element of collapse is selected or c is not selected
+        // i.e., ~c V (c_i for i in collapse)
+        assert(!collapse.empty());
+
+        ID selc = seedVarOf(c);
+        Clause cls;
+        cls.reserve(collapse.size() + 1);
+
+        cls.push_back(negate(selc));
+        for (ClauseID id : collapse)
+        {
+            ID sel = seedVarOf(id);
+            cls.push_back(sel);
+        }
+
+        return cls;
+    }
+
+    bool MARCOMinimizer::findCollapse(ClauseID c, CollapseSet & collapse)
+    {
+        stats().marco_find_collapse_calls++;
+        AutoTimer t(stats().marco_find_collapse_time);
+
+        return m_collapse_finder.findAndBlock(c, collapse);
     }
 }
 

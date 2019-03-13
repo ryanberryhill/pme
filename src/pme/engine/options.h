@@ -81,6 +81,8 @@ namespace PME {
             // MARCO-MSIS
             PMEOption<bool> marco_direction_down;
             PMEOption<bool> marco_direction_up;
+            PMEOption<bool> marco_mcs;
+            PMEOption<bool> marco_collapse;
 
             // --- IVC Extraction ---
 

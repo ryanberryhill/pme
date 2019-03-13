@@ -27,12 +27,15 @@
 
 #include "pme/minimization/minimization.h"
 #include "pme/engine/consecution_checker.h"
+#include "pme/engine/collapse_set_finder.h"
 #include "pme/util/maxsat_solver.h"
 
 #include <unordered_map>
 
 namespace PME
 {
+    // TODO: There is no need for the distinction between MARCO and CAMSIS.
+    // Merge the two into a single configurable algorithm.
     class MARCOMinimizer : public ProofMinimizer
     {
         public:
@@ -50,6 +53,7 @@ namespace PME
             void initSolvers();
             ID seedVarOf(ClauseID cls) const;
             bool isSIS(const Seed & seed);
+            bool isSIS(const Seed & seed, std::vector<ClauseID> & unsupported);
             void grow(Seed & seed);
             void shrink(Seed & seed);
             bool findSIS(Seed & seed);
@@ -58,6 +62,8 @@ namespace PME
 
             void updateProofs(const Seed & seed);
 
+            bool useMCS() const;
+            bool useCollapse() const;
             bool isDirectionUp() const;
             bool isDirectionDown() const;
             bool isDirectionZigZag() const;
@@ -66,7 +72,11 @@ namespace PME
             bool isNextSeedMaximum() const;
             PBOMaxSATSolver & getSeedSolver();
 
-            VariableManager m_vars;
+            bool findCollapse(ClauseID c, CollapseSet & collapse);
+            Clause collapseClause(ClauseID c, const CollapseSet & collapse) const;
+            void collapseRefine(const std::vector<ClauseID> & unsupported);
+
+            CollapseSetFinder m_collapse_finder;
             PBOMaxSATSolver m_seed_solver_down, m_seed_solver_up;
             ConsecutionChecker m_ind_solver;
             std::unordered_map<ClauseID, ID> m_clause_to_seed_var;
