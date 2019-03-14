@@ -50,6 +50,10 @@ namespace PME
             typedef std::pair<bool, Seed> UnexploredResult;
 
             UnexploredResult getUnexplored();
+            UnexploredResult getUnexploredMin();
+            UnexploredResult getUnexploredMax();
+            UnexploredResult getUnexploredMinMax(MSU4MaxSATSolver & seed_solver);
+            UnexploredResult getUnexploredArb();
             void initSolvers();
             ID seedVarOf(ClauseID cls) const;
             bool isSIS(const Seed & seed);
@@ -70,14 +74,15 @@ namespace PME
             bool isDirectionArbitrary() const;
             bool isNextSeedMinimum() const;
             bool isNextSeedMaximum() const;
-            PBOMaxSATSolver & getSeedSolver();
+            void addSeedClause(const Clause & cls);
 
             bool findCollapse(ClauseID c, CollapseSet & collapse);
             Clause collapseClause(ClauseID c, const CollapseSet & collapse) const;
             void collapseRefine(const std::vector<ClauseID> & unsupported);
 
             CollapseSetFinder m_collapse_finder;
-            PBOMaxSATSolver m_seed_solver_down, m_seed_solver_up;
+            SATAdaptor m_seed_solver_arb;
+            MSU4MaxSATSolver m_seed_solver_down, m_seed_solver_up;
             ConsecutionChecker m_ind_solver;
             std::unordered_map<ClauseID, ID> m_clause_to_seed_var;
             Seed m_smallest_proof;
