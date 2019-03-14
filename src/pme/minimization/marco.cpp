@@ -102,35 +102,6 @@ namespace PME
         }
     }
 
-    PBOMaxSATSolver & MARCOMinimizer::getSeedSolver()
-    {
-        if (isDirectionUp() || isDirectionArbitrary())
-        {
-            return m_seed_solver_up;
-        }
-        else if (isDirectionDown())
-        {
-            return m_seed_solver_down;
-        }
-        else if (isDirectionZigZag())
-        {
-            if (isNextSeedMinimum())
-            {
-                return m_seed_solver_up;
-            }
-            else
-            {
-                assert(isNextSeedMaximum());
-                return m_seed_solver_down;
-            }
-        }
-        else
-        {
-            assert(false);
-            return m_seed_solver_down;
-        }
-    }
-
     void MARCOMinimizer::initSolvers()
     {
         for (ClauseID id = 0; id < numClauses(); ++id)
@@ -156,8 +127,7 @@ namespace PME
             // always present
             if (cls.size() == 1 && cls.at(0) == negate(tr().bad()))
             {
-                m_seed_solver_up.addClause({cls_seed});
-                m_seed_solver_down.addClause({cls_seed});
+                addSeedClause({cls_seed});
             }
 
             // In MARCO-FORQES, we use use the collapse set finder as well
@@ -177,6 +147,7 @@ namespace PME
             bool sat;
             Seed seed;
 
+            // TODO: remove unnecessary statefulness
             bool minimum = isNextSeedMinimum();
             bool maximum = isNextSeedMaximum();
 
@@ -212,12 +183,11 @@ namespace PME
                        << (minimum ? " [minimum]" : maximum ? " [maximum]" : "")
                        << std::endl;
 
-                log(2) << "MSS of size " << seed.size() << std::endl;
-                log(3) << "MSS: " << seed << std::endl;
-
                 if (useMCS())
                 {
                     if (!maximum) { grow(seed); }
+                    log(2) << "MSS of size " << seed.size() << std::endl;
+                    log(3) << "MSS: " << seed << std::endl;
                     blockDown(seed);
                 }
 
@@ -271,8 +241,7 @@ namespace PME
             cls.push_back(negate(svar));
         }
 
-        m_seed_solver_up.addClause(cls);
-        m_seed_solver_down.addClause(cls);
+        addSeedClause(cls);
     }
 
     void MARCOMinimizer::blockDown(const Seed & seed)
@@ -298,13 +267,11 @@ namespace PME
         // clause (false) in that case
         if (cls.empty())
         {
-            m_seed_solver_up.addClause({ID_FALSE});
-            m_seed_solver_down.addClause({ID_FALSE});
+            addSeedClause({ID_FALSE});
         }
         else
         {
-            m_seed_solver_up.addClause(cls);
-            m_seed_solver_down.addClause(cls);
+            addSeedClause(cls);
         }
     }
 
@@ -412,51 +379,102 @@ namespace PME
         return findSafeMIS(m_ind_solver, seed, propertyID());
     }
 
+    void MARCOMinimizer::addSeedClause(const Clause & cls)
+    {
+        m_seed_solver_up.addClause(cls);
+        m_seed_solver_down.addClause(cls);
+        m_seed_solver_arb.addClause(cls);
+    }
+
     MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexplored()
     {
         stats().marco_get_unexplored_calls++;
         AutoTimer t(stats().marco_get_unexplored_time);
 
-        PBOMaxSATSolver & seed_solver = getSeedSolver();
-        bool minimum = isNextSeedMinimum();
-        m_seed_count++;
+        if (isNextSeedMinimum()) { return getUnexploredMin(); }
+        else if (isNextSeedMaximum()) { return getUnexploredMax(); }
+        else { return getUnexploredArb(); }
+    }
 
+    MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexploredMin()
+    {
+        UnexploredResult result = getUnexploredMinMax(m_seed_solver_up);
+
+        if (result.first)
+        {
+            const Seed & seed = result.second;
+            assert(seed.size() >= m_lower_bound);
+            m_lower_bound = seed.size();
+            if (!minimumProofKnown() && !m_smallest_proof.empty() &&
+                    m_smallest_proof.size() <= m_lower_bound)
+            {
+                setMinimumProof(m_smallest_proof);
+            }
+        }
+
+        return result;
+    }
+
+    MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexploredMax()
+    {
+        return getUnexploredMinMax(m_seed_solver_down);
+    }
+
+    MARCOMinimizer::UnexploredResult
+    MARCOMinimizer::getUnexploredMinMax(MSU4MaxSATSolver & seed_solver)
+    {
         UnexploredResult result;
         Seed & seed = result.second;
+
         if (seed_solver.solve())
         {
+            m_seed_count++;
             result.first = true;
             for (ClauseID id = 0; id < numClauses(); ++id)
             {
                 ID seed_var = seedVarOf(id);
-                ModelValue assignment = seed_solver.safeGetAssignmentToVar(seed_var);
+                ModelValue assignment = seed_solver.getAssignmentToVar(seed_var);
                 if (assignment == SAT::TRUE) { seed.push_back(id); }
-
-                // UNDEF should only be possible in MARCO-ARB
-                // We treat it as true (it indicates variable does not yet
-                // appear in the map, so it's a don't care)
-                if (assignment == SAT::UNDEF)
-                {
-                    assert(isDirectionArbitrary());
-                    seed.push_back(id);
-                }
-            }
-
-            if (minimum)
-            {
-                assert(seed.size() >= m_lower_bound);
-                m_lower_bound = seed.size();
-                if (!minimumProofKnown() && !m_smallest_proof.empty() &&
-                        m_smallest_proof.size() <= m_lower_bound)
-                {
-                    setMinimumProof(m_smallest_proof);
-                }
             }
         }
         else
         {
             result.first = false;
         }
+
+        return result;
+    }
+
+    MARCOMinimizer::UnexploredResult MARCOMinimizer::getUnexploredArb()
+    {
+        UnexploredResult result;
+        Seed & seed = result.second;
+
+        if (m_seed_solver_arb.solve())
+        {
+            m_seed_count++;
+            result.first = true;
+            for (ClauseID id = 0; id < numClauses(); ++id)
+            {
+                ID seed_var = seedVarOf(id);
+                ModelValue assignment = m_seed_solver_arb.safeGetAssignmentToVar(seed_var);
+                if (assignment == SAT::TRUE) { seed.push_back(id); }
+
+                // We treat UNDEF as true (it indicates variable does not yet
+                // appear in the map, so it's a don't care)
+                if (assignment == SAT::UNDEF)
+                {
+                    assert(isDirectionArbitrary());
+                    seed.push_back(id);
+                }
+
+            }
+        }
+        else
+        {
+            result.first = false;
+        }
+
         return result;
     }
 
@@ -476,8 +494,7 @@ namespace PME
             assert(found);
 
             Clause cls = collapseClause(c, collapse);
-            m_seed_solver_up.addClause(cls);
-            m_seed_solver_down.addClause(cls);
+            addSeedClause(cls);
         }
     }
 
