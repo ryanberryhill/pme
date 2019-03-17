@@ -35,6 +35,7 @@ namespace PME
         maxsat_runtime(0.0),
         sat_calls(0),
         sat_runtime(0.0),
+        num_clauses(0),
         num_msis_found(0),
         smallest_msis_size(std::numeric_limits<size_t>::max()),
         largest_msis_size(0),
@@ -94,6 +95,7 @@ namespace PME
         os << "SAT Runtime: " << sat_runtime << std::endl;
 
         // Proof Minimization
+        os << "Clauses in proof: " << num_clauses << std::endl;
         os << "MSISes Found: " << num_msis_found << std::endl;
         if (num_msis_found > 0)
         {

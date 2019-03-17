@@ -66,6 +66,7 @@ namespace PME
     {
         m_timer.start();
         stats().num_gates = tr().numGates();
+        stats().num_clauses = proof().size();
 
         doMinimize();
     }

@@ -45,6 +45,7 @@ namespace PME
         double sat_runtime;
 
         // Proof Minimization
+        size_t num_clauses;
         size_t num_msis_found;
         size_t smallest_msis_size;
         size_t largest_msis_size;
