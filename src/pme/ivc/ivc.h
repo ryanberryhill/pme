@@ -26,6 +26,7 @@
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
+#include "pme/util/map_solver.h"
 #include "pme/util/timer.h"
 
 namespace PME {
@@ -33,7 +34,6 @@ namespace PME {
     // A vector of IDs corresponding to the LHS of AndGates
     typedef std::vector<ID> IVC;
     typedef std::vector<ID> BVC;
-    typedef std::vector<ID> Seed;
 
     class IVCFinder
     {

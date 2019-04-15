@@ -41,7 +41,6 @@ namespace PME {
         protected:
             virtual std::ostream & log(int verbosity) const override;
         private:
-            typedef std::pair<bool, Seed> UnexploredResult;
 
             UnexploredResult getUnexplored();
             void recordMIVC(const Seed & mivc);

@@ -77,6 +77,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/util/hitting_set_finder.cpp \
                    src/pme/util/check_cex.h \
                    src/pme/util/check_cex.cpp \
+                   src/pme/util/map_solver.h \
+                   src/pme/util/map_solver.cpp \
                    src/pme/minimization/marco.h \
                    src/pme/minimization/marco.cpp \
                    src/pme/minimization/camsis.h \
@@ -192,7 +194,8 @@ TESTS = test_sat_adaptor \
         test_ivc_checker \
         test_hybrid_safety_checker \
         test_hitting_set_finder \
-        test_check_cex
+        test_check_cex \
+        test_map_solver
 
 check_PROGRAMS = $(TESTS)
 
@@ -294,6 +297,9 @@ test_hitting_set_finder_LDADD = $(PME_TEST_LIBS)
 
 test_check_cex_SOURCES = tests/test_check_cex.cpp  
 test_check_cex_LDADD = $(PME_TEST_LIBS)
+
+test_map_solver_SOURCES = tests/test_map_solver.cpp
+test_map_solver_LDADD = $(PME_TEST_LIBS)
 
 SUBDIRS = src/sat/solvers/glucose src/sat/solvers/minisat 
 

@@ -99,7 +99,7 @@ namespace PME {
         addMIVC(mivc);
     }
 
-    MARCOIVCFinder::UnexploredResult MARCOIVCFinder::getUnexplored()
+    UnexploredResult MARCOIVCFinder::getUnexplored()
     {
         stats().marcoivc_get_unexplored_calls++;
         AutoTimer timer(stats().marcoivc_get_unexplored_time);
