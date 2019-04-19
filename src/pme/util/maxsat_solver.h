@@ -40,7 +40,9 @@ namespace PME
             virtual void addClause(const Clause & cls) = 0;
             virtual void addClauses(const ClauseVec & vec) = 0;
             virtual bool solve();
+            virtual bool check(const Cube & assumps);
             virtual bool doSolve() = 0;
+            virtual bool doCheck(const Cube & assumps) = 0;
             virtual void addForOptimization(ID lit) = 0;
             virtual bool isSAT() const = 0;
             virtual ModelValue getAssignment(ID lit) const = 0;
@@ -55,6 +57,7 @@ namespace PME
             virtual void addClause(const Clause & cls) override;
             virtual void addClauses(const ClauseVec & vec) override;
             virtual bool doSolve() override;
+            virtual bool doCheck(const Cube & assumps) override;
             virtual void addForOptimization(ID lit) override;
             virtual bool isSAT() const override;
             virtual ModelValue getAssignment(ID lit) const override;
@@ -87,6 +90,7 @@ namespace PME
             virtual void addClause(const Clause & cls) override;
             virtual void addClauses(const ClauseVec & vec) override;
             virtual bool doSolve() override;
+            virtual bool doCheck(const Cube & assumps) override;
             virtual void addForOptimization(ID lit) override;
             virtual bool isSAT() const override;
             virtual ModelValue getAssignment(ID lit) const override;

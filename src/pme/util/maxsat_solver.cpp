@@ -36,6 +36,15 @@ namespace PME
         return doSolve();
     }
 
+    bool MaxSATSolver::check(const Cube & assumps)
+    {
+        // TODO: check probably shouldn't count as MaxSAT runtime
+        GlobalState::stats().maxsat_calls++;
+        AutoTimer timer(GlobalState::stats().maxsat_runtime);
+
+        return doCheck(assumps);
+    }
+
     const PMEOptions& MaxSATSolver::opts() const
     {
         return GlobalState::options();
@@ -116,6 +125,12 @@ namespace PME
     {
         std::vector<ID> assumps;
         return assumpSolve(assumps);
+    }
+
+    bool PBOMaxSATSolver::doCheck(const Cube & assumps)
+    {
+        if (!m_solverInited) { initSolver(); }
+        return m_solver.solve(assumps);
     }
 
     bool PBOMaxSATSolver::assumpSolve(const Cube & assumps)
@@ -452,6 +467,13 @@ namespace PME
 
         assert(false);
         return false;
+    }
+
+    bool MSU4MaxSATSolver::doCheck(const Cube & assumps)
+    {
+        // Don't count as a solve, as it doesn't add cardinality constraints
+        // or the like
+        return m_solver.solve(assumps);
     }
 
     void MSU4MaxSATSolver::addForOptimization(ID lit)

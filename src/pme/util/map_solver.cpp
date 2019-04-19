@@ -29,8 +29,6 @@ namespace PME {
     template <class ForwardIterator>
     Clause downClause(ForwardIterator begin, ForwardIterator end, const Seed & seed)
     {
-        assert(!seed.empty());
-
         // Clause that blocks seed and all subsets.
         // For c_1,...,c_n not in seed: (c_1 V ... V c_n)
         Clause cls;
@@ -51,8 +49,6 @@ namespace PME {
 
     Clause upClause(const Seed & seed)
     {
-        assert(!seed.empty());
-
         // Clause that blocks seed and all supersets.
         // For seed = c_1,...,c_n: (~c_1 V ... V ~c_n)
 
@@ -72,6 +68,15 @@ namespace PME {
     void MapSolver::blockUp(const Seed & seed)
     {
         Clause cls = upClause(seed);
+
+        // When blocking the whole search space (i.e., seed = empty),
+        // the clause will be empty and the SAT solver will probably
+        // assert on that. Add the false clause in that case
+        if (cls.empty())
+        {
+            cls = { ID_FALSE };
+        }
+
         addClauseToSolver(cls);
     }
 
@@ -82,7 +87,6 @@ namespace PME {
         // When blocking the whole search space (e.g., seed = all gates),
         // the clause will be empty and the SAT solver will probably
         // assert on that. Add the false clause in that case
-
         if (cls.empty())
         {
             cls = { ID_FALSE };
@@ -144,6 +148,43 @@ namespace PME {
         map().addClause(cls);
     }
 
+    Seed MinmaxMapSolver::extractSeed() const
+    {
+        assert(map().isSAT());
+
+        Seed seed;
+
+        for (auto it = begin_gates(); it != end_gates(); ++it)
+        {
+            ID gate = *it;
+            ModelValue assignment = map().getAssignmentToVar(gate);
+            if (assignment == SAT::TRUE) { seed.push_back(gate); }
+        }
+
+        return seed;
+    }
+
+    bool MinmaxMapSolver::checkSeed(const Seed & seed)
+    {
+        std::unordered_set<ID> seed_set(seed.begin(), seed.end());
+        Cube assumps;
+
+        for (auto it = begin_gates(); it != end_gates(); ++it)
+        {
+            ID gate = *it;
+            if (seed_set.count(gate) > 0)
+            {
+                assumps.push_back(gate);
+            }
+            else
+            {
+                assumps.push_back(negate(gate));
+            }
+        }
+
+        return map().check(assumps);
+    }
+
     void MaximalMapSolver::initSolver()
     {
         for (auto it = begin_gates(); it != end_gates(); ++it)
@@ -155,16 +196,10 @@ namespace PME {
     UnexploredResult MaximalMapSolver::doFindMaximalSeed()
     {
         UnexploredResult result;
-        Seed & seed = result.second;
         if (map().solve())
         {
             result.first = true;
-            for (auto it = begin_gates(); it != end_gates(); ++it)
-            {
-                ID gate = *it;
-                ModelValue assignment = map().getAssignmentToVar(gate);
-                if (assignment == SAT::TRUE) { seed.push_back(gate); }
-            }
+            result.second = extractSeed();
         }
         else
         {
@@ -176,6 +211,34 @@ namespace PME {
     UnexploredResult MaximalMapSolver::doFindSeed()
     {
         return doFindMaximalSeed();
+    }
+
+    void MinimalMapSolver::initSolver()
+    {
+        for (auto it = begin_gates(); it != end_gates(); ++it)
+        {
+            map().addForOptimization(negate(*it));
+        }
+    }
+
+    UnexploredResult MinimalMapSolver::doFindMinimalSeed()
+    {
+        UnexploredResult result;
+        if (map().solve())
+        {
+            result.first = true;
+            result.second = extractSeed();
+        }
+        else
+        {
+            result.first = false;
+        }
+        return result;
+    }
+
+    UnexploredResult MinimalMapSolver::doFindSeed()
+    {
+        return doFindMinimalSeed();
     }
 }
 

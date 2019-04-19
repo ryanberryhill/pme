@@ -45,12 +45,89 @@ struct MapSolverFixture
         solver.reset(new Solver(gates.begin(), gates.end(), vars));
     }
 
+    void blockDown(const Seed & seed)
+    {
+        std::set<ID> seed_set(seed.begin(), seed.end());
+        blocked_down.push_back(seed_set);
+
+        solver->blockDown(seed);
+    }
+
+    void blockUp(const Seed & seed)
+    {
+        std::set<ID> seed_set(seed.begin(), seed.end());
+        blocked_up.push_back(seed_set);
+
+        solver->blockUp(seed);
+    }
+
+    bool isBlocked(const Seed & seed)
+    {
+        std::set<ID> s(seed.begin(), seed.end());
+
+        for (const std::set<ID> blocked : blocked_down)
+        {
+            if (std::includes(blocked.begin(), blocked.end(), s.begin(), s.end()))
+            {
+                return true;
+            }
+        }
+
+        for (const std::set<ID> blocked : blocked_up)
+        {
+            if (std::includes(s.begin(), s.end(), blocked.begin(), blocked.end()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     VariableManager vars;
     ID g1, g2, g3, g4;
 
     std::unique_ptr<Solver> solver;
     std::vector<ID> gates;
+
+    std::vector<std::set<ID>> blocked_down;
+    std::vector<std::set<ID>> blocked_up;
 };
+
+std::set<Seed> powerSet(Seed seed)
+{
+    if (seed.size() == 0)
+    {
+        Seed empty;
+        return {empty};
+    }
+    else
+    {
+        std::set<Seed> powerset;
+        for (size_t i = 0; i < seed.size(); ++i)
+        {
+            ID deleted = seed.at(i);
+
+            Seed copy = seed;
+            copy.erase(copy.begin() + i);
+
+            std::set<Seed> powerset_sub = powerSet(copy);
+            for (const Seed & s : powerset_sub)
+            {
+                Seed pcopy = s;
+                pcopy.push_back(deleted);
+
+                assert(std::is_sorted(s.begin(), s.end()));
+                std::sort(pcopy.begin(), pcopy.end());
+
+                powerset.insert(s);
+                powerset.insert(pcopy);
+            }
+        }
+
+        return powerset;
+    }
+}
 
 bool containedIn(const Seed & s1, const Seed & s2)
 {
@@ -112,6 +189,11 @@ void testFindMaximalBlockEverything()
     // Check the gates also match up
     BOOST_CHECK(containedIn(seed, f.gates));
 
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(f.solver->checkSeed({f.g2}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g3}));
+
     // Block the whole search space
     f.solver->blockDown(seed);
 
@@ -119,6 +201,396 @@ void testFindMaximalBlockEverything()
 
     BOOST_CHECK(!sat);
     BOOST_CHECK(seed.empty());
+    BOOST_CHECK(!f.solver->checkSeed(seed));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g2}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g3}));
+}
+
+template<class Solver>
+void testFindMaximalBlockUp()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat;
+    Seed seed;
+
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+
+    // Must be SAT
+    BOOST_REQUIRE(sat);
+    // And equal to the whole thing
+    BOOST_CHECK_EQUAL(seed.size(), f.gates.size());
+    // Check the gates also match up
+    BOOST_CHECK(containedIn(seed, f.gates));
+
+    f.solver->blockUp({f.g1, f.g2, f.g3});
+
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+
+    // {g1, g2, g3, g4} should be blocked, as should {g1, g2, g3}
+    BOOST_CHECK(!f.solver->checkSeed({f.gates}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2, f.g3}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g4}));
+
+    // So the only other possibility is {g1, g2, g4}
+    BOOST_REQUIRE(sat);
+    BOOST_REQUIRE(!seed.empty());
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(containedIn(seed, f.gates));
+    BOOST_CHECK_EQUAL(seed.size(), 3);
+    BOOST_CHECK(containedIn(seed, {f.g1, f.g2, f.g4}));
+
+    f.solver->blockUp({f.g2, f.g4});
+
+    // Next should be {g1, g3, g4}
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_REQUIRE(!seed.empty());
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(containedIn(seed, f.gates));
+    BOOST_CHECK_EQUAL(seed.size(), 3);
+    BOOST_CHECK(containedIn(seed, {f.g1, f.g3, f.g4}));
+
+    f.solver->blockUp({f.g3});
+    f.solver->blockUp({f.g4});
+
+    // Next should be {g1, g2}
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_REQUIRE(!seed.empty());
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(containedIn(seed, f.gates));
+    BOOST_CHECK_EQUAL(seed.size(), 2);
+    BOOST_CHECK(containedIn(seed, {f.g1, f.g2}));
+
+    f.solver->blockUp({f.g1});
+
+    // All that's left is {g2} and empty seed
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_REQUIRE(!seed.empty());
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(containedIn(seed, f.gates));
+    BOOST_CHECK_EQUAL(seed.size(), 1);
+    BOOST_CHECK(containedIn(seed, {f.g2}));
+
+    f.solver->blockUp({f.g2});
+
+    // Should be empty
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(seed.empty());
+
+    Seed empty;
+    f.solver->blockUp(empty);
+
+    // Should be UNSAT
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+    BOOST_CHECK(!sat);
+    BOOST_CHECK(seed.empty());
+}
+
+template<class Solver>
+void testFindMaximalBlockDown()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat;
+    Seed seed;
+
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+
+    // Must be SAT
+    BOOST_REQUIRE(sat);
+    // And equal to the whole thing
+    BOOST_CHECK_EQUAL(seed.size(), f.gates.size());
+    // Check the gates also match up
+    BOOST_CHECK(containedIn(seed, f.gates));
+
+    f.solver->blockDown({f.g1});
+    f.solver->blockDown({f.g2});
+    f.solver->blockDown({f.g3});
+    f.solver->blockDown({f.g4});
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g2}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g3}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g4}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g4}));
+
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+
+    // Should still be the whole thing
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK_EQUAL(seed.size(), f.gates.size());
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(containedIn(seed, f.gates));
+
+    f.solver->blockDown({f.g1, f.g2, f.g3});
+    f.solver->blockDown({f.g1, f.g2, f.g4});
+    f.solver->blockDown({f.g1, f.g3, f.g4});
+    f.solver->blockDown({f.g2, f.g3, f.g4});
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g2, f.g3}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g3, f.g4}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3, f.g4}));
+
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+
+    // Should still be the whole thing
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK_EQUAL(seed.size(), f.gates.size());
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(containedIn(seed, f.gates));
+
+    f.solver->blockDown({f.g1, f.g2, f.g3, f.g4});
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g2, f.g3}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g3, f.g4}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2, f.g3, f.g4}));
+
+    std::tie(sat, seed) = f.solver->findMaximalSeed();
+
+    // Should be UNSAT
+    BOOST_CHECK(!sat);
+    BOOST_CHECK(seed.empty());
+}
+
+template<class Solver>
+void testFindMinimalBasic()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat;
+    Seed seed;
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    // Must be SAT
+    BOOST_REQUIRE(sat);
+    // And empty
+    BOOST_CHECK(seed.empty());
+}
+
+template<class Solver>
+void testFindMinimalBlockEverything()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat;
+    Seed seed;
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    // Must be SAT
+    BOOST_REQUIRE(sat);
+    // And empty
+    BOOST_CHECK(seed.empty());
+
+    BOOST_CHECK(f.solver->checkSeed(seed));
+    BOOST_CHECK(f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(f.solver->checkSeed({f.g2}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g3}));
+
+    // Block the whole search space
+    f.solver->blockUp(seed);
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    BOOST_CHECK(!sat);
+    BOOST_CHECK(seed.empty());
+    BOOST_CHECK(!f.solver->checkSeed(seed));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g2}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g3}));
+}
+
+template<class Solver>
+void testFindMinimalBlockUp()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat;
+    Seed seed;
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    // Must be SAT
+    BOOST_REQUIRE(sat);
+    // And empty
+    BOOST_CHECK(seed.empty());
+
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3, f.g4}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3}));
+
+    f.solver->blockUp({f.g1, f.g2, f.g3, f.g4});
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(seed.empty());
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2, f.g3, f.g4}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3}));
+
+    f.solver->blockUp({f.g1, f.g2, f.g3});
+    f.solver->blockUp({f.g1, f.g2, f.g4});
+    f.solver->blockUp({f.g1, f.g3, f.g4});
+    f.solver->blockUp({f.g2, f.g3, f.g4});
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2, f.g3}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g3}));
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(seed.empty());
+
+    f.solver->blockUp({f.g1, f.g2});
+    f.solver->blockUp({f.g1, f.g3});
+    f.solver->blockUp({f.g1, f.g4});
+    f.solver->blockUp({f.g2, f.g3});
+    f.solver->blockUp({f.g2, f.g4});
+    f.solver->blockUp({f.g3, f.g4});
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g3}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(f.solver->checkSeed({f.g2}));
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(seed.empty());
+
+    f.solver->blockUp({f.g1});
+    f.solver->blockUp({f.g2});
+    f.solver->blockUp({f.g3});
+    f.solver->blockUp({f.g4});
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK(seed.empty());
+
+    BOOST_CHECK(!f.solver->checkSeed({f.g1}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g2}));
+    Seed empty;
+    BOOST_CHECK(f.solver->checkSeed(empty));
+
+    f.solver->blockUp(empty);
+    BOOST_CHECK(!f.solver->checkSeed(empty));
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+    BOOST_CHECK(!sat);
+    BOOST_CHECK(seed.empty());
+}
+
+template<class Solver>
+void testFindMinimalBlockDown()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat;
+    Seed seed;
+
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    // Must be SAT
+    BOOST_REQUIRE(sat);
+    // And empty
+    BOOST_CHECK(seed.empty());
+
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3, f.g4}));
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3}));
+
+    f.solver->blockDown({f.g1, f.g2, f.g3});
+
+    BOOST_CHECK(f.solver->checkSeed({f.g1, f.g2, f.g3, f.g4}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2, f.g3}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g2}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g1, f.g3}));
+    BOOST_CHECK(!f.solver->checkSeed({f.g3}));
+
+    // Next should be {g4}
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK_EQUAL(seed.size(), 1);
+    BOOST_CHECK(containedIn(seed, {f.g4}));
+
+    f.solver->blockDown({f.g1, f.g3, f.g4});
+
+    // Next {g2, g4}
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK_EQUAL(seed.size(), 2);
+    BOOST_CHECK(containedIn(seed, {f.g2, f.g4}));
+
+    f.solver->blockDown({f.g1, f.g2, f.g4});
+
+    // Next {g2, g3, g4}
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK_EQUAL(seed.size(), 3);
+    BOOST_CHECK(containedIn(seed, {f.g2, f.g3, f.g4}));
+
+    f.solver->blockDown({f.g2, f.g3, f.g4});
+
+    // Next {g1, g2, g3, g4}
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    BOOST_REQUIRE(sat);
+    BOOST_CHECK_EQUAL(seed.size(), 4);
+    BOOST_CHECK(containedIn(seed, {f.g1, f.g2, f.g3, f.g4}));
+
+    f.solver->blockDown({f.g1, f.g2, f.g3, f.g4});
+
+    // Now UNSAT
+    std::tie(sat, seed) = f.solver->findMinimalSeed();
+
+    BOOST_REQUIRE(!sat);
+    BOOST_CHECK(seed.empty());
+}
+
+template<class Solver>
+void testFindArbitraryBlockUp()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat = true;
+    Seed seed;
+
+
+    while(sat)
+    {
+        std::tie(sat, seed) = f.solver->findSeed();
+
+        // Must be SAT and not already blocked
+        if (sat)
+        {
+            BOOST_CHECK(!f.isBlocked(seed));
+            BOOST_CHECK(f.solver->checkSeed(seed));
+            if (seed.empty())
+            {
+                f.blockDown(seed);
+            }
+            else
+            {
+                f.blockUp({seed.at(0)});
+            }
+        }
+    }
+
+    // Upon UNSAT, check the whole power set is blocked
+    std::set<Seed> powerset = powerSet(f.gates);
+    for (const Seed & s : powerset)
+    {
+        BOOST_CHECK(f.isBlocked(s));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(maximal_map_solver)
@@ -126,5 +598,18 @@ BOOST_AUTO_TEST_CASE(maximal_map_solver)
     testMinimalUnsupported<MaximalMapSolver>();
     testFindMaximalBasic<MaximalMapSolver>();
     testFindMaximalBlockEverything<MaximalMapSolver>();
+    testFindMaximalBlockUp<MaximalMapSolver>();
+    testFindMaximalBlockDown<MaximalMapSolver>();
+    testFindArbitraryBlockUp<MaximalMapSolver>();
+}
+
+BOOST_AUTO_TEST_CASE(minimal_map_solver)
+{
+    testMaximalUnsupported<MinimalMapSolver>();
+    testFindMinimalBasic<MinimalMapSolver>();
+    testFindMinimalBlockEverything<MinimalMapSolver>();
+    testFindMinimalBlockUp<MinimalMapSolver>();
+    testFindMinimalBlockDown<MinimalMapSolver>();
+    testFindArbitraryBlockUp<MinimalMapSolver>();
 }
 

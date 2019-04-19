@@ -45,14 +45,16 @@ namespace PME {
             virtual UnexploredResult findMaximalSeed();
             virtual UnexploredResult findSeed() = 0;
 
+            virtual bool checkSeed(const Seed & seed) = 0;
+
         protected:
             VariableManager & vars() { return m_vars; }
-            const std::set<ID> & gates() { return m_gates; }
+            const std::set<ID> & gates() const { return m_gates; }
 
-            auto begin_gates() -> decltype(gates().begin())
-            { return gates().begin(); }
-            auto end_gates() -> decltype(gates().end())
-            { return gates().end(); }
+            auto begin_gates() const -> decltype(gates().cbegin())
+            { return gates().cbegin(); }
+            auto end_gates() const -> decltype(gates().cend())
+            { return gates().cend(); }
 
             virtual void addClauseToSolver(const Clause & cls) = 0;
 
@@ -76,6 +78,8 @@ namespace PME {
             virtual UnexploredResult findMaximalSeed() override;
             virtual UnexploredResult findSeed() override;
 
+            virtual bool checkSeed(const Seed & seed) override;
+
         protected:
             virtual void addClauseToSolver(const Clause & cls) override;
 
@@ -84,7 +88,10 @@ namespace PME {
             virtual UnexploredResult doFindMaximalSeed();
             virtual UnexploredResult doFindSeed() = 0;
 
+            Seed extractSeed() const;
+
             MSU4MaxSATSolver & map() { return m_map; }
+            const MSU4MaxSATSolver & map() const { return m_map; }
 
         private:
             void initIfNecessary();
@@ -104,6 +111,21 @@ namespace PME {
         protected:
             virtual void initSolver() override;
             virtual UnexploredResult doFindMaximalSeed() override;
+            virtual UnexploredResult doFindSeed() override;
+    };
+
+    class MinimalMapSolver : public MinmaxMapSolver
+    {
+        public:
+            template <class It>
+            MinimalMapSolver(It begin, It end, VariableManager & varman)
+                : MinmaxMapSolver(begin, end, varman)
+            { }
+            virtual ~MinimalMapSolver() { };
+
+        protected:
+            virtual void initSolver() override;
+            virtual UnexploredResult doFindMinimalSeed() override;
             virtual UnexploredResult doFindSeed() override;
     };
 }

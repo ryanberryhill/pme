@@ -336,3 +336,127 @@ BOOST_AUTO_TEST_CASE(pbo_safe_get_assignment)
     BOOST_CHECK_EQUAL(solver.safeGetAssignment(c), SAT::TRUE);
     BOOST_CHECK_EQUAL(solver.safeGetAssignment(d), SAT::UNDEF);
 }
+
+void testMaxSATCheck(VariableManager & vars, MaxSATSolver & solver)
+{
+    ID a = vars.getNewID();
+    ID b = vars.getNewID();
+    ID c = vars.getNewID();
+    ID d = vars.getNewID();
+
+    std::vector<ID> ids = {a, b, c, d};
+
+    solver.addForOptimization(a);
+    solver.addForOptimization(b);
+    solver.addForOptimization(c);
+    solver.addForOptimization(d);
+
+    BOOST_CHECK(solver.check({a, b, c, d}));
+    BOOST_CHECK(solver.check({a, b, c}));
+    BOOST_CHECK(solver.check({a, b, d}));
+    BOOST_CHECK(solver.check({a, c, d}));
+    BOOST_CHECK(solver.check({b, c, d}));
+    BOOST_CHECK(solver.check({a, b}));
+    BOOST_CHECK(solver.check({a, c}));
+    BOOST_CHECK(solver.check({a, d}));
+    BOOST_CHECK(solver.check({b, c}));
+    BOOST_CHECK(solver.check({b, d}));
+    BOOST_CHECK(solver.check({c, d}));
+    BOOST_CHECK(solver.check({a}));
+    BOOST_CHECK(solver.check({b}));
+    BOOST_CHECK(solver.check({c}));
+    BOOST_CHECK(solver.check({d}));
+
+    solver.addClause({negate(a), negate(b), negate(c), negate(d)});
+
+    BOOST_CHECK(!solver.check({a, b, c, d}));
+    BOOST_CHECK(solver.check({a, b, c}));
+    BOOST_CHECK(solver.check({a, b, d}));
+    BOOST_CHECK(solver.check({a, c, d}));
+    BOOST_CHECK(solver.check({b, c, d}));
+    BOOST_CHECK(solver.check({a, b}));
+    BOOST_CHECK(solver.check({a, c}));
+    BOOST_CHECK(solver.check({a, d}));
+    BOOST_CHECK(solver.check({b, c}));
+    BOOST_CHECK(solver.check({b, d}));
+    BOOST_CHECK(solver.check({c, d}));
+    BOOST_CHECK(solver.check({a}));
+    BOOST_CHECK(solver.check({b}));
+    BOOST_CHECK(solver.check({c}));
+    BOOST_CHECK(solver.check({d}));
+
+    Clause block;
+    // Block the 4 assignments of size 3
+    for (int i = 0; i < 4; ++i)
+    {
+        BOOST_REQUIRE(solver.solve());
+        unsigned count = countAndBlock(solver, ids, block);
+        BOOST_CHECK_EQUAL(count, 3);
+        solver.addClause(block);
+    }
+
+    BOOST_CHECK(!solver.check({a, b, c, d}));
+    BOOST_CHECK(!solver.check({a, b, c}));
+    BOOST_CHECK(!solver.check({a, b, d}));
+    BOOST_CHECK(!solver.check({a, c, d}));
+    BOOST_CHECK(!solver.check({b, c, d}));
+    BOOST_CHECK(solver.check({a, b}));
+    BOOST_CHECK(solver.check({a, c}));
+    BOOST_CHECK(solver.check({a, d}));
+    BOOST_CHECK(solver.check({b, c}));
+    BOOST_CHECK(solver.check({b, d}));
+    BOOST_CHECK(solver.check({c, d}));
+    BOOST_CHECK(solver.check({a}));
+    BOOST_CHECK(solver.check({b}));
+    BOOST_CHECK(solver.check({c}));
+    BOOST_CHECK(solver.check({d}));
+
+    // Block the 6 assignments of size 2
+    for (int i = 0; i < 6; ++i)
+    {
+        BOOST_REQUIRE(solver.solve());
+        unsigned count = countAndBlock(solver, ids, block);
+        BOOST_CHECK_EQUAL(count, 2);
+        solver.addClause(block);
+    }
+
+    BOOST_CHECK(!solver.check({a, b, c, d}));
+    BOOST_CHECK(!solver.check({a, b, c}));
+    BOOST_CHECK(!solver.check({a, b, d}));
+    BOOST_CHECK(!solver.check({a, c, d}));
+    BOOST_CHECK(!solver.check({b, c, d}));
+    BOOST_CHECK(!solver.check({a, b}));
+    BOOST_CHECK(!solver.check({a, c}));
+    BOOST_CHECK(!solver.check({a, d}));
+    BOOST_CHECK(!solver.check({b, c}));
+    BOOST_CHECK(!solver.check({b, d}));
+    BOOST_CHECK(!solver.check({c, d}));
+    BOOST_CHECK(solver.check({a}));
+    BOOST_CHECK(solver.check({b}));
+    BOOST_CHECK(solver.check({c}));
+    BOOST_CHECK(solver.check({d}));
+
+    for (ID id : ids)
+    {
+        BOOST_CHECK(solver.check({id}));
+        solver.addClause({negate(id)});
+        BOOST_CHECK(!solver.check({id}));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(pbo_check)
+{
+    VariableManager vars;
+    PBOMaxSATSolver solver(vars);
+
+    testMaxSATCheck(vars, solver);
+}
+
+BOOST_AUTO_TEST_CASE(msu4_check)
+{
+    VariableManager vars;
+    MSU4MaxSATSolver solver(vars);
+
+    testMaxSATCheck(vars, solver);
+}
+
