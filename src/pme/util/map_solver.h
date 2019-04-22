@@ -63,16 +63,42 @@ namespace PME {
             VariableManager & m_vars;
     };
 
-    class MinmaxMapSolver : public MapSolver
+    class SATArbitraryMapSolver : public MapSolver
     {
         public:
             template <class It>
-            MinmaxMapSolver(It begin, It end, VariableManager & varman)
+            SATArbitraryMapSolver(It begin, It end, VariableManager & varman)
+                : MapSolver(begin, end, varman)
+            { }
+            virtual ~SATArbitraryMapSolver() { };
+
+            virtual UnexploredResult findMinimalSeed() override;
+            virtual UnexploredResult findMaximalSeed() override;
+            virtual UnexploredResult findSeed() override;
+
+            virtual bool checkSeed(const Seed & seed) override;
+
+        protected:
+            virtual void addClauseToSolver(const Clause & cls) override;
+
+        private:
+            Seed extractSeed() const;
+            void grow(Seed & seed);
+            void shrink(Seed & seed);
+
+            SATAdaptor m_map;
+    };
+
+    class MSU4MapSolver : public MapSolver
+    {
+        public:
+            template <class It>
+            MSU4MapSolver(It begin, It end, VariableManager & varman)
                 : MapSolver(begin, end, varman),
                   m_map(varman),
                   m_map_inited(false)
             { }
-            virtual ~MinmaxMapSolver() { };
+            virtual ~MSU4MapSolver() { };
 
             virtual UnexploredResult findMinimalSeed() override;
             virtual UnexploredResult findMaximalSeed() override;
@@ -99,14 +125,18 @@ namespace PME {
             bool m_map_inited;
     };
 
-    class MaximalMapSolver : public MinmaxMapSolver
+    class MSU4ArbitraryMapSolver;
+
+    class MSU4MaximalMapSolver : public MSU4MapSolver
     {
+        friend class MSU4ArbitraryMapSolver;
+
         public:
             template <class It>
-            MaximalMapSolver(It begin, It end, VariableManager & varman)
-                : MinmaxMapSolver(begin, end, varman)
+            MSU4MaximalMapSolver(It begin, It end, VariableManager & varman)
+                : MSU4MapSolver(begin, end, varman)
             { }
-            virtual ~MaximalMapSolver() { };
+            virtual ~MSU4MaximalMapSolver() { };
 
         protected:
             virtual void initSolver() override;
@@ -114,19 +144,47 @@ namespace PME {
             virtual UnexploredResult doFindSeed() override;
     };
 
-    class MinimalMapSolver : public MinmaxMapSolver
+    class MSU4MinimalMapSolver : public MSU4MapSolver
     {
+        friend class MSU4ArbitraryMapSolver;
+
         public:
             template <class It>
-            MinimalMapSolver(It begin, It end, VariableManager & varman)
-                : MinmaxMapSolver(begin, end, varman)
+            MSU4MinimalMapSolver(It begin, It end, VariableManager & varman)
+                : MSU4MapSolver(begin, end, varman)
             { }
-            virtual ~MinimalMapSolver() { };
+            virtual ~MSU4MinimalMapSolver() { };
 
         protected:
             virtual void initSolver() override;
             virtual UnexploredResult doFindMinimalSeed() override;
             virtual UnexploredResult doFindSeed() override;
+    };
+
+    class MSU4ArbitraryMapSolver : public MapSolver
+    {
+        public:
+            template <class It>
+            MSU4ArbitraryMapSolver(It begin, It end, VariableManager & varman)
+                : MapSolver(begin, end, varman),
+                  m_min(begin, end, varman),
+                  m_max(begin, end, varman)
+            { }
+            virtual ~MSU4ArbitraryMapSolver() { };
+
+            virtual UnexploredResult findMinimalSeed() override;
+            virtual UnexploredResult findMaximalSeed() override;
+            virtual UnexploredResult findSeed() override;
+
+            virtual bool checkSeed(const Seed & seed) override;
+
+        protected:
+            virtual void addClauseToSolver(const Clause & cls) override;
+
+        private:
+            MSU4MinimalMapSolver m_min;
+            MSU4MaximalMapSolver m_max;
+
     };
 }
 

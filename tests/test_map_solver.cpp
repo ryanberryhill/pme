@@ -593,23 +593,49 @@ void testFindArbitraryBlockUp()
     }
 }
 
-BOOST_AUTO_TEST_CASE(maximal_map_solver)
+BOOST_AUTO_TEST_CASE(sat_arbitrary_map_solver)
 {
-    testMinimalUnsupported<MaximalMapSolver>();
-    testFindMaximalBasic<MaximalMapSolver>();
-    testFindMaximalBlockEverything<MaximalMapSolver>();
-    testFindMaximalBlockUp<MaximalMapSolver>();
-    testFindMaximalBlockDown<MaximalMapSolver>();
-    testFindArbitraryBlockUp<MaximalMapSolver>();
+    testFindArbitraryBlockUp<SATArbitraryMapSolver>();
+    testFindMaximalBasic<SATArbitraryMapSolver>();
+    testFindMaximalBlockEverything<SATArbitraryMapSolver>();
+    testFindMaximalBlockUp<SATArbitraryMapSolver>();
+    testFindMaximalBlockDown<SATArbitraryMapSolver>();
+    testFindMinimalBasic<SATArbitraryMapSolver>();
+    testFindMinimalBlockEverything<SATArbitraryMapSolver>();
+    testFindMinimalBlockUp<SATArbitraryMapSolver>();
+    testFindMinimalBlockDown<SATArbitraryMapSolver>();
 }
 
-BOOST_AUTO_TEST_CASE(minimal_map_solver)
+BOOST_AUTO_TEST_CASE(msu4_arbitrary_map_solver)
 {
-    testMaximalUnsupported<MinimalMapSolver>();
-    testFindMinimalBasic<MinimalMapSolver>();
-    testFindMinimalBlockEverything<MinimalMapSolver>();
-    testFindMinimalBlockUp<MinimalMapSolver>();
-    testFindMinimalBlockDown<MinimalMapSolver>();
-    testFindArbitraryBlockUp<MinimalMapSolver>();
+    testFindArbitraryBlockUp<MSU4ArbitraryMapSolver>();
+    testFindMaximalBasic<MSU4ArbitraryMapSolver>();
+    testFindMaximalBlockEverything<MSU4ArbitraryMapSolver>();
+    testFindMaximalBlockUp<MSU4ArbitraryMapSolver>();
+    testFindMaximalBlockDown<MSU4ArbitraryMapSolver>();
+    testFindMinimalBasic<MSU4ArbitraryMapSolver>();
+    testFindMinimalBlockEverything<MSU4ArbitraryMapSolver>();
+    testFindMinimalBlockUp<MSU4ArbitraryMapSolver>();
+    testFindMinimalBlockDown<MSU4ArbitraryMapSolver>();
+}
+
+BOOST_AUTO_TEST_CASE(msu4_maximal_map_solver)
+{
+    testMinimalUnsupported<MSU4MaximalMapSolver>();
+    testFindMaximalBasic<MSU4MaximalMapSolver>();
+    testFindMaximalBlockEverything<MSU4MaximalMapSolver>();
+    testFindMaximalBlockUp<MSU4MaximalMapSolver>();
+    testFindMaximalBlockDown<MSU4MaximalMapSolver>();
+    testFindArbitraryBlockUp<MSU4MaximalMapSolver>();
+}
+
+BOOST_AUTO_TEST_CASE(msu4_minimal_map_solver)
+{
+    testMaximalUnsupported<MSU4MinimalMapSolver>();
+    testFindMinimalBasic<MSU4MinimalMapSolver>();
+    testFindMinimalBlockEverything<MSU4MinimalMapSolver>();
+    testFindMinimalBlockUp<MSU4MinimalMapSolver>();
+    testFindMinimalBlockDown<MSU4MinimalMapSolver>();
+    testFindArbitraryBlockUp<MSU4MinimalMapSolver>();
 }
 
