@@ -315,3 +315,187 @@ BOOST_AUTO_TEST_CASE(approximate_mcs_over_gates)
     BOOST_CHECK(!found);
 }
 
+
+
+
+
+
+template<class Finder>
+void testFindMCS()
+{
+    // The MCSes are:
+    // {a6}
+    // {a4, a5}
+    // {a0, a1, a5}
+    // {a2, a3, a4}
+    // {a0, a1, a2, a3}
+    CorrectionSetFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    Finder finder(f.vars, *f.tr);
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+    BOOST_REQUIRE(finder.moreCorrectionSets(1));
+    BOOST_REQUIRE(finder.moreCorrectionSets(4));
+    BOOST_REQUIRE(finder.moreCorrectionSets(6));
+    BOOST_REQUIRE(finder.moreCorrectionSets(10));
+
+    bool found;
+    CorrectionSet corr;
+
+    // MCS {a6}
+    std::tie(found, corr) = finder.findNext();
+
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 1);
+    BOOST_CHECK_EQUAL(corr.at(0), a6);
+
+    BOOST_REQUIRE(!finder.moreCorrectionSets(1));
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+    BOOST_REQUIRE(finder.moreCorrectionSets(2));
+
+    // MCS {a4, a5}
+    std::tie(found, corr) = finder.findNext();
+
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 2);
+    CorrectionSet expected = {a4, a5};
+    std::sort(expected.begin(), expected.end());
+    std::sort(corr.begin(), corr.end());
+    BOOST_CHECK(corr == expected);
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+    BOOST_REQUIRE(finder.moreCorrectionSets(3));
+    BOOST_REQUIRE(!finder.moreCorrectionSets(2));
+    BOOST_REQUIRE(!finder.moreCorrectionSets(1));
+
+    // MCSes {a0, a1, a5} and {a2, a3, a4}
+    CorrectionSet expected1 = {a0, a1, a5};
+    CorrectionSet expected2 = {a2, a3, a4};
+    std::sort(expected1.begin(), expected1.end());
+    std::sort(expected2.begin(), expected2.end());
+
+    CorrectionSet actual1, actual2;
+    std::tie(found, actual1) = finder.findNext();
+    BOOST_REQUIRE(found);
+    BOOST_REQUIRE(finder.moreCorrectionSets(3));
+
+    std::tie(found, actual2) = finder.findNext();
+    BOOST_REQUIRE(found);
+
+    BOOST_CHECK(!finder.moreCorrectionSets(3));
+    BOOST_CHECK(finder.moreCorrectionSets());
+    BOOST_CHECK(finder.moreCorrectionSets(4));
+
+    BOOST_CHECK_EQUAL(actual1.size(), 3);
+    BOOST_CHECK_EQUAL(actual2.size(), 3);
+
+    std::sort(actual1.begin(), actual1.end());
+    std::sort(actual2.begin(), actual2.end());
+
+    BOOST_REQUIRE(actual1 != actual2);
+    BOOST_CHECK(actual1 == expected1 || actual1 == expected2);
+    BOOST_CHECK(actual2 == expected1 || actual2 == expected2);
+
+    // MCS {a0, a1, a2, a3}
+    std::tie(found, corr) = finder.findNext();
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 4);
+    expected = {a0, a1, a2, a3};
+    std::sort(expected.begin(), expected.end());
+    BOOST_CHECK(corr == expected);
+
+    std::tie(found, corr) = finder.findNext();
+    BOOST_REQUIRE(!found);
+
+    BOOST_REQUIRE(!finder.moreCorrectionSets(1));
+    BOOST_REQUIRE(!finder.moreCorrectionSets(4));
+    BOOST_REQUIRE(!finder.moreCorrectionSets(10));
+    BOOST_REQUIRE(!finder.moreCorrectionSets());
+}
+
+template<class Finder>
+void testFindMCSExternallyBlocked()
+{
+    // The MCSes are:
+    // {a6}
+    // {a4, a5}
+    // {a0, a1, a5}
+    // {a2, a3, a4}
+    // {a0, a1, a2, a3}
+    CorrectionSetFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    Finder finder(f.vars, *f.tr);
+
+    finder.block({a5, a4});
+    finder.block({a0, a1, a5});
+
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+    BOOST_REQUIRE(finder.moreCorrectionSets(1));
+    BOOST_REQUIRE(finder.moreCorrectionSets(4));
+    BOOST_REQUIRE(finder.moreCorrectionSets(6));
+    BOOST_REQUIRE(finder.moreCorrectionSets(10));
+
+    bool found;
+    CorrectionSet corr;
+
+    // MCS {a6}
+    std::tie(found, corr) = finder.findNext();
+
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 1);
+    BOOST_CHECK_EQUAL(corr.at(0), a6);
+
+    BOOST_REQUIRE(!finder.moreCorrectionSets(1));
+    BOOST_REQUIRE(finder.moreCorrectionSets());
+    BOOST_REQUIRE(finder.moreCorrectionSets(3));
+
+    // MCSes {a2, a3, a4}
+    CorrectionSet expected = {a2, a3, a4};
+    std::sort(expected.begin(), expected.end());
+
+    std::tie(found, corr) = finder.findNext();
+    BOOST_REQUIRE(found);
+
+    BOOST_CHECK(!finder.moreCorrectionSets(3));
+    BOOST_CHECK(finder.moreCorrectionSets(4));
+
+    BOOST_CHECK_EQUAL(corr.size(), 3);
+    std::sort(corr.begin(), corr.end());
+
+    BOOST_CHECK(corr == expected);
+
+    // MCS {a0, a1, a2, a3}
+    std::tie(found, corr) = finder.findNext();
+    BOOST_REQUIRE(found);
+    BOOST_CHECK_EQUAL(corr.size(), 4);
+    expected = {a0, a1, a2, a3};
+    std::sort(expected.begin(), expected.end());
+    BOOST_CHECK(corr == expected);
+
+    std::tie(found, corr) = finder.findNext();
+    BOOST_REQUIRE(!found);
+
+    BOOST_REQUIRE(!finder.moreCorrectionSets());
+}
+
+BOOST_AUTO_TEST_CASE(basic_mcs_finder)
+{
+    testFindMCS<BasicMCSFinder>();
+    testFindMCSExternallyBlocked<BasicMCSFinder>();
+}

@@ -27,17 +27,17 @@
 namespace PME {
 
     typedef std::vector<ID> CorrectionSet;
+    typedef std::pair<bool, CorrectionSet> FindMCSResult;
 
     class MCSFinder
     {
         public:
-            typedef std::pair<bool, CorrectionSet> FindResult;
             MCSFinder(VariableManager & varman,
                       DebugTransitionRelation & tr);
 
             bool moreCorrectionSets();
-            FindResult findAndBlock();
-            FindResult findAndBlockOverGates(const std::vector<ID> & gates);
+            FindMCSResult findAndBlock();
+            FindMCSResult findAndBlockOverGates(const std::vector<ID> & gates);
             void setCardinality(unsigned n);
 
             void blockSolution(const CorrectionSet & corr);
@@ -51,22 +51,72 @@ namespace PME {
     class ApproximateMCSFinder
     {
         public:
-            typedef std::pair<bool, CorrectionSet> FindResult;
             ApproximateMCSFinder(VariableManager & varman,
                                  DebugTransitionRelation & tr);
 
-            FindResult findAndBlockWithBMC(unsigned n);
-            FindResult findAndBlockOverGatesWithBMC(const std::vector<ID> & gates, unsigned n);
-            FindResult findAndBlockOverGates(const std::vector<ID> & gates);
-            FindResult findAndBlockOverGates(const std::vector<ID> & gates, unsigned n_max);
+            FindMCSResult findAndBlockWithBMC(unsigned n);
+            FindMCSResult findAndBlockOverGatesWithBMC(const std::vector<ID> & gates, unsigned n);
+            FindMCSResult findAndBlockOverGates(const std::vector<ID> & gates);
+            FindMCSResult findAndBlockOverGates(const std::vector<ID> & gates, unsigned n_max);
             void blockSolution(const CorrectionSet & corr);
 
         private:
-            FindResult findFallback(const std::vector<ID> & gates);
+            FindMCSResult findFallback(const std::vector<ID> & gates);
 
             unsigned m_cardinality;
             IC3Debugger m_fallback;
             BMCDebugger m_solver;
+    };
+
+    class CorrectionSetFinder
+    {
+        public:
+            CorrectionSetFinder(VariableManager & varman,
+                                const DebugTransitionRelation & tr);
+            virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) = 0;
+            virtual FindMCSResult findNext(const std::vector<ID> & gates);
+            virtual FindMCSResult findNext(unsigned n);
+            virtual FindMCSResult findNext();
+
+            virtual bool moreCorrectionSets(unsigned n) = 0;
+            virtual bool moreCorrectionSets();
+
+            virtual void block(const CorrectionSet & corr) = 0;
+
+        protected:
+            const DebugTransitionRelation & tr() const { return m_tr; }
+            VariableManager & vars() { return m_vars; }
+
+        private:
+            VariableManager & m_vars;
+            const DebugTransitionRelation & m_tr;
+    };
+
+    class BasicMCSFinder : public CorrectionSetFinder
+    {
+        public:
+            BasicMCSFinder(VariableManager & varman, const DebugTransitionRelation & tr);
+
+            using CorrectionSetFinder::findNext;
+            virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) override;
+
+            // Override these two to ensure they don't call the one that takes
+            // gates as a parameter, as it might have significant performance
+            // implications
+            virtual FindMCSResult findNext(unsigned n) override;
+            virtual FindMCSResult findNext() override;
+
+            using CorrectionSetFinder::moreCorrectionSets;
+            virtual bool moreCorrectionSets(unsigned n) override;
+
+            virtual void block(const CorrectionSet & corr) override;
+        private:
+            FindMCSResult doFind(const std::vector<ID> & gates, unsigned n);
+            FindMCSResult doDebug(const std::vector<ID> & gates);
+
+            void setCardinality(unsigned n);
+            HybridDebugger m_solver;
+            unsigned m_cardinality;
     };
 }
 
