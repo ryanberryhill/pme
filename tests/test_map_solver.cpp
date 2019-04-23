@@ -42,7 +42,7 @@ struct MapSolverFixture
         gates.push_back(g3);
         gates.push_back(g4);
 
-        solver.reset(new Solver(gates.begin(), gates.end(), vars));
+        solver.reset(new Solver(vars, gates.begin(), gates.end()));
     }
 
     void blockDown(const Seed & seed)

@@ -32,7 +32,7 @@ namespace PME {
     class MapSolver {
         public:
             template <class It>
-            MapSolver(It begin, It end, VariableManager & varman)
+            MapSolver(VariableManager & varman, It begin, It end)
                 : m_ids(begin, end), m_vars(varman)
             { }
 
@@ -68,8 +68,8 @@ namespace PME {
     {
         public:
             template <class It>
-            SATArbitraryMapSolver(It begin, It end, VariableManager & varman)
-                : MapSolver(begin, end, varman)
+            SATArbitraryMapSolver(VariableManager & varman, It begin, It end)
+                : MapSolver(varman, begin, end)
             { }
             virtual ~SATArbitraryMapSolver() { };
 
@@ -94,8 +94,8 @@ namespace PME {
     {
         public:
             template <class It>
-            MSU4MapSolver(It begin, It end, VariableManager & varman)
-                : MapSolver(begin, end, varman),
+            MSU4MapSolver(VariableManager & varman, It begin, It end)
+                : MapSolver(varman, begin, end),
                   m_map(varman),
                   m_map_inited(false)
             { }
@@ -134,8 +134,8 @@ namespace PME {
 
         public:
             template <class It>
-            MSU4MaximalMapSolver(It begin, It end, VariableManager & varman)
-                : MSU4MapSolver(begin, end, varman)
+            MSU4MaximalMapSolver(VariableManager & varman, It begin, It end)
+                : MSU4MapSolver(varman, begin, end)
             { }
             virtual ~MSU4MaximalMapSolver() { };
 
@@ -151,8 +151,8 @@ namespace PME {
 
         public:
             template <class It>
-            MSU4MinimalMapSolver(It begin, It end, VariableManager & varman)
-                : MSU4MapSolver(begin, end, varman)
+            MSU4MinimalMapSolver(VariableManager & varman, It begin, It end)
+                : MSU4MapSolver(varman, begin, end)
             { }
             virtual ~MSU4MinimalMapSolver() { };
 
@@ -166,10 +166,10 @@ namespace PME {
     {
         public:
             template <class It>
-            MSU4ArbitraryMapSolver(It begin, It end, VariableManager & varman)
-                : MapSolver(begin, end, varman),
-                  m_min(begin, end, varman),
-                  m_max(begin, end, varman)
+            MSU4ArbitraryMapSolver(VariableManager & varman, It begin, It end)
+                : MapSolver(varman, begin, end),
+                  m_min(varman, begin, end),
+                  m_max(varman, begin, end)
             { }
             virtual ~MSU4ArbitraryMapSolver() { };
 
