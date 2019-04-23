@@ -40,6 +40,7 @@ namespace PME {
 
             virtual void blockUp(const Seed & seed);
             virtual void blockDown(const Seed & seed);
+            virtual void addClause(const Clause & cls);
 
             virtual UnexploredResult findMinimalSeed();
             virtual UnexploredResult findMaximalSeed();

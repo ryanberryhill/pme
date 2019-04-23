@@ -95,6 +95,11 @@ namespace PME {
         addClauseToSolver(cls);
     }
 
+    void MapSolver::addClause(const Clause & cls)
+    {
+        addClauseToSolver(cls);
+    }
+
     UnexploredResult MapSolver::findMinimalSeed()
     {
         throw std::logic_error("Called findMinimalSeed on a Map Solver "

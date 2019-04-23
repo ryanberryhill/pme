@@ -590,12 +590,59 @@ void testFindArbitraryBlockUp()
     for (const Seed & s : powerset)
     {
         BOOST_CHECK(f.isBlocked(s));
+        BOOST_CHECK(!f.solver->checkSeed(s));
+    }
+}
+
+template<class Solver>
+void testFindArbitraryAddClause()
+{
+    MapSolverFixture<Solver> f;
+
+    bool sat = true;
+    Seed seed;
+
+    // Shouldn't find any seeds with g1 and g2
+    f.solver->addClause({negate(f.g1), negate(f.g2)});
+
+    while(sat)
+    {
+        std::tie(sat, seed) = f.solver->findSeed();
+
+        // Must be SAT and not already blocked
+        if (sat)
+        {
+            BOOST_CHECK(!f.isBlocked(seed));
+            BOOST_CHECK(f.solver->checkSeed(seed));
+            if (seed.empty())
+            {
+                f.blockDown(seed);
+            }
+            else
+            {
+                f.blockUp({seed.at(0)});
+            }
+
+            bool g1_found = (std::find(seed.begin(), seed.end(), f.g1) != seed.end());
+            bool g2_found = (std::find(seed.begin(), seed.end(), f.g2) != seed.end());
+
+            BOOST_CHECK(!g1_found || !g2_found);
+        }
+    }
+
+    // Upon UNSAT, check the whole power set is blocked
+    // We can't use isBlocked since we have addClause, but we can use checkSeed
+    std::set<Seed> powerset = powerSet(f.gates);
+    for (const Seed & s : powerset)
+    {
+        BOOST_CHECK(!f.solver->checkSeed(s));
     }
 }
 
 BOOST_AUTO_TEST_CASE(sat_arbitrary_map_solver)
 {
     testFindArbitraryBlockUp<SATArbitraryMapSolver>();
+    testFindArbitraryAddClause<SATArbitraryMapSolver>();
     testFindMaximalBasic<SATArbitraryMapSolver>();
     testFindMaximalBlockEverything<SATArbitraryMapSolver>();
     testFindMaximalBlockUp<SATArbitraryMapSolver>();
@@ -609,6 +656,7 @@ BOOST_AUTO_TEST_CASE(sat_arbitrary_map_solver)
 BOOST_AUTO_TEST_CASE(msu4_arbitrary_map_solver)
 {
     testFindArbitraryBlockUp<MSU4ArbitraryMapSolver>();
+    testFindArbitraryAddClause<MSU4ArbitraryMapSolver>();
     testFindMaximalBasic<MSU4ArbitraryMapSolver>();
     testFindMaximalBlockEverything<MSU4ArbitraryMapSolver>();
     testFindMaximalBlockUp<MSU4ArbitraryMapSolver>();
@@ -627,6 +675,7 @@ BOOST_AUTO_TEST_CASE(msu4_maximal_map_solver)
     testFindMaximalBlockUp<MSU4MaximalMapSolver>();
     testFindMaximalBlockDown<MSU4MaximalMapSolver>();
     testFindArbitraryBlockUp<MSU4MaximalMapSolver>();
+    testFindArbitraryAddClause<MSU4MaximalMapSolver>();
 }
 
 BOOST_AUTO_TEST_CASE(msu4_minimal_map_solver)
@@ -637,5 +686,6 @@ BOOST_AUTO_TEST_CASE(msu4_minimal_map_solver)
     testFindMinimalBlockUp<MSU4MinimalMapSolver>();
     testFindMinimalBlockDown<MSU4MinimalMapSolver>();
     testFindArbitraryBlockUp<MSU4MinimalMapSolver>();
+    testFindArbitraryAddClause<MSU4MinimalMapSolver>();
 }
 
