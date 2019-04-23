@@ -181,7 +181,9 @@ namespace PME { namespace IC3 {
     void IC3Solver::restrictInitialStates(const Clause & cls)
     {
         assert(!cls.empty());
-        m_init_constraints.push_back(negateVec(cls));
+        Clause sorted = negateVec(cls);
+        std::sort(sorted.begin(), sorted.end());
+        m_init_constraints.push_back(sorted);
     }
 
     std::ostream & IC3Solver::log(int verbosity) const
