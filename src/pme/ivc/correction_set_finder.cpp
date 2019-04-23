@@ -252,11 +252,6 @@ namespace PME {
         return doFind(empty, n);
     }
 
-    FindMCSResult BasicMCSFinder::findNext()
-    {
-        return findNext(CARDINALITY_INF);
-    }
-
     bool BasicMCSFinder::moreCorrectionSets(unsigned n)
     {
         setCardinality(n);
@@ -271,7 +266,7 @@ namespace PME {
     {
         if (n >= tr().numGates())
         {
-            // including CARDINALITY_INF
+            // including n = CARDINALITY_INF
             m_solver.clearCardinality();
         }
         else
@@ -283,5 +278,167 @@ namespace PME {
     void BasicMCSFinder::block(const CorrectionSet & corr)
     {
         m_solver.blockSolution(corr);
+    }
+
+    ///////////////////////////////////////////////////////
+    // BMCCorrectionSetFinder
+    ///////////////////////////////////////////////////////
+    BMCCorrectionSetFinder::BMCCorrectionSetFinder(VariableManager & varman,
+                           const DebugTransitionRelation & tr)
+        : CorrectionSetFinder(varman, tr),
+          m_bmc(varman, tr),
+          m_ic3(varman, tr),
+          m_cardinality(1),
+          m_current_k(0)
+    { }
+
+    void BMCCorrectionSetFinder::setBMCCardinality(unsigned n)
+    {
+        if (n >= tr().numGates())
+        {
+            // including n = CARDINALITY_INF
+            m_bmc.clearCardinality();
+        }
+        else
+        {
+            m_bmc.setCardinality(n);
+        }
+    }
+
+    FindMCSResult BMCCorrectionSetFinder::findNext(const std::vector<ID> & gates, unsigned n)
+    {
+        // This function is normally called only when we know a correction set
+        // exists, so the fallback shouldn't occur unless we exceed k_max.
+        unsigned k_max = GlobalState::options().mcs_bmc_loose_kmax;
+
+        for (unsigned cardinality = 1; cardinality <= n; ++cardinality)
+        {
+            setBMCCardinality(cardinality);
+
+            bool sat;
+            CorrectionSet corr;
+            std::tie(sat, corr) = m_bmc.debugRange(0, k_max);
+
+            if (sat)
+            {
+                block(corr);
+                return std::make_pair(true, corr);
+            }
+
+            if (cardinality >= tr().numGates()) { break; }
+        }
+
+        for (unsigned cardinality = 1; cardinality <= n; cardinality++)
+        {
+            m_ic3.setCardinality(cardinality);
+
+            bool sat;
+            CorrectionSet corr;
+            std::tie(sat, corr) = m_ic3.debug();
+
+            if (sat)
+            {
+                block(corr);
+                return std::make_pair(true, corr);
+            }
+
+            if (!moreCorrectionSets()) { break; }
+        }
+
+        CorrectionSet empty;
+        return std::make_pair(false, empty);
+    }
+
+    FindMCSResult BMCCorrectionSetFinder::findNext(unsigned n)
+    {
+        unsigned k_max = GlobalState::options().mcs_bmc_kmax;
+        unsigned start_cardinality = m_cardinality;
+
+        for (unsigned cardinality = start_cardinality; cardinality <= n; ++cardinality)
+        {
+            m_cardinality = cardinality;
+            setBMCCardinality(cardinality);
+
+            for (unsigned k = m_current_k; k <= k_max; ++k)
+            {
+                m_current_k = k;
+                bool sat;
+                CorrectionSet corr;
+                std::tie(sat, corr) = m_bmc.debugAtK(m_current_k);
+
+                if (sat)
+                {
+                    block(corr);
+                    return std::make_pair(true, corr);
+                }
+            }
+
+            m_current_k = 0;
+
+            if (cardinality >= tr().numGates()) { break; }
+        }
+
+        for (unsigned cardinality = 1; cardinality <= n; cardinality++)
+        {
+            m_ic3.setCardinality(cardinality);
+
+            bool sat;
+            CorrectionSet corr;
+            std::tie(sat, corr) = m_ic3.debug();
+
+            if (sat)
+            {
+                block(corr);
+                return std::make_pair(true, corr);
+            }
+
+            if (!moreCorrectionSetsIC3(n)) { break; }
+        }
+
+        CorrectionSet empty;
+        return std::make_pair(false, empty);
+    }
+
+    bool BMCCorrectionSetFinder::moreCorrectionSetsBMC(unsigned n)
+    {
+        unsigned k_max = GlobalState::options().mcs_bmc_kmax;
+        setBMCCardinality(n);
+
+        bool sat;
+        std::tie(sat, std::ignore) = m_bmc.debugRange(0, k_max);
+
+        return sat;
+    }
+
+    bool BMCCorrectionSetFinder::moreCorrectionSetsIC3(unsigned n)
+    {
+        // TODO: consider separate IC3 solvers for checking for more sets
+        // and finding MCSes
+        if (n >= tr().numGates())
+        {
+            m_ic3.clearCardinality();
+        }
+        else
+        {
+            m_ic3.setCardinality(n);
+        }
+
+        bool sat;
+        std::tie(sat, std::ignore) = m_ic3.debug();
+
+        return sat;
+    }
+
+    bool BMCCorrectionSetFinder::moreCorrectionSets(unsigned n)
+    {
+        if (moreCorrectionSetsBMC(n)) { return true; }
+
+        return moreCorrectionSetsIC3(n);
+    }
+
+    void BMCCorrectionSetFinder::block(const CorrectionSet & corr)
+    {
+        m_bmc.blockSolution(corr);
+        m_ic3.blockSolution(corr);
     }
 }

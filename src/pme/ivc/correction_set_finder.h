@@ -99,12 +99,10 @@ namespace PME {
 
             using CorrectionSetFinder::findNext;
             virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) override;
-
-            // Override these two to ensure they don't call the one that takes
+            // Override this one to ensure it won't call the one that takes
             // gates as a parameter, as it might have significant performance
             // implications
             virtual FindMCSResult findNext(unsigned n) override;
-            virtual FindMCSResult findNext() override;
 
             using CorrectionSetFinder::moreCorrectionSets;
             virtual bool moreCorrectionSets(unsigned n) override;
@@ -115,8 +113,37 @@ namespace PME {
             FindMCSResult doDebug(const std::vector<ID> & gates);
 
             void setCardinality(unsigned n);
+
             HybridDebugger m_solver;
             unsigned m_cardinality;
+    };
+
+    class BMCCorrectionSetFinder : public CorrectionSetFinder
+    {
+        public:
+            BMCCorrectionSetFinder(VariableManager & varman,
+                                   const DebugTransitionRelation & tr);
+
+            using CorrectionSetFinder::findNext;
+            virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) override;
+            // Override this to ensure it doesn't call the one above
+            virtual FindMCSResult findNext(unsigned n) override;
+
+            using CorrectionSetFinder::moreCorrectionSets;
+            virtual bool moreCorrectionSets(unsigned n) override;
+
+            virtual void block(const CorrectionSet & corr) override;
+
+        private:
+            bool moreCorrectionSetsBMC(unsigned n);
+            bool moreCorrectionSetsIC3(unsigned n);
+            void setBMCCardinality(unsigned n);
+
+            BMCDebugger m_bmc;
+            IC3Debugger m_ic3;
+            unsigned m_cardinality;
+            unsigned m_current_k;
+
     };
 }
 

@@ -86,6 +86,10 @@ namespace PME {
 
             // --- IVC Extraction ---
 
+            // MCS Finding
+            PMEOption<unsigned> mcs_bmc_kmax;
+            PMEOption<unsigned> mcs_bmc_loose_kmax;
+
             // CAIVC
             PMEOption<bool> caivc_use_bmc;
             PMEOption<bool> caivc_abstraction_refinement;

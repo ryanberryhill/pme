@@ -86,6 +86,42 @@ struct CorrectionSetFixture
         tr->setInit(latch, val);
     }
 
+    // Shrink a correction set to an MCS in order to simplify testing
+    // for correction set finders that don't guarantee minimality
+    void shrink(CorrectionSet & corr)
+    {
+        std::vector<std::set<ID>> mcses;
+
+        ID b0 = tr->toInternal(a0);
+        ID b1 = tr->toInternal(a1);
+        ID b2 = tr->toInternal(a2);
+        ID b3 = tr->toInternal(a3);
+        ID b4 = tr->toInternal(a4);
+        ID b5 = tr->toInternal(a5);
+        ID b6 = tr->toInternal(a6);
+
+        mcses.push_back({b6});
+        mcses.push_back({b4, b5});
+        mcses.push_back({b0, b1, b5});
+        mcses.push_back({b2, b3, b4});
+        mcses.push_back({b0, b1, b2, b3});
+
+        std::sort(corr.begin(), corr.end());
+
+        for (const auto & mcs : mcses)
+        {
+            if (std::includes(corr.begin(), corr.end(), mcs.begin(), mcs.end()))
+            {
+                corr.clear();
+                corr.insert(corr.end(), mcs.begin(), mcs.end());
+                return;
+            }
+        }
+
+        // Reaching this line indicates failure
+        BOOST_REQUIRE(false);
+    }
+
     ~CorrectionSetFixture()
     {
         aiger_reset(aig);
@@ -321,7 +357,7 @@ BOOST_AUTO_TEST_CASE(approximate_mcs_over_gates)
 
 
 template<class Finder>
-void testFindMCS()
+void testFindMCS(bool guaranteed_minimal)
 {
     // The MCSes are:
     // {a6}
@@ -354,6 +390,7 @@ void testFindMCS()
     std::tie(found, corr) = finder.findNext();
 
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(corr); }
     BOOST_CHECK_EQUAL(corr.size(), 1);
     BOOST_CHECK_EQUAL(corr.at(0), a6);
 
@@ -365,6 +402,7 @@ void testFindMCS()
     std::tie(found, corr) = finder.findNext();
 
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(corr); }
     BOOST_CHECK_EQUAL(corr.size(), 2);
     CorrectionSet expected = {a4, a5};
     std::sort(expected.begin(), expected.end());
@@ -385,10 +423,12 @@ void testFindMCS()
     CorrectionSet actual1, actual2;
     std::tie(found, actual1) = finder.findNext();
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(actual1); }
     BOOST_REQUIRE(finder.moreCorrectionSets(3));
 
     std::tie(found, actual2) = finder.findNext();
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(actual2); }
 
     BOOST_CHECK(!finder.moreCorrectionSets(3));
     BOOST_CHECK(finder.moreCorrectionSets());
@@ -407,6 +447,7 @@ void testFindMCS()
     // MCS {a0, a1, a2, a3}
     std::tie(found, corr) = finder.findNext();
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(corr); }
     BOOST_CHECK_EQUAL(corr.size(), 4);
     expected = {a0, a1, a2, a3};
     std::sort(expected.begin(), expected.end());
@@ -422,7 +463,7 @@ void testFindMCS()
 }
 
 template<class Finder>
-void testFindMCSExternallyBlocked()
+void testFindMCSExternallyBlocked(bool guaranteed_minimal)
 {
     // The MCSes are:
     // {a6}
@@ -458,6 +499,7 @@ void testFindMCSExternallyBlocked()
     std::tie(found, corr) = finder.findNext();
 
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(corr); }
     BOOST_CHECK_EQUAL(corr.size(), 1);
     BOOST_CHECK_EQUAL(corr.at(0), a6);
 
@@ -471,6 +513,7 @@ void testFindMCSExternallyBlocked()
 
     std::tie(found, corr) = finder.findNext();
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(corr); }
 
     BOOST_CHECK(!finder.moreCorrectionSets(3));
     BOOST_CHECK(finder.moreCorrectionSets(4));
@@ -483,6 +526,7 @@ void testFindMCSExternallyBlocked()
     // MCS {a0, a1, a2, a3}
     std::tie(found, corr) = finder.findNext();
     BOOST_REQUIRE(found);
+    if (!guaranteed_minimal) { f.shrink(corr); }
     BOOST_CHECK_EQUAL(corr.size(), 4);
     expected = {a0, a1, a2, a3};
     std::sort(expected.begin(), expected.end());
@@ -496,6 +540,12 @@ void testFindMCSExternallyBlocked()
 
 BOOST_AUTO_TEST_CASE(basic_mcs_finder)
 {
-    testFindMCS<BasicMCSFinder>();
-    testFindMCSExternallyBlocked<BasicMCSFinder>();
+    testFindMCS<BasicMCSFinder>(true);
+    testFindMCSExternallyBlocked<BasicMCSFinder>(true);
+}
+
+BOOST_AUTO_TEST_CASE(bmc_finder)
+{
+    testFindMCS<BMCCorrectionSetFinder>(false);
+    testFindMCSExternallyBlocked<BMCCorrectionSetFinder>(false);
 }

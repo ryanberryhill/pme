@@ -74,6 +74,8 @@ namespace PME {
         marco_direction_up(*this, false, "marco_direction_up"),
         marco_mcs(*this, true, "marco_mcs"),
         marco_collapse(*this, false, "marco_collapse"),
+        mcs_bmc_kmax(*this, 16, "mcs_bmc_kmax"),
+        mcs_bmc_loose_kmax(*this, 64, "mcs_bmc_loose_kmax"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
