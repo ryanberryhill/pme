@@ -36,11 +36,11 @@ namespace PME {
         std::set<ID> seed_set(seed.begin(), seed.end());
         for (auto it = begin; it != end; ++it)
         {
-            ID gate = *it;
-            assert(!is_negated(gate));
-            if (seed_set.count(gate) == 0)
+            ID id = *it;
+            assert(!is_negated(id));
+            if (seed_set.count(id) == 0)
             {
-                cls.push_back(gate);
+                cls.push_back(id);
             }
         }
 
@@ -55,11 +55,11 @@ namespace PME {
         Clause cls;
         cls.reserve(seed.size());
 
-        for (ID gate : seed)
+        for (ID id : seed)
         {
-            assert(!is_negated(gate));
-            ID ngate = negate(gate);
-            cls.push_back(ngate);
+            assert(!is_negated(id));
+            ID nid = negate(id);
+            cls.push_back(nid);
         }
 
         return cls;
@@ -82,9 +82,9 @@ namespace PME {
 
     void MapSolver::blockDown(const Seed & seed)
     {
-        Clause cls = downClause(begin_gates(), end_gates(), seed);
+        Clause cls = downClause(begin_ids(), end_ids(), seed);
 
-        // When blocking the whole search space (e.g., seed = all gates),
+        // When blocking the whole search space (e.g., seed = all IDs),
         // the clause will be empty and the SAT solver will probably
         // assert on that. Add the false clause in that case
         if (cls.empty())
@@ -170,16 +170,16 @@ namespace PME {
         std::unordered_set<ID> seed_set(seed.begin(), seed.end());
         Cube assumps;
 
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
-            ID gate = *it;
-            if (seed_set.count(gate) > 0)
+            ID id = *it;
+            if (seed_set.count(id) > 0)
             {
-                assumps.push_back(gate);
+                assumps.push_back(id);
             }
             else
             {
-                assumps.push_back(negate(gate));
+                assumps.push_back(negate(id));
             }
         }
 
@@ -192,13 +192,13 @@ namespace PME {
 
         Seed seed;
 
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
-            ID gate = *it;
-            ModelValue assignment = m_map.safeGetAssignmentToVar(gate);
+            ID id = *it;
+            ModelValue assignment = m_map.safeGetAssignmentToVar(id);
             // Treat undefined (i.e., the variable does not appear in the
             // formula, which can happen and indicates don't care) as true
-            if (assignment != SAT::FALSE) { seed.push_back(gate); }
+            if (assignment != SAT::FALSE) { seed.push_back(id); }
         }
 
         return seed;
@@ -207,14 +207,14 @@ namespace PME {
     void SATArbitraryMapSolver::grow(Seed & seed)
     {
         std::set<ID> seed_set(seed.begin(), seed.end());
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
-            ID gate = *it;
+            ID id = *it;
 
-            if (seed_set.count(gate) == 0)
+            if (seed_set.count(id) == 0)
             {
                 Seed seed_copy = seed;
-                seed_copy.push_back(gate);
+                seed_copy.push_back(id);
                 if (checkSeed(seed_copy)) { seed = seed_copy; }
             }
         }
@@ -285,11 +285,11 @@ namespace PME {
 
         Seed seed;
 
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
-            ID gate = *it;
-            ModelValue assignment = map().getAssignmentToVar(gate);
-            if (assignment == SAT::TRUE) { seed.push_back(gate); }
+            ID id = *it;
+            ModelValue assignment = map().getAssignmentToVar(id);
+            if (assignment == SAT::TRUE) { seed.push_back(id); }
         }
 
         return seed;
@@ -300,16 +300,16 @@ namespace PME {
         std::unordered_set<ID> seed_set(seed.begin(), seed.end());
         Cube assumps;
 
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
-            ID gate = *it;
-            if (seed_set.count(gate) > 0)
+            ID id = *it;
+            if (seed_set.count(id) > 0)
             {
-                assumps.push_back(gate);
+                assumps.push_back(id);
             }
             else
             {
-                assumps.push_back(negate(gate));
+                assumps.push_back(negate(id));
             }
         }
 
@@ -318,7 +318,7 @@ namespace PME {
 
     void MSU4MaximalMapSolver::initSolver()
     {
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
             map().addForOptimization(*it);
         }
@@ -346,7 +346,7 @@ namespace PME {
 
     void MSU4MinimalMapSolver::initSolver()
     {
-        for (auto it = begin_gates(); it != end_gates(); ++it)
+        for (auto it = begin_ids(); it != end_ids(); ++it)
         {
             map().addForOptimization(negate(*it));
         }

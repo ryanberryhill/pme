@@ -33,7 +33,7 @@ namespace PME {
         public:
             template <class It>
             MapSolver(It begin, It end, VariableManager & varman)
-                : m_gates(begin, end), m_vars(varman)
+                : m_ids(begin, end), m_vars(varman)
             { }
 
             virtual ~MapSolver() { };
@@ -49,17 +49,17 @@ namespace PME {
 
         protected:
             VariableManager & vars() { return m_vars; }
-            const std::set<ID> & gates() const { return m_gates; }
+            const std::set<ID> & ids() const { return m_ids; }
 
-            auto begin_gates() const -> decltype(gates().cbegin())
-            { return gates().cbegin(); }
-            auto end_gates() const -> decltype(gates().cend())
-            { return gates().cend(); }
+            auto begin_ids() const -> decltype(ids().cbegin())
+            { return ids().cbegin(); }
+            auto end_ids() const -> decltype(ids().cend())
+            { return ids().cend(); }
 
             virtual void addClauseToSolver(const Clause & cls) = 0;
 
         private:
-            std::set<ID> m_gates;
+            std::set<ID> m_ids;
             VariableManager & m_vars;
     };
 
