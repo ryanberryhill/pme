@@ -32,7 +32,7 @@ namespace PME {
     MARCOIVCFinder::MARCOIVCFinder(VariableManager & varman,
                                    const TransitionRelation & tr)
         : IVCFinder(varman, tr),
-          m_seed_solver(varman),
+          m_map(varman, tr.begin_gate_ids(), tr.end_gate_ids()),
           m_debug_tr(tr),
           m_gates(tr.begin_gate_ids(), tr.end_gate_ids()),
           m_incr_ivc_checker(varman, m_debug_tr),
@@ -103,23 +103,7 @@ namespace PME {
     {
         stats().marcoivc_get_unexplored_calls++;
         AutoTimer timer(stats().marcoivc_get_unexplored_time);
-        UnexploredResult result;
-        Seed & seed = result.second;
-        if (m_seed_solver.solve())
-        {
-            result.first = true;
-            for (ID gate : m_gates)
-            {
-                ID seed_var = debugVarOf(gate);
-                ModelValue assignment = m_seed_solver.getAssignmentToVar(seed_var);
-                if (assignment == SAT::TRUE) { seed.push_back(gate); }
-            }
-        }
-        else
-        {
-            result.first = false;
-        }
-        return result;
+        return m_map.findSeed();
     }
 
     Seed MARCOIVCFinder::negateSeed(const Seed & seed) const
@@ -187,12 +171,10 @@ namespace PME {
 
     void MARCOIVCFinder::grow(Seed & seed)
     {
-        // grow is implemented in the obvious way. Try to add a gate
-        // and see if it's still unsafe.
-        // If unsafe, keep the gate, otherwise, remove it.
         stats().marcoivc_grow_calls++;
         AutoTimer timer(stats().marcoivc_grow_time);
 
+        // There are multiple implementations of grow
         if (opts().marcoivc_debug_grow)
         {
             debugGrow(seed);
@@ -205,6 +187,9 @@ namespace PME {
 
     void MARCOIVCFinder::bruteForceGrow(Seed & seed)
     {
+        // This version of grow is implemented in the obvious way.
+        // Try to add a gate and see if it's still unsafe.
+        // If unsafe, keep the gate, otherwise, remove it.
         std::set<ID> seed_set(seed.begin(), seed.end());
 
         for (ID gate : m_gates)
@@ -258,59 +243,20 @@ namespace PME {
 
     void MARCOIVCFinder::blockUp(const Seed & seed)
     {
-        assert(!seed.empty());
         // Block seed and all supersets. For seed = c_1,...,c_n: (~c_1 V ... V ~c_n)
-        Clause cls;
-        cls.reserve(seed.size());
-
-        for (ID gate : seed)
-        {
-            ID svar = debugVarOf(gate);
-            cls.push_back(negate(svar));
-        }
-
-        m_seed_solver.addClause(cls);
+        assert(!seed.empty());
+        m_map.blockUp(seed);
     }
 
     void MARCOIVCFinder::blockDown(const Seed & seed)
     {
-        assert(!seed.empty());
         // Block seed and all subsets. For c_1,...,c_n not in seed: (c_1 V ... V c_n)
-        Clause cls;
-        cls.reserve(m_debug_tr.numGates() - seed.size());
-
-        std::set<ID> seed_set(seed.begin(), seed.end());
-        for (auto it = begin_gates(); it != end_gates(); ++it)
-        {
-            ID gate = *it;
-            if (seed_set.count(gate) == 0)
-            {
-                ID svar = debugVarOf(gate);
-                cls.push_back(svar);
-            }
-        }
-
-        // It's possible for original circuit to be the only IVC. In this case,
-        // the clause will be empty. Add clause (false) in that case because
-        // MaxSATSolver doesn't like empty clauses.
-        if (cls.empty())
-        {
-            m_seed_solver.addClause({ID_FALSE});
-        }
-        else
-        {
-            m_seed_solver.addClause(cls);
-        }
+        assert(!seed.empty());
+        m_map.blockDown(seed);
     }
 
     void MARCOIVCFinder::initSolvers()
     {
-        for (ID gate_id : m_gates)
-        {
-            ID dv_id = debugVarOf(gate_id);
-            m_seed_solver.addForOptimization(dv_id);
-        }
-
         if (opts().marcoivc_explore_basic_hints ||
             opts().marcoivc_explore_complex_hints)
         {
@@ -332,22 +278,18 @@ namespace PME {
         std::map<ID, std::vector<ID>> gate_to_fanout;
         for (ID gate_id : m_gates)
         {
-            ID lhs_dv_id = debugVarOf(gate_id);
-
             const AndGate & gate = tr().getGate(gate_id);
             ID rhs0 = gate.rhs0;
             ID rhs1 = gate.rhs1;
 
             if (tr().isGate(rhs0))
             {
-                ID rhs_dv_id = debugVarOf(rhs0);
-                gate_to_fanout[rhs_dv_id].push_back(lhs_dv_id);
+                gate_to_fanout[rhs0].push_back(gate_id);
             }
 
             if (tr().isGate(rhs1))
             {
-                ID rhs_dv_id = debugVarOf(rhs1);
-                gate_to_fanout[rhs_dv_id].push_back(lhs_dv_id);
+                gate_to_fanout[rhs1].push_back(gate_id);
             }
         }
 
@@ -368,18 +310,13 @@ namespace PME {
 
             if (fanout.size() == 1 && opts().marcoivc_explore_basic_hints)
             {
-                m_seed_solver.addClause(cls);
+                m_map.addClause(cls);
             }
             else if (opts().marcoivc_explore_complex_hints)
             {
-                m_seed_solver.addClause(cls);
+                m_map.addClause(cls);
             }
         }
-    }
-
-    ID MARCOIVCFinder::debugVarOf(ID gate) const
-    {
-        return m_debug_tr.debugLatchForGate(gate);
     }
 }
 

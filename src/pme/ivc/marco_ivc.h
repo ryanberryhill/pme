@@ -31,6 +31,7 @@
 #include "pme/engine/debug_transition_relation.h"
 #include "pme/util/hybrid_debugger.h"
 #include "pme/ivc/correction_set_finder.h"
+#include "pme/util/map_solver.h"
 
 namespace PME {
     class MARCOIVCFinder : public IVCFinder {
@@ -57,14 +58,13 @@ namespace PME {
 
             void initSolvers();
             void addExploreHints();
-            ID debugVarOf(ID gate) const;
 
             Seed negateSeed(const Seed & seed) const;
 
             id_iterator begin_gates() const { return m_debug_tr.begin_gate_ids(); }
             id_iterator end_gates() const { return m_debug_tr.end_gate_ids(); }
 
-            MSU4MaxSATSolver m_seed_solver;
+            MSU4MaximalMapSolver m_map;
             DebugTransitionRelation m_debug_tr;
             Seed m_smallest_ivc;
             std::vector<ID> m_gates;
