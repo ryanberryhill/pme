@@ -26,7 +26,6 @@
 #define MARCO_IVC_INCLUDED
 
 #include "pme/ivc/ivc.h"
-#include "pme/util/maxsat_solver.h"
 #include "pme/engine/transition_relation.h"
 #include "pme/engine/debug_transition_relation.h"
 #include "pme/util/hybrid_debugger.h"
