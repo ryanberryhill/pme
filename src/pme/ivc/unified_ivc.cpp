@@ -144,9 +144,15 @@ namespace PME {
 
     bool UnifiedIVCFinder::getUnexploredMin()
     {
+        stats().uivc_get_unexplored_min_calls++;
+
         bool sat;
         Seed seed;
-        std::tie(sat, seed) = m_map->findMinimalSeed();
+
+        {
+            AutoTimer t(stats().uivc_get_unexplored_min_time);
+            std::tie(sat, seed) = m_map->findMinimalSeed();
+        }
 
         if (sat)
         {
@@ -158,9 +164,15 @@ namespace PME {
 
     bool UnifiedIVCFinder::getUnexploredMax()
     {
+        stats().uivc_get_unexplored_max_calls++;
+
         bool sat;
         Seed seed;
-        std::tie(sat, seed) = m_map->findMaximalSeed();
+
+        {
+            AutoTimer t(stats().uivc_get_unexplored_max_time);
+            std::tie(sat, seed) = m_map->findMaximalSeed();
+        }
 
         if (sat)
         {
@@ -172,9 +184,15 @@ namespace PME {
 
     bool UnifiedIVCFinder::getUnexploredArb()
     {
+        stats().uivc_get_unexplored_arb_calls++;
+
         bool sat;
         Seed seed;
-        std::tie(sat, seed) = m_map->findSeed();
+
+        {
+            std::tie(sat, seed) = m_map->findSeed();
+            AutoTimer t(stats().uivc_get_unexplored_arb_time);
+        }
 
         if (sat)
         {
@@ -244,12 +262,18 @@ namespace PME {
 
     void UnifiedIVCFinder::shrink(Seed & seed)
     {
+        stats().uivc_shrink_calls++;
+        AutoTimer t(stats().uivc_shrink_time);
+
         IVCUCBFFinder ivc_ucbf(vars(), tr());
         ivc_ucbf.shrink(seed);
     }
 
     void UnifiedIVCFinder::grow(Seed & seed)
     {
+        stats().uivc_grow_calls++;
+        AutoTimer t(stats().uivc_grow_time);
+
         if (opts().uivc_mcs_grow)
         {
             growByMCS(seed);
@@ -308,6 +332,8 @@ namespace PME {
 
         bool sat = true;
 
+        AutoTimer t(stats().uivc_prep_time);
+
         while (sat && n_max > 0)
         {
             CorrectionSet corr;
@@ -329,6 +355,9 @@ namespace PME {
     {
         // Don't need to check safety if we're doing CAMUS-style enumeration
         if (!shouldCheckSafety()) { return true; }
+
+        stats().uivc_issafe_calls++;
+        AutoTimer t(stats().uivc_issafe_time);
 
         TransitionRelation partial(tr(), seed);
         HybridSafetyChecker checker(vars(), partial);

@@ -81,6 +81,21 @@ namespace PME
         size_t largest_mivc_size;
         size_t num_gates;
 
+        // UIVC
+        unsigned uivc_get_unexplored_min_calls;
+        unsigned uivc_get_unexplored_max_calls;
+        unsigned uivc_get_unexplored_arb_calls;
+        unsigned uivc_issafe_calls;
+        unsigned uivc_shrink_calls;
+        unsigned uivc_grow_calls;
+        double uivc_prep_time;
+        double uivc_get_unexplored_min_time;
+        double uivc_get_unexplored_max_time;
+        double uivc_get_unexplored_arb_time;
+        double uivc_issafe_time;
+        double uivc_shrink_time;
+        double uivc_grow_time;
+
         // CAIVC
         unsigned caivc_isivc_calls;
         unsigned caivc_find_candidate_calls;

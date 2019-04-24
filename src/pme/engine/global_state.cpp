@@ -56,6 +56,19 @@ namespace PME
         smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
         num_gates(0),
+        uivc_get_unexplored_min_calls(0),
+        uivc_get_unexplored_max_calls(0),
+        uivc_get_unexplored_arb_calls(0),
+        uivc_issafe_calls(0),
+        uivc_shrink_calls(0),
+        uivc_grow_calls(0),
+        uivc_prep_time(0.0),
+        uivc_get_unexplored_min_time(0.0),
+        uivc_get_unexplored_max_time(0.0),
+        uivc_get_unexplored_arb_time(0.0),
+        uivc_issafe_time(0.0),
+        uivc_shrink_time(0.0),
+        uivc_grow_time(0.0),
         caivc_isivc_calls(0),
         caivc_find_candidate_calls(0),
         caivc_find_mcs_calls(0),
@@ -133,6 +146,21 @@ namespace PME
             os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
             os << "Largest MIVC: " << largest_mivc_size << std::endl;
         }
+
+        // UIVC specific
+        os << "UIVC getUnexploredMin Calls: " << uivc_get_unexplored_min_calls << std::endl;
+        os << "UIVC getUnexploredMin Time: " << uivc_get_unexplored_min_time << std::endl;
+        os << "UIVC getUnexploredMax Calls: " << uivc_get_unexplored_max_calls << std::endl;
+        os << "UIVC getUnexploredMax Time: " << uivc_get_unexplored_max_time << std::endl;
+        os << "UIVC getUnexploredArb Calls: " << uivc_get_unexplored_arb_calls << std::endl;
+        os << "UIVC getUnexploredArb Time: " << uivc_get_unexplored_arb_time << std::endl;
+        os << "UIVC isSafe Calls: " << uivc_issafe_calls << std::endl;
+        os << "UIVC isSafe Time: " << uivc_issafe_time << std::endl;
+        os << "UIVC shrink Calls: " << uivc_shrink_calls << std::endl;
+        os << "UIVC shrink Time: " << uivc_shrink_time << std::endl;
+        os << "UIVC grow Calls: " << uivc_grow_calls << std::endl;
+        os << "UIVC grow Time: " << uivc_grow_time << std::endl;
+        os << "UIVC Preparation Time: " << uivc_prep_time << std::endl;
 
         // CAIVC specific
         os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;
