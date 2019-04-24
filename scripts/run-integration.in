@@ -527,6 +527,9 @@ if ((limited_run == 0 || run_ivc == 1)) ;  then
                                                 --opt uivc_direction_up=true \
                                                 --opt uivc_upfront_nmax=1 \
                                                 --opt uivc_mcs_finder=bmc
+    run_ivc_test UIVC-MARCO-ZIGZAG-MCS --uivc --opt uivc_direction_down=true \
+                                              --opt uivc_direction_up=true \
+                                              --opt uivc_mcs_grow=true
 
     # No golden IVCs, so we don't need to do anything different for
     # non-all IVC tests (the test just checks they are safe and minimal)

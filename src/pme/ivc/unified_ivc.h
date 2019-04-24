@@ -55,6 +55,8 @@ namespace PME {
 
             void shrink(Seed & seed);
             void grow(Seed & seed);
+            void growByBruteForce(Seed & seed);
+            void growByMCS(Seed & seed);
 
             bool isSafe(const Seed & seed);
 

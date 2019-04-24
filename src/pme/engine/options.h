@@ -99,6 +99,7 @@ namespace PME {
             PMEOption<unsigned> uivc_upfront_nmax;
             PMEOption<bool> uivc_direction_down;
             PMEOption<bool> uivc_direction_up;
+            PMEOption<bool> uivc_mcs_grow;
 
             // CAIVC
             PMEOption<bool> caivc_use_bmc;

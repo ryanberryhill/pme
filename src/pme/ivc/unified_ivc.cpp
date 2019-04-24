@@ -250,6 +250,32 @@ namespace PME {
 
     void UnifiedIVCFinder::grow(Seed & seed)
     {
+        if (opts().uivc_mcs_grow)
+        {
+            growByMCS(seed);
+        }
+        else
+        {
+            growByBruteForce(seed);
+        }
+    }
+
+    void UnifiedIVCFinder::growByMCS(Seed & seed)
+    {
+        Seed neg_seed = negateSeed(seed);
+
+        bool sat;
+        CorrectionSet corr;
+        std::tie(sat, corr) = m_cs_finder->findNext(neg_seed);
+
+        assert(sat);
+        assert(!corr.empty());
+
+        seed = negateSeed(corr);
+    }
+
+    void UnifiedIVCFinder::growByBruteForce(Seed & seed)
+    {
         std::set<ID> seed_set(seed.begin(), seed.end());
 
         for (auto it = tr().begin_gate_ids(); it != tr().end_gate_ids(); ++it)

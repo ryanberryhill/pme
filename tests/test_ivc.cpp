@@ -224,6 +224,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_up)
 
     GlobalState::options().uivc_upfront_nmax = 1;
     runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(uivc_marco_zigzag)
@@ -235,6 +238,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_zigzag)
 
     GlobalState::options().uivc_upfront_nmax = 1;
     runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(uivc_marco_arb_maxsat)
@@ -245,6 +251,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_arb_maxsat)
     runAllMIVCTest<UnifiedIVCFinder>();
 
     GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
     runAllMIVCTest<UnifiedIVCFinder>();
 }
 
@@ -270,6 +279,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_up_bmc)
 
     GlobalState::options().uivc_upfront_nmax = 1;
     runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(uivc_marco_zigzag_bmc)
@@ -281,6 +293,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_zigzag_bmc)
     runAllMIVCTest<UnifiedIVCFinder>();
 
     GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
     runAllMIVCTest<UnifiedIVCFinder>();
 }
 
@@ -294,6 +309,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_arb_bmc)
 
     GlobalState::options().uivc_upfront_nmax = 1;
     runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(uivc_marco_arb_sat)
@@ -305,6 +323,9 @@ BOOST_AUTO_TEST_CASE(uivc_marco_arb_sat)
     runAllMIVCTest<UnifiedIVCFinder>();
 
     GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_mcs_grow = true;
     runAllMIVCTest<UnifiedIVCFinder>();
 }
 
