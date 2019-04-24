@@ -51,6 +51,9 @@ namespace PME {
             OptionParser m_parser;
     };
 
+    enum MCSFinderType { MCS_FINDER_BASIC, MCS_FINDER_BMC, MCS_FINDER_LAST = MCS_FINDER_BMC };
+    enum MapSolverType { MAP_SOLVER_SAT, MAP_SOLVER_MSU4, MAP_SOLVER_LAST = MAP_SOLVER_MSU4 };
+
     class PMEOptions
     {
         private:
@@ -89,6 +92,13 @@ namespace PME {
             // MCS Finding
             PMEOption<unsigned> mcs_bmc_kmax;
             PMEOption<unsigned> mcs_bmc_loose_kmax;
+
+            // Unified IVC
+            PMEOption<MCSFinderType> uivc_mcs_finder_type;
+            PMEOption<MapSolverType> uivc_map_solver_type;
+            PMEOption<unsigned> uivc_upfront_nmax;
+            PMEOption<bool> uivc_direction_down;
+            PMEOption<bool> uivc_direction_up;
 
             // CAIVC
             PMEOption<bool> caivc_use_bmc;

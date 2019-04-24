@@ -163,9 +163,14 @@ namespace PME
         return gs;
     }
 
+    void GlobalState::resetOptions()
+    {
+        m_opts.reset(new PMEOptions());
+    }
+
     PMEOptions& GlobalState::options()
     {
-        return instance().m_opts;
+        return *(instance().m_opts);
     }
 
     PMEStats& GlobalState::stats()

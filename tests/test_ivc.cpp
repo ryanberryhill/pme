@@ -25,6 +25,7 @@
 #include "pme/ivc/ivc.h"
 #include "pme/ivc/caivc.h"
 #include "pme/ivc/marco_ivc.h"
+#include "pme/ivc/unified_ivc.h"
 #include "pme/ivc/ivc_bf.h"
 #include "pme/ivc/ivc_ucbf.h"
 
@@ -180,23 +181,151 @@ void runMIVCTest()
     runIVCTest<T>(false);
 }
 
+void defaultUIVCOptions()
+{
+    GlobalState::instance().resetOptions();
+
+    GlobalState::options().uivc_mcs_finder_type = MCS_FINDER_BASIC;
+    GlobalState::options().uivc_map_solver_type = MAP_SOLVER_MSU4;
+    GlobalState::options().uivc_upfront_nmax = 0;
+    GlobalState::options().uivc_direction_down = true;
+    GlobalState::options().uivc_direction_up = false;
+}
+
 BOOST_AUTO_TEST_CASE(basic_ivc_caivc)
 {
+    defaultUIVCOptions();
     runAllMIVCTest<CAIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(basic_ivc_marco)
 {
+    defaultUIVCOptions();
     runAllMIVCTest<MARCOIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_down)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_up)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = false;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_zigzag)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_arb_maxsat)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = false;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_down_bmc)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = true;
+    GlobalState::options().uivc_mcs_finder_type = MCS_FINDER_BMC;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_up_bmc)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = false;
+    GlobalState::options().uivc_mcs_finder_type = MCS_FINDER_BMC;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_zigzag_bmc)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = true;
+    GlobalState::options().uivc_mcs_finder_type = MCS_FINDER_BMC;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_arb_bmc)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = false;
+    GlobalState::options().uivc_mcs_finder_type = MCS_FINDER_BMC;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_marco_arb_sat)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = false;
+    GlobalState::options().uivc_map_solver_type = MAP_SOLVER_SAT;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_upfront_nmax = 1;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+BOOST_AUTO_TEST_CASE(uivc_camus)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = false;
+    GlobalState::options().uivc_upfront_nmax = UINFINITY;
+    runAllMIVCTest<UnifiedIVCFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(basic_ivc_ivc_bf)
 {
+    defaultUIVCOptions();
     runMIVCTest<IVCBFFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(basic_ivc_ivc_ucbf)
 {
+    defaultUIVCOptions();
     runMIVCTest<IVCUCBFFinder>();
 }
 

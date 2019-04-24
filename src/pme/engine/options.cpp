@@ -20,6 +20,7 @@
  */
 
 #include "pme/engine/options.h"
+#include "pme/pme.h"
 
 #include <sstream>
 
@@ -53,6 +54,7 @@ namespace PME {
     void PMEOption<unsigned>::setDefaultParser()
     {
         m_parser = [this](std::string x) {
+            if (x == "inf") { this->m_value = UINFINITY; return true; }
             try
             {
                 this->m_value = std::stoul(x);
@@ -61,6 +63,31 @@ namespace PME {
             return true;
         };
     }
+
+    template<>
+    void PMEOption<MCSFinderType>::setDefaultParser()
+    {
+        m_parser = [this](std::string x) {
+            if (x == "basic") { this->m_value = MCS_FINDER_BASIC; }
+            else if (x == "bmc") { this->m_value = MCS_FINDER_BMC; }
+            else { return false; }
+
+            return true;
+        };
+    }
+
+    template<>
+    void PMEOption<MapSolverType>::setDefaultParser()
+    {
+        m_parser = [this](std::string x) {
+            if (x == "sat") { this->m_value = MAP_SOLVER_SAT; }
+            else if (x == "maxsat") { this->m_value = MAP_SOLVER_MSU4; }
+            else { return false; }
+
+            return true;
+        };
+    }
+
 
     PMEOptions::PMEOptions() :
         simplify(*this, true, "simplify"),
@@ -76,6 +103,11 @@ namespace PME {
         marco_collapse(*this, false, "marco_collapse"),
         mcs_bmc_kmax(*this, 16, "mcs_bmc_kmax"),
         mcs_bmc_loose_kmax(*this, 64, "mcs_bmc_loose_kmax"),
+        uivc_mcs_finder_type(*this, MCS_FINDER_BASIC, "uivc_mcs_finder"),
+        uivc_map_solver_type(*this, MAP_SOLVER_MSU4, "uivc_map_solver"),
+        uivc_upfront_nmax(*this, 0, "uivc_upfront_nmax"),
+        uivc_direction_down(*this, true, "uivc_direction_down"),
+        uivc_direction_up(*this, false, "uivc_direction_up"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),

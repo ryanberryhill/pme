@@ -73,6 +73,7 @@ namespace PME {
         public:
             CorrectionSetFinder(VariableManager & varman,
                                 const DebugTransitionRelation & tr);
+            virtual ~CorrectionSetFinder() { }
             virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) = 0;
             virtual FindMCSResult findNext(const std::vector<ID> & gates);
             virtual FindMCSResult findNext(unsigned n);
@@ -96,6 +97,7 @@ namespace PME {
     {
         public:
             BasicMCSFinder(VariableManager & varman, const DebugTransitionRelation & tr);
+            virtual ~BasicMCSFinder() { }
 
             using CorrectionSetFinder::findNext;
             virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) override;
@@ -123,6 +125,7 @@ namespace PME {
         public:
             BMCCorrectionSetFinder(VariableManager & varman,
                                    const DebugTransitionRelation & tr);
+            virtual ~BMCCorrectionSetFinder() { }
 
             using CorrectionSetFinder::findNext;
             virtual FindMCSResult findNext(const std::vector<ID> & gates, unsigned n) override;

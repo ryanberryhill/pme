@@ -42,6 +42,7 @@ typedef enum
     LOG_IVC,
     LOG_CAIVC,
     LOG_CBVC,
+    LOG_UNIFIED_IVC,
     LOG_MARCOIVC,
     LOG_IVCBF,
     LOG_IVCUCBF,
@@ -60,6 +61,7 @@ typedef enum
 
 typedef enum
 {
+    PME_IVC_UIVC,
     PME_IVC_MARCO,
     PME_IVC_CAIVC,
     PME_IVC_CBVC,
@@ -116,6 +118,7 @@ int cpme_run_camsis(void * pme);
 int cpme_run_sisi(void * pme);
 int cpme_run_bfmin(void * pme);
 int cpme_run_simplemin(void * pme);
+int cpme_run_uivc(void * pme);
 int cpme_run_caivc(void * pme);
 int cpme_run_cbvc(void * pme);
 int cpme_run_marcoivc(void * pme);
@@ -165,6 +168,8 @@ namespace PME
     typedef std::vector<ClauseID> ClauseIDVec;
 
     const std::string& pme_version();
+
+    extern const unsigned UINFINITY;
 
     typedef std::vector<ID>::const_iterator id_iterator;
     typedef ClauseVec::const_iterator clause_iterator;

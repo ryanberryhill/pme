@@ -132,44 +132,6 @@ namespace PME {
         return result;
     }
 
-    UnexploredResult SATArbitraryMapSolver::findMaximalSeed()
-    {
-        bool sat;
-        Seed seed;
-
-        std::tie(sat, seed) = findSeed();
-
-        if (sat)
-        {
-            grow(seed);
-            return std::make_pair(true, seed);
-        }
-        else
-        {
-            assert(seed.empty());
-            return std::make_pair(false, seed);
-        }
-    }
-
-    UnexploredResult SATArbitraryMapSolver::findMinimalSeed()
-    {
-        bool sat;
-        Seed seed;
-
-        std::tie(sat, seed) = findSeed();
-
-        if (sat)
-        {
-            shrink(seed);
-            return std::make_pair(true, seed);
-        }
-        else
-        {
-            assert(seed.empty());
-            return std::make_pair(false, seed);
-        }
-    }
-
     bool SATArbitraryMapSolver::checkSeed(const Seed & seed)
     {
         std::unordered_set<ID> seed_set(seed.begin(), seed.end());
@@ -207,40 +169,6 @@ namespace PME {
         }
 
         return seed;
-    }
-
-    void SATArbitraryMapSolver::grow(Seed & seed)
-    {
-        std::set<ID> seed_set(seed.begin(), seed.end());
-        for (auto it = begin_ids(); it != end_ids(); ++it)
-        {
-            ID id = *it;
-
-            if (seed_set.count(id) == 0)
-            {
-                Seed seed_copy = seed;
-                seed_copy.push_back(id);
-                if (checkSeed(seed_copy)) { seed = seed_copy; }
-            }
-        }
-    }
-
-    void SATArbitraryMapSolver::shrink(Seed & seed)
-    {
-        for (size_t i = 0; i < seed.size(); )
-        {
-            Seed seed_copy = seed;
-            seed_copy.erase(seed_copy.begin() + i);
-
-            if (checkSeed(seed_copy))
-            {
-                seed = seed_copy;
-            }
-            else
-            {
-                ++i;
-            }
-        }
     }
 
     void MSU4MapSolver::initIfNecessary()

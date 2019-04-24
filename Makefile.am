@@ -107,6 +107,8 @@ libpme_a_SOURCES = src/aiger/aiger.h \
                    src/pme/bmc/bmc_solver.cpp \
                    src/pme/ivc/ivc.h \
                    src/pme/ivc/ivc.cpp \
+                   src/pme/ivc/unified_ivc.h \
+                   src/pme/ivc/unified_ivc.cpp \
                    src/pme/ivc/cbvc.h \
                    src/pme/ivc/cbvc.cpp \
                    src/pme/ivc/correction_set_finder.h \

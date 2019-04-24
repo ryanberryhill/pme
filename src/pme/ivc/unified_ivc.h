@@ -24,6 +24,7 @@
 
 #include "pme/ivc/ivc.h"
 #include "pme/ivc/correction_set_finder.h"
+#include "pme/util/map_solver.h"
 
 namespace PME {
     class UnifiedIVCFinder : public IVCFinder {
@@ -35,9 +36,40 @@ namespace PME {
             virtual std::ostream & log(int verbosity) const override;
 
         private:
-            DebugTransitionRelation m_debug_tr;
-            MCSFinder m_mcs_finder;
+            MapSolver * createMap();
+            CorrectionSetFinder * createFinder();
 
+            void findMCSesUpfront();
+
+            bool getUnexplored();
+            bool getUnexploredMin();
+            bool getUnexploredMax();
+            bool getUnexploredArb();
+
+            void handleMinimalSeed(Seed & seed);
+            void handleMaximalSeed(Seed & seed);
+            void handleSeed(Seed & seed, bool is_minimal = false, bool is_maximal = false);
+
+            void refineSafe(Seed & seed, bool do_shrink);
+            void refineUnsafe(Seed & seed, bool do_grow);
+
+            void shrink(Seed & seed);
+            void grow(Seed & seed);
+
+            bool isSafe(const Seed & seed);
+
+            bool shouldCheckSafety() const;
+
+            void recordMIVC(const Seed & mivc);
+
+            Seed negateSeed(const Seed & seed) const;
+
+            DebugTransitionRelation m_debug_tr;
+            std::unique_ptr<MapSolver> m_map;
+            std::unique_ptr<CorrectionSetFinder> m_cs_finder;
+            Seed m_smallest_ivc;
+            unsigned m_mivc_lb;
+            unsigned m_seed_count;
     };
 }
 

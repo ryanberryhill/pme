@@ -27,6 +27,7 @@
 #include "pme/minimization/sisi.h"
 #include "pme/minimization/brute_force.h"
 #include "pme/minimization/simple.h"
+#include "pme/ivc/unified_ivc.h"
 #include "pme/ivc/caivc.h"
 #include "pme/ivc/cbvc.h"
 #include "pme/ivc/marco_ivc.h"
@@ -107,6 +108,10 @@ namespace PME
         AutoTimer timer(GlobalState::stats().runtime);
         switch (algorithm)
         {
+            case PME_IVC_UIVC:
+                log(1) << "Starting UIVC" << std::endl;
+                m_ivc_finder.reset(new UnifiedIVCFinder(m_vars, m_tr));
+                break;
             case PME_IVC_MARCO:
                 log(1) << "Starting MARCOIVC" << std::endl;
                 m_ivc_finder.reset(new MARCOIVCFinder(m_vars, m_tr));

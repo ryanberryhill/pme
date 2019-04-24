@@ -643,14 +643,8 @@ BOOST_AUTO_TEST_CASE(sat_arbitrary_map_solver)
 {
     testFindArbitraryBlockUp<SATArbitraryMapSolver>();
     testFindArbitraryAddClause<SATArbitraryMapSolver>();
-    testFindMaximalBasic<SATArbitraryMapSolver>();
-    testFindMaximalBlockEverything<SATArbitraryMapSolver>();
-    testFindMaximalBlockUp<SATArbitraryMapSolver>();
-    testFindMaximalBlockDown<SATArbitraryMapSolver>();
-    testFindMinimalBasic<SATArbitraryMapSolver>();
-    testFindMinimalBlockEverything<SATArbitraryMapSolver>();
-    testFindMinimalBlockUp<SATArbitraryMapSolver>();
-    testFindMinimalBlockDown<SATArbitraryMapSolver>();
+    testMinimalUnsupported<SATArbitraryMapSolver>();
+    testMaximalUnsupported<SATArbitraryMapSolver>();
 }
 
 BOOST_AUTO_TEST_CASE(msu4_arbitrary_map_solver)

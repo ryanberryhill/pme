@@ -24,10 +24,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 
 namespace PME
 {
     const static std::string pme_version_string = PACKAGE_VERSION;
+
+    const unsigned UINFINITY = std::numeric_limits<unsigned>::max();
 
     const std::string& pme_version()
     {

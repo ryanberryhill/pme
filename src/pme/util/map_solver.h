@@ -73,8 +73,6 @@ namespace PME {
             { }
             virtual ~SATArbitraryMapSolver() { };
 
-            virtual UnexploredResult findMinimalSeed() override;
-            virtual UnexploredResult findMaximalSeed() override;
             virtual UnexploredResult findSeed() override;
 
             virtual bool checkSeed(const Seed & seed) override;
@@ -84,8 +82,6 @@ namespace PME {
 
         private:
             Seed extractSeed() const;
-            void grow(Seed & seed);
-            void shrink(Seed & seed);
 
             SATAdaptor m_map;
     };

@@ -25,6 +25,8 @@
 #include "pme/engine/logger.h"
 #include "pme/engine/options.h"
 
+#include <memory>
+
 namespace PME
 {
     struct PMEStats
@@ -115,14 +117,19 @@ namespace PME
             // Same goes for statistics
             mutable Logger m_logger;
             mutable PMEStats m_stats;
-            PMEOptions m_opts;
+            std::unique_ptr<PMEOptions> m_opts;
         public:
-            GlobalState() { }
+            GlobalState() : m_opts(new PMEOptions()) { }
 
             static GlobalState& instance();
             static PMEOptions& options();
             static PMEStats& stats();
             static Logger& logger();
+
+            // This function is for testing, hence why it is not static.
+            // That you can only access it through GlobalState::instance()
+            // suggests you shouldn't use it.
+            void resetOptions();
 
             GlobalState(const GlobalState &)     = delete;
             void operator=(const GlobalState &)  = delete;

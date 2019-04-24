@@ -400,6 +400,20 @@ int cpme_run_cbvc(void * pme)
     return 0;
 }
 
+int cpme_run_uivc(void * pme)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    if (!eng) { return -1; }
+
+    try
+    {
+        eng->findIVCs(PME_IVC_UIVC);
+    }
+    handle_exceptions(-1);
+
+    return 0;
+}
+
 int cpme_run_marcoivc(void * pme)
 {
     PME::Engine * eng = static_cast<PME::Engine *>(pme);

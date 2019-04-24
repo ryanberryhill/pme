@@ -82,6 +82,9 @@ namespace PME {
 
     void IVCFinder::setMinimumIVC(const IVC & ivc)
     {
+        double time = m_timer.elapsed();
+        log(1) << "SMIVC found, time: " << time << std::endl;
+
         m_minimum_ivc = ivc;
     }
 
