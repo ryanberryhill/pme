@@ -36,7 +36,12 @@ namespace PME {
           m_cs_finder(createFinder()),
           m_mivc_lb(0),
           m_seed_count(0)
-    { }
+    {
+        if (opts().uivc_coi_hints)
+        {
+            addCOIToMap();
+        }
+    }
 
     std::ostream & UnifiedIVCFinder::log(int verbosity) const
     {
@@ -399,5 +404,56 @@ namespace PME {
         }
 
         return neg;
+    }
+
+    void UnifiedIVCFinder::addCOIToMap()
+    {
+        // Map each gate to its fanout (if any)
+        //
+        // Basic hints: add binary clauses for gates with no fanout.
+        // If g_b's only output is g_a, then we have !g_a => !g_b
+        // which is the same as g_a V !g_b
+        //
+        // Complex hints: add larger clauses for gates with fanout.
+        // If g_c has g_b and g_a as output, then we have !g_b & !g_a => !g_c
+        // or equivalently g_b V g_a V !g_c
+        std::map<ID, std::vector<ID>> gate_to_fanout;
+        for (auto it = tr().begin_gate_ids(); it != tr().end_gate_ids(); ++it)
+        {
+            ID gate_id = *it;
+            const AndGate & gate = tr().getGate(gate_id);
+            ID rhs0 = gate.rhs0;
+            ID rhs1 = gate.rhs1;
+
+            if (tr().isGate(rhs0))
+            {
+                gate_to_fanout[rhs0].push_back(gate_id);
+            }
+
+            if (tr().isGate(rhs1))
+            {
+                gate_to_fanout[rhs1].push_back(gate_id);
+            }
+        }
+
+        for (const auto & p : gate_to_fanout)
+        {
+            ID gate = p.first;
+            const std::vector<ID> & fanout = p.second;
+
+            assert(!fanout.empty());
+
+            Clause cls;
+            cls.reserve(fanout.size() + 1);
+            cls.push_back(negate(gate));
+            for (ID gate_fanout : fanout)
+            {
+                cls.push_back(gate_fanout);
+            }
+
+            assert(!cls.empty());
+            assert(cls.size() == fanout.size() + 1);
+            m_map->addClause(cls);
+        }
     }
 }

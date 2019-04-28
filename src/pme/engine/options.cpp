@@ -109,6 +109,7 @@ namespace PME {
         uivc_direction_down(*this, true, "uivc_direction_down"),
         uivc_direction_up(*this, false, "uivc_direction_up"),
         uivc_mcs_grow(*this, false, "uivc_mcs_grow"),
+        uivc_coi_hints(*this, false, "uivc_coi_hints"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),

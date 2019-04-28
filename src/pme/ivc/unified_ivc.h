@@ -62,6 +62,8 @@ namespace PME {
 
             bool shouldCheckSafety() const;
 
+            void addCOIToMap();
+
             void recordMIVC(const Seed & mivc);
 
             Seed negateSeed(const Seed & seed) const;
