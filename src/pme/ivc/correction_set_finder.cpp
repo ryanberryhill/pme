@@ -328,6 +328,7 @@ namespace PME {
             if (cardinality >= tr().numGates()) { break; }
         }
 
+        stats().mcs_fallbacks++;
         for (unsigned cardinality = 1; cardinality <= n; cardinality++)
         {
             m_ic3.setCardinality(cardinality);
@@ -378,6 +379,7 @@ namespace PME {
             if (cardinality >= tr().numGates()) { break; }
         }
 
+        stats().mcs_fallbacks++;
         for (unsigned cardinality = 1; cardinality <= n; cardinality++)
         {
             m_ic3.setCardinality(cardinality);

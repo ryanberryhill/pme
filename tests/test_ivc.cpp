@@ -229,6 +229,19 @@ BOOST_AUTO_TEST_CASE(uivc_marco_up)
     runAllMIVCTest<UnifiedIVCFinder>();
 }
 
+BOOST_AUTO_TEST_CASE(uivc_check_map)
+{
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = true;
+    GlobalState::options().uivc_check_map = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = false;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
 BOOST_AUTO_TEST_CASE(uivc_coi_hints)
 {
     defaultUIVCOptions();

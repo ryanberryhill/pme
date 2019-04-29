@@ -80,6 +80,7 @@ namespace PME
         size_t smallest_mivc_size;
         size_t largest_mivc_size;
         size_t num_gates;
+        unsigned mcs_fallbacks;
 
         // UIVC
         unsigned uivc_get_unexplored_min_calls;
@@ -88,6 +89,8 @@ namespace PME
         unsigned uivc_issafe_calls;
         unsigned uivc_shrink_calls;
         unsigned uivc_grow_calls;
+        unsigned uivc_cs_found;
+        unsigned uivc_map_checks;
         double uivc_prep_time;
         double uivc_get_unexplored_min_time;
         double uivc_get_unexplored_max_time;

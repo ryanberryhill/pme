@@ -270,8 +270,10 @@ namespace PME {
         stats().uivc_shrink_calls++;
         AutoTimer t(stats().uivc_shrink_time);
 
+        MapSolver * map = opts().uivc_check_map ? m_map.get() : nullptr;
+
         IVCUCBFFinder ivc_ucbf(vars(), tr());
-        ivc_ucbf.shrink(seed);
+        ivc_ucbf.shrink(seed, map);
     }
 
     void UnifiedIVCFinder::grow(Seed & seed)
@@ -287,6 +289,8 @@ namespace PME {
         {
             growByBruteForce(seed);
         }
+
+        stats().uivc_cs_found++;
     }
 
     void UnifiedIVCFinder::growByMCS(Seed & seed)
@@ -312,7 +316,13 @@ namespace PME {
             ID gate = *it;
             if (seed_set.count(gate) > 0) { continue; }
             seed.push_back(gate);
-            if (isSafe(seed))
+
+            if (opts().uivc_check_map && !m_map->checkSeed(seed))
+            {
+                stats().uivc_map_checks++;
+                seed.pop_back();
+            }
+            else if (isSafe(seed))
             {
                 seed.pop_back();
             }
@@ -345,6 +355,8 @@ namespace PME {
             std::tie(sat, corr) = m_cs_finder->findNext(n_max);
 
             if (!sat) { break; }
+
+            stats().uivc_cs_found++;
 
             log(3) << "Found a correction set of size " << corr.size() << std::endl;
             log(4) << "CS " << corr << std::endl;

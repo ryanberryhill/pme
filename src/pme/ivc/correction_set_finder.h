@@ -87,6 +87,7 @@ namespace PME {
         protected:
             const DebugTransitionRelation & tr() const { return m_tr; }
             VariableManager & vars() { return m_vars; }
+            PMEStats & stats() const { return GlobalState::stats(); }
 
         private:
             VariableManager & m_vars;

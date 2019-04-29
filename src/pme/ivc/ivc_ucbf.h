@@ -27,6 +27,7 @@
 
 #include "pme/ivc/ivc.h"
 #include "pme/ivc/ivc_bf.h"
+#include "pme/util/map_solver.h"
 
 namespace PME {
     class IVCUCBFFinder : public IVCFinder
@@ -35,8 +36,8 @@ namespace PME {
             IVCUCBFFinder(VariableManager & varman,
                           const TransitionRelation & tr);
             virtual void doFindIVCs() override;
-            void shrink(Seed & seed);
-            void shrink(Seed & seed, const SafetyProof & proof);
+            void shrink(Seed & seed, MapSolver * map = nullptr);
+            void shrink(Seed & seed, const SafetyProof & proof, MapSolver * map = nullptr);
             bool isSafe(const Seed & seed);
             bool isSafe(const Seed & seed, SafetyProof & proof);
         protected:

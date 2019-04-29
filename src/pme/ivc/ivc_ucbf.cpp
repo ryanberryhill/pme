@@ -52,7 +52,7 @@ namespace PME {
         return m_ivcbf.isSafe(seed, proof);
     }
 
-    void IVCUCBFFinder::shrink(Seed & seed)
+    void IVCUCBFFinder::shrink(Seed & seed, MapSolver * map)
     {
         SafetyProof proof;
 
@@ -60,10 +60,10 @@ namespace PME {
         ((void)(safe));
         assert(safe);
 
-        return shrink(seed, proof);
+        return shrink(seed, proof, map);
     }
 
-    void IVCUCBFFinder::shrink(Seed & seed, const SafetyProof & proof)
+    void IVCUCBFFinder::shrink(Seed & seed, const SafetyProof & proof, MapSolver * map)
     {
         // Optionally shrink the proof
         SafetyProof shrunk_proof;
@@ -162,7 +162,7 @@ namespace PME {
         }
 
         // Run IVC_BF
-        m_ivcbf.shrink(core);
+        m_ivcbf.shrink(core, map);
         log(2) << "Further shrunk down to " << core.size() << " using IVC_BF" << std::endl;
 
         seed = core;

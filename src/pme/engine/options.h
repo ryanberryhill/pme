@@ -101,6 +101,7 @@ namespace PME {
             PMEOption<bool> uivc_direction_up;
             PMEOption<bool> uivc_mcs_grow;
             PMEOption<bool> uivc_coi_hints;
+            PMEOption<bool> uivc_check_map;
 
             // CAIVC
             PMEOption<bool> caivc_use_bmc;

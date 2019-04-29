@@ -56,12 +56,15 @@ namespace PME
         smallest_mivc_size(std::numeric_limits<size_t>::max()),
         largest_mivc_size(0),
         num_gates(0),
+        mcs_fallbacks(0),
         uivc_get_unexplored_min_calls(0),
         uivc_get_unexplored_max_calls(0),
         uivc_get_unexplored_arb_calls(0),
         uivc_issafe_calls(0),
         uivc_shrink_calls(0),
         uivc_grow_calls(0),
+        uivc_cs_found(0),
+        uivc_map_checks(0),
         uivc_prep_time(0.0),
         uivc_get_unexplored_min_time(0.0),
         uivc_get_unexplored_max_time(0.0),
@@ -146,6 +149,7 @@ namespace PME
             os << "Smallest MIVC: " << smallest_mivc_size << std::endl;
             os << "Largest MIVC: " << largest_mivc_size << std::endl;
         }
+        os << "MCS Fallbacks: " << mcs_fallbacks << std::endl;
 
         // UIVC specific
         os << "UIVC getUnexploredMin Calls: " << uivc_get_unexplored_min_calls << std::endl;
@@ -161,6 +165,8 @@ namespace PME
         os << "UIVC grow Calls: " << uivc_grow_calls << std::endl;
         os << "UIVC grow Time: " << uivc_grow_time << std::endl;
         os << "UIVC Preparation Time: " << uivc_prep_time << std::endl;
+        os << "UIVC Correction Sets Found: " << uivc_cs_found << std::endl;
+        os << "UIVC Successful Map Checks: " << uivc_map_checks << std::endl;
 
         // CAIVC specific
         os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;

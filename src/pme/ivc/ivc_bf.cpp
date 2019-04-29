@@ -33,14 +33,22 @@ namespace PME {
         return IVCFinder::log(LOG_IVCBF, verbosity);
     }
 
-    void IVCBFFinder::shrink(Seed & seed)
+    void IVCBFFinder::shrink(Seed & seed, MapSolver * map)
     {
         // TODO: incrementality
         for (size_t i = 0; i < seed.size(); )
         {
             Seed seed_copy = seed;
             seed_copy.erase(seed_copy.begin() + i);
-            if (isSafe(seed_copy))
+            if (map && !map->checkSeed(seed_copy))
+            {
+                log(4) << "Cannot remove " << seed[i] << std::endl;
+                ++i;
+                // Obviously it's not good to touch UIVC stats here, but we
+                // do it anyway
+                stats().uivc_map_checks++;
+            }
+            else if (isSafe(seed_copy))
             {
                 log(4) << "Successfully removed " << seed[i] << std::endl;
                 seed.erase(seed.begin() + i);
