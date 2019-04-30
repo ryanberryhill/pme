@@ -220,11 +220,11 @@ namespace PME {
     void UnifiedIVCFinder::handleSeed(Seed & seed, bool is_minimal, bool is_maximal)
     {
         assert(!is_minimal || !is_maximal);
+        assert(seed.size() >= m_mivc_lb);
 
         // Update lower bound (if possible)
         if (is_minimal)
         {
-            assert(seed.size() >= m_mivc_lb);
             m_mivc_lb = seed.size();
         }
 
@@ -440,8 +440,8 @@ namespace PME {
         {
             ID gate_id = *it;
             const AndGate & gate = tr().getGate(gate_id);
-            ID rhs0 = gate.rhs0;
-            ID rhs1 = gate.rhs1;
+            ID rhs0 = strip(gate.rhs0);
+            ID rhs1 = strip(gate.rhs1);
 
             if (tr().isGate(rhs0))
             {
@@ -469,7 +469,7 @@ namespace PME {
                 cls.push_back(gate_fanout);
             }
 
-            assert(!cls.empty());
+            assert(cls.size() >= 2);
             assert(cls.size() == fanout.size() + 1);
             m_map->addClause(cls);
         }

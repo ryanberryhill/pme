@@ -279,8 +279,8 @@ namespace PME {
         for (ID gate_id : m_gates)
         {
             const AndGate & gate = tr().getGate(gate_id);
-            ID rhs0 = gate.rhs0;
-            ID rhs1 = gate.rhs1;
+            ID rhs0 = strip(gate.rhs0);
+            ID rhs1 = strip(gate.rhs1);
 
             if (tr().isGate(rhs0))
             {
