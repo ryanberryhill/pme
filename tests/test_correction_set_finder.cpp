@@ -356,6 +356,15 @@ BOOST_AUTO_TEST_CASE(approximate_mcs_over_gates)
 
 
 
+void sortVector(std::vector<CorrectionSet> & mcses)
+{
+    for (auto & mcs : mcses)
+    {
+        std::sort(mcs.begin(), mcs.end());
+    }
+    std::sort(mcses.begin(), mcses.end());
+}
+
 template<class Finder>
 void testFindMCS(bool guaranteed_minimal)
 {
@@ -538,14 +547,149 @@ void testFindMCSExternallyBlocked(bool guaranteed_minimal)
     BOOST_REQUIRE(!finder.moreCorrectionSets());
 }
 
+template<class Finder>
+void testFindAll()
+{
+    // The MCSes are:
+    // {a6}
+    // {a4, a5}
+    // {a0, a1, a5}
+    // {a2, a3, a4}
+    // {a0, a1, a2, a3}
+    CorrectionSetFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    std::vector<CorrectionSet> expected;
+    expected.push_back({a6});
+    expected.push_back({a4, a5});
+    expected.push_back({a0, a1, a5});
+    expected.push_back({a2, a3, a4});
+    expected.push_back({a0, a1, a2, a3});
+    sortVector(expected);
+
+    // Check for cardinality 2
+    Finder finder(f.vars, *f.tr);
+    std::vector<CorrectionSet> actual = finder.findAll(2);
+    BOOST_REQUIRE_EQUAL(actual.size(), 2);
+    sortVector(actual);
+
+    for (const auto & mcs : actual)
+    {
+        BOOST_CHECK(mcs.size() <= 2);
+        auto it = std::find(expected.begin(), expected.end(), mcs);
+        BOOST_CHECK(it != expected.end());
+    }
+
+    // Check for all cardinalities
+    Finder finder2(f.vars, *f.tr);
+    actual = finder2.findAll(8);
+    BOOST_REQUIRE_EQUAL(actual.size(), expected.size());
+    sortVector(actual);
+
+    // Check there are no duplicates
+    std::set<CorrectionSet> actual_set(actual.begin(), actual.end());
+    BOOST_REQUIRE_EQUAL(actual_set.size(), actual.size());
+
+    // Check every MCS was found
+    for (const auto & mcs : actual)
+    {
+        auto it = std::find(expected.begin(), expected.end(), mcs);
+        BOOST_CHECK(it != expected.end());
+    }
+}
+
+template<class Finder>
+void testFindBatch()
+{
+    // The MCSes are:
+    // {a6}
+    // {a4, a5}
+    // {a0, a1, a5}
+    // {a2, a3, a4}
+    // {a0, a1, a2, a3}
+    CorrectionSetFixture f;
+
+    ID a0 = f.tr->toInternal(f.a0);
+    ID a1 = f.tr->toInternal(f.a1);
+    ID a2 = f.tr->toInternal(f.a2);
+    ID a3 = f.tr->toInternal(f.a3);
+    ID a4 = f.tr->toInternal(f.a4);
+    ID a5 = f.tr->toInternal(f.a5);
+    ID a6 = f.tr->toInternal(f.a6);
+
+    std::vector<CorrectionSet> expected;
+    expected.push_back({a6});
+    expected.push_back({a4, a5});
+    expected.push_back({a0, a1, a5});
+    expected.push_back({a2, a3, a4});
+    expected.push_back({a0, a1, a2, a3});
+    sortVector(expected);
+
+    // Check for cardinality 2
+    Finder finder(f.vars, *f.tr);
+    std::vector<CorrectionSet> actual = finder.findBatch(2);
+    sortVector(actual);
+
+    for (const auto & mcs : actual)
+    {
+        BOOST_CHECK(mcs.size() <= 2);
+        // Iterate over expected to see if one of them is contained in mcs
+        bool found = false;
+        for (const auto & expected_mcs : expected)
+        {
+            if (std::includes(mcs.begin(), mcs.end(), expected_mcs.begin(), expected_mcs.end()))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        BOOST_REQUIRE(found);
+    }
+
+    // Check for all cardinalities
+    Finder finder2(f.vars, *f.tr);
+    actual = finder2.findBatch(5);
+    BOOST_REQUIRE_EQUAL(actual.size(), expected.size());
+    sortVector(actual);
+
+    for (const auto & mcs : actual)
+    {
+        BOOST_CHECK(mcs.size() <= 5);
+        // Iterate over expected to see if one of them is contained in mcs
+        bool found = false;
+        for (const auto & expected_mcs : expected)
+        {
+            if (std::includes(mcs.begin(), mcs.end(), expected_mcs.begin(), expected_mcs.end()))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        BOOST_REQUIRE(found);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(basic_mcs_finder)
 {
     testFindMCS<BasicMCSFinder>(true);
     testFindMCSExternallyBlocked<BasicMCSFinder>(true);
+    testFindAll<BasicMCSFinder>();
+    testFindBatch<BasicMCSFinder>();
 }
 
 BOOST_AUTO_TEST_CASE(bmc_finder)
 {
     testFindMCS<BMCCorrectionSetFinder>(false);
     testFindMCSExternallyBlocked<BMCCorrectionSetFinder>(false);
+    testFindAll<BMCCorrectionSetFinder>();
+    testFindBatch<BMCCorrectionSetFinder>();
 }

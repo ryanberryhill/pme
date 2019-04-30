@@ -343,22 +343,28 @@ namespace PME {
 
     void UnifiedIVCFinder::findMCSesUpfront()
     {
-        unsigned n_max = opts().uivc_upfront_nmax;
-
-        bool sat = true;
-
         AutoTimer t(stats().uivc_prep_time);
 
-        while (sat && n_max > 0)
+        unsigned n_max = opts().uivc_upfront_nmax;
+
+        std::vector<CorrectionSet> upfront;
+        if (n_max == UINFINITY)
         {
-            CorrectionSet corr;
-            std::tie(sat, corr) = m_cs_finder->findNext(n_max);
+            upfront = m_cs_finder->findAll(n_max);
+        }
+        else
+        {
+            upfront = m_cs_finder->findBatch(n_max);
+        }
 
-            if (!sat) { break; }
-
+        // Ideally we would log these as they come in instead
+        for (const auto & corr : upfront)
+        {
             stats().uivc_cs_found++;
 
-            log(3) << "Found a correction set of size " << corr.size() << std::endl;
+            log(3) << "Found a correction set of size " << corr.size()
+                   << " [#" << stats().uivc_cs_found << "]"
+                   << std::endl;
             log(4) << "CS " << corr << std::endl;
 
             assert(!corr.empty());

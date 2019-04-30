@@ -79,6 +79,11 @@ namespace PME {
             virtual FindMCSResult findNext(unsigned n);
             virtual FindMCSResult findNext();
 
+            // Find all MCSes of size n or less
+            virtual std::vector<CorrectionSet> findAll(unsigned n);
+            // Find some correction sets of size n or less
+            virtual std::vector<CorrectionSet> findBatch(unsigned n);
+
             virtual bool moreCorrectionSets(unsigned n) = 0;
             virtual bool moreCorrectionSets();
 
@@ -88,6 +93,7 @@ namespace PME {
             const DebugTransitionRelation & tr() const { return m_tr; }
             VariableManager & vars() { return m_vars; }
             PMEStats & stats() const { return GlobalState::stats(); }
+            PMEOptions & opts() const { return GlobalState::options(); }
 
         private:
             VariableManager & m_vars;
@@ -138,15 +144,30 @@ namespace PME {
 
             virtual void block(const CorrectionSet & corr) override;
 
+            virtual std::vector<CorrectionSet> findBatch(unsigned n) override;
+
         private:
             bool moreCorrectionSetsBMC(unsigned n);
             bool moreCorrectionSetsIC3(unsigned n);
             void setBMCCardinality(unsigned n);
 
+            bool checkAt(unsigned k, unsigned cardinality);
+            FindMCSResult findAt(unsigned k, unsigned cardinality);
+            FindMCSResult findAt(const std::vector<ID> & gates, unsigned k, unsigned cardinality);
+            FindMCSResult findFallback(unsigned n);
+            FindMCSResult findFallback(const std::vector<ID> & gates, unsigned n);
+
+            void exhaust(unsigned k, unsigned n);
+            bool isExhausted(unsigned k, unsigned n) const;
+
             BMCDebugger m_bmc;
             IC3Debugger m_ic3;
             unsigned m_cardinality;
+            unsigned m_exhausted_cardinality;
             unsigned m_current_k;
+            unsigned m_k_max;
+            // <k, n> pairs that have been exhausted
+            std::set<std::pair<unsigned, unsigned>> m_exhausted;
 
     };
 }

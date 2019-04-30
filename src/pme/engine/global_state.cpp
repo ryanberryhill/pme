@@ -65,6 +65,7 @@ namespace PME
         uivc_grow_calls(0),
         uivc_cs_found(0),
         uivc_map_checks(0),
+        uivc_k_max(0),
         uivc_prep_time(0.0),
         uivc_get_unexplored_min_time(0.0),
         uivc_get_unexplored_max_time(0.0),
@@ -167,6 +168,7 @@ namespace PME
         os << "UIVC Preparation Time: " << uivc_prep_time << std::endl;
         os << "UIVC Correction Sets Found: " << uivc_cs_found << std::endl;
         os << "UIVC Successful Map Checks: " << uivc_map_checks << std::endl;
+        os << "UIVC Adapted BMC k_max: " << uivc_k_max << std::endl;
 
         // CAIVC specific
         os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;

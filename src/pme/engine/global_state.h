@@ -91,6 +91,7 @@ namespace PME
         unsigned uivc_grow_calls;
         unsigned uivc_cs_found;
         unsigned uivc_map_checks;
+        unsigned uivc_k_max;
         double uivc_prep_time;
         double uivc_get_unexplored_min_time;
         double uivc_get_unexplored_max_time;

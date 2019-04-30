@@ -91,7 +91,8 @@ namespace PME {
 
             // MCS Finding
             PMEOption<unsigned> mcs_bmc_kmax;
-            PMEOption<unsigned> mcs_bmc_loose_kmax;
+            PMEOption<unsigned> mcs_bmc_nmax;
+            PMEOption<bool> mcs_try_to_exhaust;
 
             // Unified IVC
             PMEOption<MCSFinderType> uivc_mcs_finder_type;
