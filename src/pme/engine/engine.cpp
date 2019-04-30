@@ -49,7 +49,9 @@ namespace PME
 {
     Engine::Engine(aiger * aig)
         : m_tr(m_vars, aig)
-    { }
+    {
+        GlobalState::stats().num_gates = m_tr.numGates();
+    }
 
     void Engine::setProof(const ExternalClauseVec & proof)
     {

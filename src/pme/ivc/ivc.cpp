@@ -43,7 +43,6 @@ namespace PME {
 
     void IVCFinder::findIVCs()
     {
-        stats().num_gates = m_tr.numGates();
         m_timer.start();
         doFindIVCs();
     }
