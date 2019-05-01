@@ -166,6 +166,7 @@ namespace PME {
             unsigned m_exhausted_cardinality;
             unsigned m_current_k;
             unsigned m_k_max;
+            unsigned m_k_min;
             // <k, n> pairs that have been exhausted
             std::set<std::pair<unsigned, unsigned>> m_exhausted;
 

@@ -91,6 +91,7 @@ namespace PME {
 
             // MCS Finding
             PMEOption<unsigned> mcs_bmc_kmax;
+            PMEOption<unsigned> mcs_bmc_kmin;
             PMEOption<unsigned> mcs_bmc_nmax;
             PMEOption<bool> mcs_try_to_exhaust;
 

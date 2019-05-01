@@ -314,7 +314,8 @@ namespace PME {
           m_cardinality(1),
           m_exhausted_cardinality(0),
           m_current_k(0),
-          m_k_max(opts().mcs_bmc_kmax)
+          m_k_max(opts().mcs_bmc_kmax),
+          m_k_min(opts().mcs_bmc_kmin)
     { }
 
     void BMCCorrectionSetFinder::setBMCCardinality(unsigned n)
@@ -509,7 +510,6 @@ namespace PME {
         std::vector<CorrectionSet> result;
 
         // Minimum k before give-up
-        unsigned k_min = m_k_max / 2;
         unsigned n_max = std::min(n, (unsigned) tr().numGates());
         n_max = std::min(n_max, (unsigned) opts().mcs_bmc_nmax);
 
@@ -528,6 +528,7 @@ namespace PME {
                 {
                     result.push_back(corr);
                     last_soln = k;
+                    m_k_min = std::max(m_k_min, k);
                 }
                 else
                 {
@@ -542,12 +543,11 @@ namespace PME {
                 // (N, k') for all k' <= k. We still may find non-minimal
                 // correction sets, but this process will never find {a, b} and
                 // then {a}.
-                assert(k_min < m_k_max);
-                if (k - last_soln >= 3 && k >= k_min)
+                assert(m_k_min <= m_k_max);
+                if (k - last_soln >= 3 && k >= m_k_min)
                 {
                     m_k_max = k;
                     stats().uivc_k_max = m_k_max;
-                    k_min = m_k_max / 2;
                     break;
                 }
             }
@@ -606,6 +606,7 @@ namespace PME {
 
     bool BMCCorrectionSetFinder::isExhausted(unsigned k, unsigned n) const
     {
+        if (n <= m_exhausted_cardinality) { return true; }
         auto p = std::make_pair(k, n);
         return m_exhausted.count(p) > 0;
     }
