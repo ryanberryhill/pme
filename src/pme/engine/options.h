@@ -99,6 +99,8 @@ namespace PME {
             PMEOption<MCSFinderType> uivc_mcs_finder_type;
             PMEOption<MapSolverType> uivc_map_solver_type;
             PMEOption<unsigned> uivc_upfront_nmax;
+            PMEOption<unsigned> uivc_cex_cache;
+            PMEOption<unsigned> uivc_proof_cache;
             PMEOption<bool> uivc_direction_down;
             PMEOption<bool> uivc_direction_up;
             PMEOption<bool> uivc_mcs_grow;

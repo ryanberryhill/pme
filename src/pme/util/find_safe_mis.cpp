@@ -50,6 +50,38 @@ namespace PME
         return containsAllOf(vec, props) && solver.isInductive(vec);
     }
 
+    bool findSafeMIS(VariableManager & varman,
+                     const TransitionRelation & tr,
+                     const SafetyProof & proof)
+    {
+        ConsecutionChecker checker(varman, tr);
+        ClauseIDVec vec;
+        vec.reserve(proof.size());
+
+        ClauseID property = proof.size();
+        Clause propCls = { negate(tr.bad()) };
+        // Add clauses to the checker
+        for (unsigned i = 0; i < proof.size(); ++i)
+        {
+            const Clause & cls = proof.at(i);
+            checker.addClause(i, cls);
+            vec.push_back(i);
+
+            if (cls == propCls)
+            {
+                assert(property == proof.size());
+                property = i;
+            }
+        }
+
+        // Check that the property was found; if we later need to handle
+        // proofs that don't contain the property it should just be added
+        // here.
+        assert(property < proof.size());
+
+        return findSafeMIS(checker, vec, property);
+    }
+
     bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, ClauseID property)
     {
         ClauseIDVec nec = {property};
@@ -74,7 +106,16 @@ namespace PME
                 assert(nprimes(lit) == 0);
                 // The corresponding literal of ~c'
                 ID nplit = negate(prime(lit));
-                if (solver.getAssignment(nplit) == SAT::FALSE)
+
+                // We use safeGetAssignment here to support cases where this
+                // is called with a proof from a TR (call it T) and a different
+                // transition relation T' that is a subset of T
+                // (e.g., in IVC finding).
+                // If the result is SAT::UNDEF, then the clause in unsupported,
+                // so we should treat it as TRUE.
+                // The smarter thing would be to remove these clauses before
+                // running, but it's not important.
+                if (solver.safeGetAssignment(nplit) == SAT::FALSE)
                 {
                     negcp_sat = false;
                     break;

@@ -23,6 +23,8 @@
 #include "pme/ivc/ivc_ucbf.h"
 #include "pme/util/hybrid_safety_checker.h"
 #include "pme/pme.h"
+#include "pme/util/check_cex.h"
+#include "pme/util/find_safe_mis.h"
 
 #include <cassert>
 
@@ -229,7 +231,8 @@ namespace PME {
         }
 
         // check for safety (if necessary)
-        if (isSafe(seed))
+        SafetyProof proof;
+        if (isSafe(seed, &proof))
         {
             log(3) << "Found an IVC of size " << seed.size() << std::endl;
 
@@ -241,7 +244,7 @@ namespace PME {
             }
 
             // shrink (if necessary) and refine using blockUp
-            refineSafe(seed, !is_minimal);
+            refineSafe(seed, proof, !is_minimal);
 
             recordMIVC(seed);
 
@@ -265,7 +268,7 @@ namespace PME {
         }
     }
 
-    void UnifiedIVCFinder::shrink(Seed & seed)
+    void UnifiedIVCFinder::shrink(Seed & seed, const SafetyProof & proof)
     {
         stats().uivc_shrink_calls++;
         AutoTimer t(stats().uivc_shrink_time);
@@ -273,7 +276,32 @@ namespace PME {
         MapSolver * map = opts().uivc_check_map ? m_map.get() : nullptr;
 
         IVCUCBFFinder ivc_ucbf(vars(), tr());
-        ivc_ucbf.shrink(seed, map);
+        ivc_ucbf.shrinkUC(seed, proof, map);
+
+        // Do the brute force shrinking here to make use of the isSafe caches
+        for (size_t i = 0; i < seed.size(); )
+        {
+            Seed seed_copy = seed;
+            seed_copy.erase(seed_copy.begin() + i);
+            if (opts().uivc_check_map && !map->checkSeed(seed_copy))
+            {
+                log(4) << "Cannot remove " << seed[i] << std::endl;
+                stats().uivc_map_checks++;
+                ++i;
+            }
+            else if (isSafe(seed_copy))
+            {
+                log(4) << "Successfully removed " << seed[i] << std::endl;
+                seed.erase(seed.begin() + i);
+            }
+            else
+            {
+                log(4) << "Cannot remove " << seed[i] << std::endl;
+                ++i;
+            }
+        }
+
+        log(2) << "Further shrunk down to " << seed.size() << " using IVC_BF" << std::endl;
     }
 
     void UnifiedIVCFinder::grow(Seed & seed)
@@ -329,9 +357,9 @@ namespace PME {
         }
     }
 
-    void UnifiedIVCFinder::refineSafe(Seed & seed, bool do_shrink)
+    void UnifiedIVCFinder::refineSafe(Seed & seed, const SafetyProof & proof, bool do_shrink)
     {
-        if (do_shrink) { shrink(seed); }
+        if (do_shrink) { shrink(seed, proof); }
         m_map->blockUp(seed);
     }
 
@@ -374,7 +402,7 @@ namespace PME {
         }
     }
 
-    bool UnifiedIVCFinder::isSafe(const Seed & seed)
+    bool UnifiedIVCFinder::isSafe(const Seed & seed, SafetyProof * proof)
     {
         // Don't need to check safety if we're doing CAMUS-style enumeration
         if (!shouldCheckSafety()) { return true; }
@@ -383,10 +411,116 @@ namespace PME {
         AutoTimer t(stats().uivc_issafe_time);
 
         TransitionRelation partial(tr(), seed);
+
+        SafetyResult cached = checkSafetyCache(partial);
+
+        if (!cached.unknown())
+        {
+            if (proof) { *proof = cached.proof; }
+            return cached.safe();
+        }
+
         HybridSafetyChecker checker(vars(), partial);
         SafetyResult safe = checker.prove();
 
-        return safe.result == SAFE;
+        if (safe.safe())
+        {
+            stats().uivc_safe_cache_misses++;
+            if (proof) { *proof = safe.proof; }
+            cacheProof(safe.proof);
+        }
+        else if (safe.unsafe())
+        {
+            stats().uivc_unsafe_cache_misses++;
+            cacheCounterExample(safe.cex);
+        }
+
+        return safe.safe();
+    }
+
+    SafetyResult UnifiedIVCFinder::checkSafetyCache(const TransitionRelation & partial)
+    {
+        SafetyResult result;
+
+        // Checking counter-examples is much less expensive, so always do
+        // it first.
+        for (auto it = m_cexes.begin(); it != m_cexes.end(); ++it)
+        {
+            AutoTimer t(stats().uivc_safe_cache_time);
+            const auto & cex = *it;
+            if (checkCounterExample(vars(), partial, cex))
+            {
+                // Unsafe, witnessed by cex
+                // Move cex to the front of the LRU cache and return UNSAFE
+                m_cexes.push_front(cex);
+                m_cexes.erase(it);
+
+                stats().uivc_unsafe_cache_hits++;
+                log(4) << "Found seed unsafe using cache" << std::endl;
+
+                //SafetyProof empty_proof;
+                //return SafetyResult(UNSAFE, empty_proof, cex);
+                result.result = UNSAFE;
+                result.cex = m_cexes.front();
+                return result;
+            }
+        }
+
+        for (auto it = m_proofs.begin(); it != m_proofs.end(); ++it)
+        {
+            AutoTimer t(stats().uivc_unsafe_cache_time);
+            const auto & proof = *it;
+            if (findSafeMIS(vars(), partial, proof))
+            {
+                // Safe, witnessed by proof
+                // Move proof to the front of the LRU cache and return SAFE.
+                // What about the safe MIS? We throw it away. It's a subset of
+                // the proof so while it might be faster to check sometimes,
+                // checking a proof is relatively inexpensive already.
+                m_proofs.push_front(proof);
+                m_proofs.erase(it);
+
+                stats().uivc_safe_cache_hits++;
+                log(4) << "Found seed safe using cache" << std::endl;
+
+                //SafetyCounterExample empty_cex;
+                //return SafetyResult(SAFE, proof, empty_cex);
+                result.result = SAFE;
+                result.proof = m_proofs.front();
+                return result;
+            }
+        }
+
+        result.result = UNKNOWN;
+        return result;
+    }
+
+    void UnifiedIVCFinder::cacheCounterExample(const SafetyCounterExample & cex)
+    {
+        unsigned size = opts().uivc_cex_cache;
+        if (size == 0) { return; }
+
+        m_cexes.push_front(cex);
+
+        assert(m_cexes.size() <= size + 1);
+        if (m_cexes.size() > size)
+        {
+            m_cexes.pop_back();
+        }
+    }
+
+    void UnifiedIVCFinder::cacheProof(const SafetyProof & proof)
+    {
+        unsigned size = opts().uivc_proof_cache;
+        if (size == 0) { return; }
+
+        m_proofs.push_front(proof);
+
+        assert(m_proofs.size() <= size + 1);
+        if (m_proofs.size() > size)
+        {
+            m_proofs.pop_back();
+        }
     }
 
     void UnifiedIVCFinder::recordMIVC(const Seed & mivc)

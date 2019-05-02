@@ -92,6 +92,12 @@ namespace PME
         unsigned uivc_cs_found;
         unsigned uivc_map_checks;
         unsigned uivc_k_max;
+        unsigned uivc_safe_cache_hits;
+        unsigned uivc_safe_cache_misses;
+        unsigned uivc_unsafe_cache_hits;
+        unsigned uivc_unsafe_cache_misses;
+        double uivc_safe_cache_time;
+        double uivc_unsafe_cache_time;
         double uivc_prep_time;
         double uivc_get_unexplored_min_time;
         double uivc_get_unexplored_max_time;

@@ -62,6 +62,7 @@ namespace PME
 
             const Clause & clauseOf(ClauseID id) const;
 
+            ModelValue safeGetAssignment(ID lit) const;
             ModelValue getAssignment(ID lit) const;
 
         private:

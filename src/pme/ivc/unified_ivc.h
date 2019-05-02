@@ -26,6 +26,8 @@
 #include "pme/ivc/correction_set_finder.h"
 #include "pme/util/map_solver.h"
 
+#include <list>
+
 namespace PME {
     class UnifiedIVCFinder : public IVCFinder {
         public:
@@ -50,15 +52,18 @@ namespace PME {
             void handleMaximalSeed(Seed & seed);
             void handleSeed(Seed & seed, bool is_minimal = false, bool is_maximal = false);
 
-            void refineSafe(Seed & seed, bool do_shrink);
+            void refineSafe(Seed & seed, const SafetyProof & proof, bool do_shrink);
             void refineUnsafe(Seed & seed, bool do_grow);
 
-            void shrink(Seed & seed);
+            void shrink(Seed & seed, const SafetyProof & proof);
             void grow(Seed & seed);
             void growByBruteForce(Seed & seed);
             void growByMCS(Seed & seed);
 
-            bool isSafe(const Seed & seed);
+            bool isSafe(const Seed & seed, SafetyProof * proof = nullptr);
+            SafetyResult checkSafetyCache(const TransitionRelation & partial);
+            void cacheCounterExample(const SafetyCounterExample & cex);
+            void cacheProof(const SafetyProof & proof);
 
             bool shouldCheckSafety() const;
 
@@ -74,6 +79,8 @@ namespace PME {
             Seed m_smallest_ivc;
             unsigned m_mivc_lb;
             unsigned m_seed_count;
+            std::list<SafetyProof> m_proofs;
+            std::list<SafetyCounterExample> m_cexes;
     };
 }
 

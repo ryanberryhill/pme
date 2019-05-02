@@ -23,11 +23,15 @@
 #define MIS_FINDER_H_INCLUDED
 
 #include "pme/pme.h"
+#include "pme/safety.h"
 #include "pme/engine/variable_manager.h"
 #include "pme/engine/consecution_checker.h"
 
 namespace PME
 {
+    bool findSafeMIS(VariableManager & varman,
+                     const TransitionRelation & tr,
+                     const SafetyProof & proof);
     bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, ClauseID property);
     bool findSafeMIS(ConsecutionChecker & solver, ClauseIDVec & vec, const ClauseIDVec & nec);
 }

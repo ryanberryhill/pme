@@ -239,3 +239,64 @@ BOOST_AUTO_TEST_CASE(multiple_necessary_clauses)
     BOOST_CHECK(proof_copy == expected);
 }
 
+BOOST_AUTO_TEST_CASE(no_checker_interface)
+{
+    MISFixture f;
+    ID l0 = f.tr->toInternal(f.l0);
+    ID l1 = f.tr->toInternal(f.l1);
+    ID l2 = f.tr->toInternal(f.l2);
+    ID l3 = f.tr->toInternal(f.l3);
+
+    ID nl0 = negate(l0);
+    ID nl1 = negate(l1);
+    ID nl2 = negate(l2);
+    ID nl3 = negate(l3);
+
+    SafetyProof safe_non_inductive = {
+        // Safe inductive formula
+        { negate(f.tr->bad()) },
+        {nl0, nl1},
+        {nl0, nl2},
+        {nl0, nl3},
+        {nl1, nl2},
+        {nl1, nl3},
+        {nl2, nl3},
+        // Extra clauses
+        {l0, l1},
+        {l1, l2}
+    };
+
+    BOOST_CHECK(findSafeMIS(f.vars, *f.tr, safe_non_inductive));
+
+    SafetyProof safe_inductive = {
+        { negate(f.tr->bad()) },
+        {nl0, nl1},
+        {nl0, nl2},
+        {nl0, nl3},
+        {nl1, nl2},
+        {nl1, nl3},
+        {nl2, nl3}
+    };
+
+    BOOST_CHECK(findSafeMIS(f.vars, *f.tr, safe_inductive));
+
+    SafetyProof minimal_safe_inductive = {
+        { negate(f.tr->bad()) },
+        {nl0, nl1},
+        {nl1, nl2},
+        {nl2, nl3},
+        {nl3, nl0}
+    };
+
+    BOOST_CHECK(findSafeMIS(f.vars, *f.tr, minimal_safe_inductive));
+
+    SafetyProof non_proof = {
+        { negate(f.tr->bad()) },
+        {nl0, nl1},
+        {nl2, nl3},
+        {nl3, nl0}
+    };
+
+    BOOST_CHECK(!findSafeMIS(f.vars, *f.tr, non_proof));
+}
+

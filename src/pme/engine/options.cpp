@@ -108,6 +108,8 @@ namespace PME {
         uivc_mcs_finder_type(*this, MCS_FINDER_BASIC, "uivc_mcs_finder"),
         uivc_map_solver_type(*this, MAP_SOLVER_MSU4, "uivc_map_solver"),
         uivc_upfront_nmax(*this, 0, "uivc_upfront_nmax"),
+        uivc_cex_cache(*this, 0, "uivc_cex_cache"),
+        uivc_proof_cache(*this, 0, "uivc_proof_cache"),
         uivc_direction_down(*this, true, "uivc_direction_down"),
         uivc_direction_up(*this, false, "uivc_direction_up"),
         uivc_mcs_grow(*this, false, "uivc_mcs_grow"),

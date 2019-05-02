@@ -36,8 +36,13 @@ namespace PME {
             IVCUCBFFinder(VariableManager & varman,
                           const TransitionRelation & tr);
             virtual void doFindIVCs() override;
+
+            void shrinkUC(Seed & seed, const SafetyProof & proof, MapSolver * map = nullptr);
+            void shrinkUC(Seed & seed, MapSolver * map = nullptr);
+            void shrinkBF(Seed & seed, MapSolver * map = nullptr);
             void shrink(Seed & seed, MapSolver * map = nullptr);
             void shrink(Seed & seed, const SafetyProof & proof, MapSolver * map = nullptr);
+
             bool isSafe(const Seed & seed);
             bool isSafe(const Seed & seed, SafetyProof & proof);
         protected:

@@ -52,18 +52,7 @@ namespace PME {
         return m_ivcbf.isSafe(seed, proof);
     }
 
-    void IVCUCBFFinder::shrink(Seed & seed, MapSolver * map)
-    {
-        SafetyProof proof;
-
-        bool safe = isSafe(seed, proof);
-        ((void)(safe));
-        assert(safe);
-
-        return shrink(seed, proof, map);
-    }
-
-    void IVCUCBFFinder::shrink(Seed & seed, const SafetyProof & proof, MapSolver * map)
+    void IVCUCBFFinder::shrinkUC(Seed & seed, const SafetyProof & proof, MapSolver * map)
     {
         // Optionally shrink the proof
         SafetyProof shrunk_proof;
@@ -160,12 +149,41 @@ namespace PME {
             log(2) << "Initial states unsafe, falling back to IVC_BF" << std::endl;
             core = seed;
         }
+    }
 
+    void IVCUCBFFinder::shrinkUC(Seed & seed, MapSolver * map)
+    {
+        SafetyProof proof;
+
+        bool safe = isSafe(seed, proof);
+        ((void)(safe));
+        assert(safe);
+
+        return shrinkUC(seed, proof, map);
+    }
+
+    void IVCUCBFFinder::shrinkBF(Seed & seed, MapSolver * map)
+    {
         // Run IVC_BF
-        m_ivcbf.shrink(core, map);
-        log(2) << "Further shrunk down to " << core.size() << " using IVC_BF" << std::endl;
+        m_ivcbf.shrink(seed, map);
+        log(2) << "Shrunk down to " << seed.size() << " using IVC_BF" << std::endl;
+    }
 
-        seed = core;
+    void IVCUCBFFinder::shrink(Seed & seed, MapSolver * map)
+    {
+        SafetyProof proof;
+
+        bool safe = isSafe(seed, proof);
+        ((void)(safe));
+        assert(safe);
+
+        return shrink(seed, proof, map);
+    }
+
+    void IVCUCBFFinder::shrink(Seed & seed, const SafetyProof & proof, MapSolver * map)
+    {
+        shrinkUC(seed, proof, map);
+        shrinkBF(seed, map);
     }
 
     void IVCUCBFFinder::doFindIVCs()
