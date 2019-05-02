@@ -75,6 +75,9 @@ namespace PME {
 
             DebugTransitionRelation m_debug_tr;
             std::unique_ptr<MapSolver> m_map;
+            // Quick hack for checking the map while COI hints are
+            // present; they are present in m_map but not m_check_map
+            SATArbitraryMapSolver m_check_map;
             std::unique_ptr<CorrectionSetFinder> m_cs_finder;
             Seed m_smallest_ivc;
             unsigned m_mivc_lb;

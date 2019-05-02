@@ -35,6 +35,7 @@ namespace PME {
         : IVCFinder(varman, tr),
           m_debug_tr(tr),
           m_map(createMap()),
+          m_check_map(vars(), tr.begin_gate_ids(), tr.end_gate_ids()),
           m_cs_finder(createFinder()),
           m_mivc_lb(0),
           m_seed_count(0)
@@ -273,7 +274,7 @@ namespace PME {
         stats().uivc_shrink_calls++;
         AutoTimer t(stats().uivc_shrink_time);
 
-        MapSolver * map = opts().uivc_check_map ? m_map.get() : nullptr;
+        MapSolver * map = opts().uivc_check_map ? &m_check_map : nullptr;
 
         IVCUCBFFinder ivc_ucbf(vars(), tr());
         ivc_ucbf.shrinkUC(seed, proof, map);
@@ -345,7 +346,7 @@ namespace PME {
             if (seed_set.count(gate) > 0) { continue; }
             seed.push_back(gate);
 
-            if (opts().uivc_check_map && !m_map->checkSeed(seed))
+            if (opts().uivc_check_map && !m_check_map.checkSeed(seed))
             {
                 stats().uivc_map_checks++;
                 seed.pop_back();
@@ -361,12 +362,14 @@ namespace PME {
     {
         if (do_shrink) { shrink(seed, proof); }
         m_map->blockUp(seed);
+        m_check_map.blockUp(seed);
     }
 
     void UnifiedIVCFinder::refineUnsafe(Seed & seed, bool do_grow)
     {
         if (do_grow) { grow(seed); }
         m_map->blockDown(seed);
+        m_check_map.blockDown(seed);
     }
 
     void UnifiedIVCFinder::findMCSesUpfront()
@@ -398,7 +401,9 @@ namespace PME {
             assert(!corr.empty());
 
             Seed mss = negateSeed(corr);
+
             m_map->blockDown(mss);
+            m_check_map.blockDown(mss);
         }
     }
 
@@ -446,7 +451,7 @@ namespace PME {
         // it first.
         for (auto it = m_cexes.begin(); it != m_cexes.end(); ++it)
         {
-            AutoTimer t(stats().uivc_safe_cache_time);
+            AutoTimer t(stats().uivc_unsafe_cache_time);
             const auto & cex = *it;
             if (checkCounterExample(vars(), partial, cex))
             {
@@ -468,7 +473,7 @@ namespace PME {
 
         for (auto it = m_proofs.begin(); it != m_proofs.end(); ++it)
         {
-            AutoTimer t(stats().uivc_unsafe_cache_time);
+            AutoTimer t(stats().uivc_safe_cache_time);
             const auto & proof = *it;
             if (findSafeMIS(vars(), partial, proof))
             {

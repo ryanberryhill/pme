@@ -521,6 +521,11 @@ if ((limited_run == 0 || run_ivc == 1)) ;  then
                                       --opt uivc_direction_up=true
     run_ivc_test UIVC-MARCO-DOWN --uivc --opt uivc_direction_down=true \
                                         --opt uivc_direction_up=false
+    run_ivc_test UIVC-MARCO-DOWN-MAP-CHECK \
+                               --uivc --opt uivc_direction_down=true \
+                                      --opt uivc_direction_up=false \
+                                      --opt uivc_coi_hints=true \
+                                      --opt uivc_check_map=true
     run_ivc_test UIVC-MARCO-ZIGZAG --uivc --opt uivc_direction_down=true \
                                           --opt uivc_direction_up=true
     run_ivc_test UIVC-MARCO-ZIGZAG-NMAX1 --uivc --opt uivc_direction_down=true \
@@ -532,8 +537,8 @@ if ((limited_run == 0 || run_ivc == 1)) ;  then
                                               --opt uivc_mcs_grow=true
     run_ivc_test UIVC-MARCO-ZIGZAG-CACHING --uivc --opt uivc_direction_down=true \
                                                   --opt uivc_direction_up=true \
-                                                  --opt uivc_proof_cache=25 \
-                                                  --opt uivc_cex_cache=50
+                                                  --opt uivc_proof_cache=5 \
+                                                  --opt uivc_cex_cache=5
 
     # No golden IVCs, so we don't need to do anything different for
     # non-all IVC tests (the test just checks they are safe and minimal)
