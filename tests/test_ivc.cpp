@@ -267,6 +267,42 @@ BOOST_AUTO_TEST_CASE(uivc_coi_hints)
     runAllMIVCTest<UnifiedIVCFinder>();
 }
 
+BOOST_AUTO_TEST_CASE(uivc_proof_caching)
+{
+    defaultUIVCOptions();
+
+    // MARCO-UP
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = false;
+    GlobalState::options().uivc_proof_cache = 4;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_shrink_cached_proofs = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    // MARCO-DOWN
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = false;
+    GlobalState::options().uivc_direction_down = true;
+    GlobalState::options().uivc_proof_cache = 4;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_shrink_cached_proofs = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    // CAMUS
+    defaultUIVCOptions();
+    GlobalState::options().uivc_direction_up = true;
+    GlobalState::options().uivc_direction_down = false;
+    GlobalState::options().uivc_upfront_nmax = UINFINITY;
+    GlobalState::options().uivc_proof_cache = 4;
+    runAllMIVCTest<UnifiedIVCFinder>();
+
+    GlobalState::options().uivc_shrink_cached_proofs = true;
+    runAllMIVCTest<UnifiedIVCFinder>();
+}
+
+
 BOOST_AUTO_TEST_CASE(uivc_marco_zigzag)
 {
     defaultUIVCOptions();

@@ -110,6 +110,7 @@ namespace PME {
         uivc_upfront_nmax(*this, 0, "uivc_upfront_nmax"),
         uivc_cex_cache(*this, 0, "uivc_cex_cache"),
         uivc_proof_cache(*this, 0, "uivc_proof_cache"),
+        uivc_shrink_cached_proofs(*this, false, "uivc_shrink_cached_proofs"),
         uivc_direction_down(*this, true, "uivc_direction_down"),
         uivc_direction_up(*this, false, "uivc_direction_up"),
         uivc_mcs_grow(*this, false, "uivc_mcs_grow"),

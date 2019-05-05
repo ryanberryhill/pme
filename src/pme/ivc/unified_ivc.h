@@ -62,8 +62,11 @@ namespace PME {
 
             bool isSafe(const Seed & seed, SafetyProof * proof = nullptr);
             SafetyResult checkSafetyCache(const TransitionRelation & partial);
+            SafetyResult checkUnsafetyCache(const TransitionRelation & partial);
+            SafetyResult isSafeBMC(const TransitionRelation & partial);
+            SafetyResult isSafeIC3(const TransitionRelation & partial);
             void cacheCounterExample(const SafetyCounterExample & cex);
-            void cacheProof(const SafetyProof & proof);
+            void cacheProof(const SafetyProof & proof, const Seed & seed);
 
             bool shouldCheckSafety() const;
 

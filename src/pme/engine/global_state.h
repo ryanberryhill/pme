@@ -105,6 +105,7 @@ namespace PME
         double uivc_issafe_time;
         double uivc_shrink_time;
         double uivc_grow_time;
+        double uivc_shrink_cached_time;
 
         // CAIVC
         unsigned caivc_isivc_calls;

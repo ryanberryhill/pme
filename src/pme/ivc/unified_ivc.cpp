@@ -21,10 +21,12 @@
 
 #include "pme/ivc/unified_ivc.h"
 #include "pme/ivc/ivc_ucbf.h"
-#include "pme/util/hybrid_safety_checker.h"
+#include "pme/bmc/bmc_solver.h"
+#include "pme/ic3/ic3_solver.h"
 #include "pme/pme.h"
 #include "pme/util/check_cex.h"
 #include "pme/util/find_safe_mis.h"
+#include "pme/minimization/sisi.h"
 
 #include <cassert>
 
@@ -417,38 +419,66 @@ namespace PME {
 
         TransitionRelation partial(tr(), seed);
 
-        SafetyResult cached = checkSafetyCache(partial);
-
-        if (!cached.unknown())
+        SafetyResult ucached = checkUnsafetyCache(partial);
+        if (!ucached.unknown())
         {
-            if (proof) { *proof = cached.proof; }
-            return cached.safe();
+            assert(ucached.unsafe());
+            stats().uivc_unsafe_cache_hits++;
+            return false;
         }
 
-        HybridSafetyChecker checker(vars(), partial);
-        SafetyResult safe = checker.prove();
+        SafetyResult bmc_result = isSafeBMC(partial);
+        if (!bmc_result.unknown())
+        {
+            assert(bmc_result.unsafe());
+            stats().uivc_unsafe_cache_misses++;
+            cacheCounterExample(bmc_result.cex);
+            return false;
+        }
 
-        if (safe.safe())
+        SafetyResult scached = checkSafetyCache(partial);
+        if (!scached.unknown())
+        {
+            assert(scached.safe());
+            stats().uivc_safe_cache_hits++;
+            if (proof) { *proof = scached.proof; }
+            return true;
+        }
+
+        SafetyResult ic3_result = isSafeIC3(partial);
+        if (ic3_result.safe())
         {
             stats().uivc_safe_cache_misses++;
-            if (proof) { *proof = safe.proof; }
-            cacheProof(safe.proof);
+            if (proof) { *proof = ic3_result.proof; }
+            cacheProof(ic3_result.proof, seed);
         }
-        else if (safe.unsafe())
+        else if (ic3_result.unsafe())
         {
             stats().uivc_unsafe_cache_misses++;
-            cacheCounterExample(safe.cex);
+            cacheCounterExample(ic3_result.cex);
         }
 
-        return safe.safe();
+        return ic3_result.safe();
     }
 
-    SafetyResult UnifiedIVCFinder::checkSafetyCache(const TransitionRelation & partial)
+    SafetyResult UnifiedIVCFinder::isSafeBMC(const TransitionRelation & partial)
+    {
+        BMC::BMCSolver bmc(vars(), partial);
+        // Ideally we'd use a UIVC option, but for now we'll hardcode it
+        return bmc.solve(16);
+
+    }
+
+    SafetyResult UnifiedIVCFinder::isSafeIC3(const TransitionRelation & partial)
+    {
+        IC3::IC3Solver ic3(vars(), partial);
+        return ic3.prove();
+    }
+
+    SafetyResult UnifiedIVCFinder::checkUnsafetyCache(const TransitionRelation & partial)
     {
         SafetyResult result;
 
-        // Checking counter-examples is much less expensive, so always do
-        // it first.
         for (auto it = m_cexes.begin(); it != m_cexes.end(); ++it)
         {
             AutoTimer t(stats().uivc_unsafe_cache_time);
@@ -460,16 +490,21 @@ namespace PME {
                 m_cexes.push_front(cex);
                 m_cexes.erase(it);
 
-                stats().uivc_unsafe_cache_hits++;
                 log(4) << "Found seed unsafe using cache" << std::endl;
 
-                //SafetyProof empty_proof;
-                //return SafetyResult(UNSAFE, empty_proof, cex);
                 result.result = UNSAFE;
                 result.cex = m_cexes.front();
                 return result;
             }
         }
+
+        result.result = UNKNOWN;
+        return result;
+    }
+
+    SafetyResult UnifiedIVCFinder::checkSafetyCache(const TransitionRelation & partial)
+    {
+        SafetyResult result;
 
         for (auto it = m_proofs.begin(); it != m_proofs.end(); ++it)
         {
@@ -485,11 +520,8 @@ namespace PME {
                 m_proofs.push_front(proof);
                 m_proofs.erase(it);
 
-                stats().uivc_safe_cache_hits++;
                 log(4) << "Found seed safe using cache" << std::endl;
 
-                //SafetyCounterExample empty_cex;
-                //return SafetyResult(SAFE, proof, empty_cex);
                 result.result = SAFE;
                 result.proof = m_proofs.front();
                 return result;
@@ -514,12 +546,36 @@ namespace PME {
         }
     }
 
-    void UnifiedIVCFinder::cacheProof(const SafetyProof & proof)
+    void UnifiedIVCFinder::cacheProof(const SafetyProof & proof, const Seed & seed)
     {
         unsigned size = opts().uivc_proof_cache;
         if (size == 0) { return; }
 
-        m_proofs.push_front(proof);
+        SafetyProof local_proof = proof;
+
+        if (opts().uivc_shrink_cached_proofs)
+        {
+            AutoTimer t(stats().uivc_shrink_cached_time);
+
+            TransitionRelation seed_tr(tr(), seed);
+            SISIMinimizer pmin(vars(), seed_tr, proof);
+            pmin.minimize();
+            assert(pmin.numProofs() == 1);
+            local_proof = pmin.getProof(0);
+
+            // This case is when the property is inductive on its own
+            if (local_proof.empty())
+            {
+                Clause cls = { negate(tr().bad()) };
+                local_proof.push_back(cls);
+            }
+
+            log(3) << "Shrunk cached proof from " << proof.size()
+                   << " to " << local_proof.size()
+                   << std::endl;
+        }
+
+        m_proofs.push_front(local_proof);
 
         assert(m_proofs.size() <= size + 1);
         if (m_proofs.size() > size)

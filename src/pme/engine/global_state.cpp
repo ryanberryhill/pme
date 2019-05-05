@@ -79,6 +79,7 @@ namespace PME
         uivc_issafe_time(0.0),
         uivc_shrink_time(0.0),
         uivc_grow_time(0.0),
+        uivc_shrink_cached_time(0.0),
         caivc_isivc_calls(0),
         caivc_find_candidate_calls(0),
         caivc_find_mcs_calls(0),
@@ -171,6 +172,7 @@ namespace PME
         os << "UIVC shrink Time: " << uivc_shrink_time << std::endl;
         os << "UIVC grow Calls: " << uivc_grow_calls << std::endl;
         os << "UIVC grow Time: " << uivc_grow_time << std::endl;
+        os << "UIVC Shrink Cached Proof Time: " << uivc_shrink_cached_time << std::endl;
         os << "UIVC Preparation Time: " << uivc_prep_time << std::endl;
         os << "UIVC Correction Sets Found: " << uivc_cs_found << std::endl;
         os << "UIVC Successful Map Checks: " << uivc_map_checks << std::endl;
