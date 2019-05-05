@@ -60,7 +60,7 @@ namespace PME {
             void growByBruteForce(Seed & seed);
             void growByMCS(Seed & seed);
 
-            bool isSafe(const Seed & seed, SafetyProof * proof = nullptr);
+            bool isSafe(const Seed & seed, bool expect_safe, SafetyProof * proof = nullptr);
             SafetyResult checkSafetyCache(const TransitionRelation & partial);
             SafetyResult checkUnsafetyCache(const TransitionRelation & partial);
             SafetyResult isSafeBMC(const TransitionRelation & partial);

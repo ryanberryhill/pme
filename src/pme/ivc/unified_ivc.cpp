@@ -235,7 +235,8 @@ namespace PME {
 
         // check for safety (if necessary)
         SafetyProof proof;
-        if (isSafe(seed, &proof))
+        // Expect safe for maximal seeds, unsafe otherwise
+        if (isSafe(seed, is_maximal, &proof))
         {
             log(3) << "Found an IVC of size " << seed.size() << std::endl;
 
@@ -292,7 +293,7 @@ namespace PME {
                 stats().uivc_map_checks++;
                 ++i;
             }
-            else if (isSafe(seed_copy))
+            else if (isSafe(seed_copy, true)) // expect safe in shrink
             {
                 log(4) << "Successfully removed " << seed[i] << std::endl;
                 seed.erase(seed.begin() + i);
@@ -353,7 +354,7 @@ namespace PME {
                 stats().uivc_map_checks++;
                 seed.pop_back();
             }
-            else if (isSafe(seed))
+            else if (isSafe(seed, false)) // expect unsafe
             {
                 seed.pop_back();
             }
@@ -409,7 +410,7 @@ namespace PME {
         }
     }
 
-    bool UnifiedIVCFinder::isSafe(const Seed & seed, SafetyProof * proof)
+    bool UnifiedIVCFinder::isSafe(const Seed & seed, bool expect_safe, SafetyProof * proof)
     {
         // Don't need to check safety if we're doing CAMUS-style enumeration
         if (!shouldCheckSafety()) { return true; }
@@ -419,46 +420,91 @@ namespace PME {
 
         TransitionRelation partial(tr(), seed);
 
-        SafetyResult ucached = checkUnsafetyCache(partial);
-        if (!ucached.unknown())
+        if (expect_safe)
         {
-            assert(ucached.unsafe());
-            stats().uivc_unsafe_cache_hits++;
-            return false;
-        }
+            // Safety cache (skip unsafety)
+            SafetyResult scached = checkSafetyCache(partial);
+            if (!scached.unknown())
+            {
+                assert(scached.safe());
+                stats().uivc_safe_cache_hits++;
+                if (proof) { *proof = scached.proof; }
+                return true;
+            }
 
-        SafetyResult bmc_result = isSafeBMC(partial);
-        if (!bmc_result.unknown())
-        {
-            assert(bmc_result.unsafe());
-            stats().uivc_unsafe_cache_misses++;
-            cacheCounterExample(bmc_result.cex);
-            return false;
-        }
+            // BMC
+            SafetyResult bmc_result = isSafeBMC(partial);
+            if (!bmc_result.unknown())
+            {
+                assert(bmc_result.unsafe());
+                stats().uivc_unsafe_cache_misses++;
+                cacheCounterExample(bmc_result.cex);
+                return false;
+            }
 
-        SafetyResult scached = checkSafetyCache(partial);
-        if (!scached.unknown())
-        {
-            assert(scached.safe());
-            stats().uivc_safe_cache_hits++;
-            if (proof) { *proof = scached.proof; }
-            return true;
-        }
+            // IC3
+            SafetyResult ic3_result = isSafeIC3(partial);
+            if (ic3_result.safe())
+            {
+                stats().uivc_safe_cache_misses++;
+                if (proof) { *proof = ic3_result.proof; }
+                cacheProof(ic3_result.proof, seed);
+            }
+            else if (ic3_result.unsafe())
+            {
+                stats().uivc_unsafe_cache_misses++;
+                cacheCounterExample(ic3_result.cex);
+            }
 
-        SafetyResult ic3_result = isSafeIC3(partial);
-        if (ic3_result.safe())
-        {
-            stats().uivc_safe_cache_misses++;
-            if (proof) { *proof = ic3_result.proof; }
-            cacheProof(ic3_result.proof, seed);
+            return ic3_result.safe();
         }
-        else if (ic3_result.unsafe())
+        else
         {
-            stats().uivc_unsafe_cache_misses++;
-            cacheCounterExample(ic3_result.cex);
-        }
+            // Unsafety cache
+            SafetyResult ucached = checkUnsafetyCache(partial);
+            if (!ucached.unknown())
+            {
+                assert(ucached.unsafe());
+                stats().uivc_unsafe_cache_hits++;
+                return false;
+            }
 
-        return ic3_result.safe();
+            // BMC
+            SafetyResult bmc_result = isSafeBMC(partial);
+            if (!bmc_result.unknown())
+            {
+                assert(bmc_result.unsafe());
+                stats().uivc_unsafe_cache_misses++;
+                cacheCounterExample(bmc_result.cex);
+                return false;
+            }
+
+            // Safety cache
+            SafetyResult scached = checkSafetyCache(partial);
+            if (!scached.unknown())
+            {
+                assert(scached.safe());
+                stats().uivc_safe_cache_hits++;
+                if (proof) { *proof = scached.proof; }
+                return true;
+            }
+
+            // IC3
+            SafetyResult ic3_result = isSafeIC3(partial);
+            if (ic3_result.safe())
+            {
+                stats().uivc_safe_cache_misses++;
+                if (proof) { *proof = ic3_result.proof; }
+                cacheProof(ic3_result.proof, seed);
+            }
+            else if (ic3_result.unsafe())
+            {
+                stats().uivc_unsafe_cache_misses++;
+                cacheCounterExample(ic3_result.cex);
+            }
+
+            return ic3_result.safe();
+        }
     }
 
     SafetyResult UnifiedIVCFinder::isSafeBMC(const TransitionRelation & partial)
