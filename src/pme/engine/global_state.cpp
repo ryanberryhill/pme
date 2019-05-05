@@ -175,12 +175,30 @@ namespace PME
         os << "UIVC Correction Sets Found: " << uivc_cs_found << std::endl;
         os << "UIVC Successful Map Checks: " << uivc_map_checks << std::endl;
         os << "UIVC Adapted BMC k_max: " << uivc_k_max << std::endl;
+
+        double safe_cache_ratio = 100.0;
+        double unsafe_cache_ratio = 100.0;
+        unsigned safe_cache_total = uivc_safe_cache_hits + uivc_safe_cache_misses;
+        unsigned unsafe_cache_total = uivc_unsafe_cache_hits + uivc_unsafe_cache_misses;
+
+        if (safe_cache_total > 0)
+        {
+            safe_cache_ratio = double(uivc_safe_cache_hits) / double(safe_cache_total);
+        }
+
+        if (unsafe_cache_total > 0)
+        {
+            unsafe_cache_ratio = double(uivc_unsafe_cache_hits) / double(unsafe_cache_total);
+        }
+
         os << "UIVC Safe Cache Hits: " << uivc_safe_cache_hits << std::endl;
         os << "UIVC Safe Cache Misses: " << uivc_safe_cache_misses << std::endl;
         os << "UIVC Safe Cache Time: " << uivc_safe_cache_time << std::endl;
+        os << "UIVC Safe Cache Ratio: " << safe_cache_ratio << std::endl;
         os << "UIVC Unsafe Cache Hits: " << uivc_unsafe_cache_hits << std::endl;
         os << "UIVC Unsafe Cache Misses: " << uivc_unsafe_cache_misses << std::endl;
         os << "UIVC Unsafe Cache Time: " << uivc_unsafe_cache_time << std::endl;
+        os << "UIVC Unsafe Cache Ratio: " << unsafe_cache_ratio << std::endl;
 
         // CAIVC specific
         os << "CAIVC Correction Sets Found: " << caivc_correction_sets_found << std::endl;
