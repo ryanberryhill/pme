@@ -420,7 +420,54 @@ namespace PME {
 
         TransitionRelation partial(tr(), seed);
 
-        if (expect_safe)
+        if (!opts().uivc_clever_issafe)
+        {
+            // Unsafety cache
+            SafetyResult ucached = checkUnsafetyCache(partial);
+            if (!ucached.unknown())
+            {
+                assert(ucached.unsafe());
+                stats().uivc_unsafe_cache_hits++;
+                return false;
+            }
+
+            // Safety cache
+            SafetyResult scached = checkSafetyCache(partial);
+            if (!scached.unknown())
+            {
+                assert(scached.safe());
+                stats().uivc_safe_cache_hits++;
+                if (proof) { *proof = scached.proof; }
+                return true;
+            }
+
+            // BMC
+            SafetyResult bmc_result = isSafeBMC(partial);
+            if (!bmc_result.unknown())
+            {
+                assert(bmc_result.unsafe());
+                stats().uivc_unsafe_cache_misses++;
+                cacheCounterExample(bmc_result.cex);
+                return false;
+            }
+
+            // IC3
+            SafetyResult ic3_result = isSafeIC3(partial);
+            if (ic3_result.safe())
+            {
+                stats().uivc_safe_cache_misses++;
+                if (proof) { *proof = ic3_result.proof; }
+                cacheProof(ic3_result.proof, seed);
+            }
+            else if (ic3_result.unsafe())
+            {
+                stats().uivc_unsafe_cache_misses++;
+                cacheCounterExample(ic3_result.cex);
+            }
+
+            return ic3_result.safe();
+        }
+        else if (expect_safe)
         {
             // Safety cache (skip unsafety)
             SafetyResult scached = checkSafetyCache(partial);
