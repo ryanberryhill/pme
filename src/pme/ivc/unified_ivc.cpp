@@ -279,8 +279,11 @@ namespace PME {
 
         MapSolver * map = opts().uivc_check_map ? &m_check_map : nullptr;
 
-        IVCUCBFFinder ivc_ucbf(vars(), tr());
-        ivc_ucbf.shrinkUC(seed, proof, map);
+        if (!opts().uivc_skip_uc)
+        {
+            IVCUCBFFinder ivc_ucbf(vars(), tr());
+            ivc_ucbf.shrinkUC(seed, proof, map);
+        }
 
         // Do the brute force shrinking here to make use of the isSafe caches
         for (size_t i = 0; i < seed.size(); )

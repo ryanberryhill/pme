@@ -108,6 +108,7 @@ namespace PME {
             PMEOption<bool> uivc_coi_hints;
             PMEOption<bool> uivc_check_map;
             PMEOption<bool> uivc_clever_issafe;
+            PMEOption<bool> uivc_skip_uc;
 
             // CAIVC
             PMEOption<bool> caivc_use_bmc;

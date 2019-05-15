@@ -117,6 +117,7 @@ namespace PME {
         uivc_coi_hints(*this, false, "uivc_coi_hints"),
         uivc_check_map(*this, false, "uivc_check_map"),
         uivc_clever_issafe(*this, false, "uivc_clever_issafe"),
+        uivc_skip_uc(*this, false, "uivc_skip_uc"),
         caivc_use_bmc(*this, true, "caivc_use_bmc"),
         caivc_abstraction_refinement(*this, true, "caivc_ar"),
         caivc_approx_mcs(*this, true, "caivc_approx_mcs"),
