@@ -149,6 +149,8 @@ namespace PME {
             log(2) << "Initial states unsafe, falling back to IVC_BF" << std::endl;
             core = seed;
         }
+
+        seed = core;
     }
 
     void IVCUCBFFinder::shrinkUC(Seed & seed, MapSolver * map)
