@@ -108,6 +108,7 @@ namespace PME
             {
                 return std::find(m_inputIDs.begin(), m_inputIDs.end(), id) != m_inputIDs.end();
             }
+            const Latch& latch(ID id) const { return m_latches.at(id); }
 
         private:
             VariableManager & m_vars;

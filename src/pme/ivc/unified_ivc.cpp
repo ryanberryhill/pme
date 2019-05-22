@@ -717,6 +717,15 @@ namespace PME {
 
     void UnifiedIVCFinder::addCOIToMap()
     {
+        std::set<ID> next_states;
+        for (auto it = tr().begin_latches(); it != tr().end_latches(); ++it)
+        {
+            ID id = *it;
+            const Latch& latch = tr().latch(id);
+            ID next = strip(latch.next);
+            next_states.insert(next);
+        }
+
         // Map each gate to its fanout (if any)
         //
         // Basic hints: add binary clauses for gates with no fanout.
@@ -748,6 +757,12 @@ namespace PME {
         for (const auto & p : gate_to_fanout)
         {
             ID gate = p.first;
+            ID sgate = strip(gate);
+
+            // Don't add COI clauses for outputs or next states
+            if (sgate == strip(tr().bad()))  { continue; }
+            if (next_states.find(sgate) != next_states.end()) { continue; }
+
             const std::vector<ID> & fanout = p.second;
 
             assert(!fanout.empty());
