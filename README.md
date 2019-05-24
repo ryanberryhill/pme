@@ -33,9 +33,7 @@ It also supports computing MIVCs using at least the following approaches:
 1. A brute force approach based on IVC\_BF from Ghassabani et al. in "Efficient
    Generation of Inductive Validity Cores for Safety Properties" (--ivcbf)
 2. An approach based on IVC\_UCBF from the same paper (--ivcucbf)
-3. A MARCO-based like the one from the same authors in "Efficient Generation of
-   All Minimal Inductive Validity Cores" (--marcoivc)
-4. A CAMUS-like approach (--camivc)
+3. An approach that can operate like CAMUS or MARCO (--uivc)
 
 Building
 ---------
@@ -48,7 +46,7 @@ boost unit test framework.
     $ ./configure
     $ make
     $ make check     # optional, requires boost
-    $ make install   # optional
+    $ make install   # optional, not recommended
 ```
 
 Finding MSISes
@@ -108,16 +106,38 @@ And confusingly, the FORQES-based approach is executed by just specifying
 Finding MIVCs
 ---------------
 
+All of the examples assume you are in the ivc-examples directory.
+
+```bash
+    cd ivc-examples
+```
+
 Finding MIVCs is similar to finding MSISes, but there is no need to specify a
 proof. For instance, MARCO-DOWN is executed as follows.
 
 ```bash
-    pme -vvvv --marco-ivc vis4arbitp1.aig
+    pme -vvvv --uivc visemodel.aig
 ```
 
-And to execute CAIVC:
+Most options are controlled through the --opt parameter. To execute CAMUS:
 
 ```bash
-    pme -vvvv --caivc vis4arbitp1.aig
+    pme -vvvv --uivc --opt uivc_direction_down=false --opt uivc_direction_up=true --opt uivc_upfront_nmax=inf visemodel.aig
 ```
 
+To execute MARCO-UP:
+
+```bash
+    pme -vvvv --uivc --opt uivc_direction_down=false --opt uivc_rection_up=true visemodel.aig
+```
+
+Or with an important optimization:
+
+```bash
+    pme -vvvv --uivc --opt uivc_direction_down=false --opt uivc_rection_up=true --opt uivc_mcs_grow=true visemodel.aig 
+```
+
+Finally, a MARCO-DOWN configuration with good performance:
+```bash
+    pme -vvvv --uivc --opt uivc_proof_cache=1 --opt uivc_cex_cache=8 --opt uivc_shrink_cached_proofs=true --opt uivc_clever_issafe=true --opt uivc_coi_hints=true --opt uivc_upfront_nmax=2 visemodel.aig
+```
