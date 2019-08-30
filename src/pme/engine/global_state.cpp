@@ -70,6 +70,8 @@ namespace PME
         uivc_safe_cache_misses(0),
         uivc_unsafe_cache_hits(0),
         uivc_unsafe_cache_misses(0),
+        uivc_check_seed_time(0.0),
+        uivc_phase2_time(0.0),
         uivc_safe_cache_time(0.0),
         uivc_unsafe_cache_time(0.0),
         uivc_prep_time(0.0),
@@ -160,6 +162,8 @@ namespace PME
         os << "MCS Fallbacks: " << mcs_fallbacks << std::endl;
 
         // UIVC specific
+        os << "UIVC checkSeed Time: " << uivc_check_seed_time << std::endl;
+        os << "UIVC Phase 2 Time: " << uivc_phase2_time << std::endl;
         os << "UIVC getUnexploredMin Calls: " << uivc_get_unexplored_min_calls << std::endl;
         os << "UIVC getUnexploredMin Time: " << uivc_get_unexplored_min_time << std::endl;
         os << "UIVC getUnexploredMax Calls: " << uivc_get_unexplored_max_calls << std::endl;

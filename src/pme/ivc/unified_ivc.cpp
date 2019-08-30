@@ -101,8 +101,11 @@ namespace PME {
         // Find correction sets upfront (if any)
         findMCSesUpfront();
 
-        // Find candidates
-        while (getUnexplored()) { }
+        {
+            AutoTimer t(stats().uivc_phase2_time);
+            // Find candidates
+            while (getUnexplored()) { }
+        }
 
         // Update SMIVC (if necessary)
         if (!minimumIVCKnown()) { setMinimumIVC(m_smallest_ivc); }
@@ -235,8 +238,15 @@ namespace PME {
 
         // check for safety (if necessary)
         SafetyProof proof;
+        bool is_safe = false;
+
+        {
+            AutoTimer t(stats().uivc_check_seed_time);
+            is_safe = isSafe(seed, is_maximal, &proof);
+        }
+
         // Expect safe for maximal seeds, unsafe otherwise
-        if (isSafe(seed, is_maximal, &proof))
+        if (is_safe)
         {
             log(3) << "Found an IVC of size " << seed.size() << std::endl;
 

@@ -96,6 +96,8 @@ namespace PME
         unsigned uivc_safe_cache_misses;
         unsigned uivc_unsafe_cache_hits;
         unsigned uivc_unsafe_cache_misses;
+        double uivc_check_seed_time;
+        double uivc_phase2_time;
         double uivc_safe_cache_time;
         double uivc_unsafe_cache_time;
         double uivc_prep_time;
