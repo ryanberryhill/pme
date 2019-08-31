@@ -377,12 +377,10 @@ namespace PME {
 
                 exhaust(k, cardinality);
             }
-
-            FindMCSResult fallback = findFallback(cardinality);
-            if (fallback.first) { return fallback; }
         }
 
-        return findFallback(n);
+        CorrectionSet empty;
+        return std::make_pair(false, empty);
     }
 
     bool BMCCorrectionSetFinder::checkAt(unsigned k, unsigned cardinality)
