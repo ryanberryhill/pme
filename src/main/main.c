@@ -491,7 +491,7 @@ void print_cex(void * pme, aiger * aig)
 int g_ic3 = 0, g_bmc = 0;
 int g_checkproof = 0, g_checkmin = 0, g_checkmivc = 0;
 int g_marco = 0, g_camsis = 0, g_bfmin = 0, g_sisi = 0, g_simplemin = 0;
-int g_uivc = 0, g_caivc = 0, g_cbvc = 0, g_marcoivc = 0, g_ivcbf = 0, g_ivcucbf = 0;
+int g_uivc = 0, g_caivc = 0, g_marcoivc = 0, g_ivcbf = 0, g_ivcucbf = 0;
 int g_saveproofs = 0, g_saveivcs = 0;
 int g_printstats = 0, g_nocex = 0;
 int g_savemax = 0;
@@ -502,20 +502,20 @@ char * g_saveproof_name = NULL;
 int needs_proof_arg()
 {
     return !(g_ic3 || g_bmc ||
-             g_uivc || g_caivc || g_cbvc || g_marcoivc || g_ivcbf || g_ivcucbf ||
+             g_uivc || g_caivc || g_marcoivc || g_ivcbf || g_ivcucbf ||
              g_checkmivc);
 }
 
 int uses_proof()
 {
     return !(g_bmc ||
-             g_uivc || g_caivc || g_cbvc || g_marcoivc || g_ivcbf || g_ivcucbf ||
+             g_uivc || g_caivc || g_marcoivc || g_ivcbf || g_ivcucbf ||
              g_checkmivc);
 }
 
 int ic3_should_be_quiet()
 {
-    return (g_uivc || g_caivc || g_cbvc || g_marcoivc || g_ivcbf || g_ivcucbf || g_checkmivc);
+    return (g_uivc || g_caivc || g_marcoivc || g_ivcbf || g_ivcucbf || g_checkmivc);
 }
 
 // I don't think this scheme for printing out stats on a failure is truly safe
@@ -574,7 +574,6 @@ int main(int argc, char ** argv)
             {"simplemin",           no_argument,        &g_simplemin,  1 },
             {"uivc",                no_argument,        &g_uivc,       1 },
             {"caivc",               no_argument,        &g_caivc,      1 },
-            {"cbvc",                no_argument,        &g_cbvc,       1 },
             {"marco-ivc",           no_argument,        &g_marcoivc,   1 },
             {"ivcbf",               no_argument,        &g_ivcbf,      1 },
             {"ivcucbf",             no_argument,        &g_ivcucbf,    1 },
@@ -1095,19 +1094,6 @@ int main(int argc, char ** argv)
         }
 
         report_ivc_run(pme, "CAIVC");
-    }
-
-    if (g_cbvc)
-    {
-        g_saveivc_name = "cbvc";
-        int cbvc_ok = cpme_run_cbvc(pme);
-        if (cbvc_ok < 0)
-        {
-            fprintf(stderr, "Error running CBVC\n");
-            failure = 1; goto cleanup;
-        }
-
-        report_ivc_run(pme, "CBVC");
     }
 
 cleanup:

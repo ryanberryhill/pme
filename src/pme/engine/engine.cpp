@@ -29,7 +29,6 @@
 #include "pme/minimization/simple.h"
 #include "pme/ivc/unified_ivc.h"
 #include "pme/ivc/caivc.h"
-#include "pme/ivc/cbvc.h"
 #include "pme/ivc/marco_ivc.h"
 #include "pme/ivc/ivc_bf.h"
 #include "pme/ivc/ivc_ucbf.h"
@@ -121,10 +120,6 @@ namespace PME
             case PME_IVC_CAIVC:
                 log(1) << "Starting CAIVC" << std::endl;
                 m_ivc_finder.reset(new CAIVCFinder(m_vars, m_tr));
-                break;
-            case PME_IVC_CBVC:
-                log(1) << "Starting CBVC" << std::endl;
-                m_ivc_finder.reset(new CBVCFinder(m_vars, m_tr));
                 break;
             case PME_IVC_BF:
                 log(1) << "Starting IVC_BF" << std::endl;

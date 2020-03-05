@@ -41,7 +41,6 @@ typedef enum
     LOG_IC3,
     LOG_IVC,
     LOG_CAIVC,
-    LOG_CBVC,
     LOG_UNIFIED_IVC,
     LOG_MARCOIVC,
     LOG_IVCBF,
@@ -64,7 +63,6 @@ typedef enum
     PME_IVC_UIVC,
     PME_IVC_MARCO,
     PME_IVC_CAIVC,
-    PME_IVC_CBVC,
     PME_IVC_BF,
     PME_IVC_UCBF
 } PMEIVCAlgorithm;
@@ -120,7 +118,6 @@ int cpme_run_bfmin(void * pme);
 int cpme_run_simplemin(void * pme);
 int cpme_run_uivc(void * pme);
 int cpme_run_caivc(void * pme);
-int cpme_run_cbvc(void * pme);
 int cpme_run_marcoivc(void * pme);
 int cpme_run_ivcbf(void * pme);
 int cpme_run_ivcucbf(void * pme);
