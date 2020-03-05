@@ -254,4 +254,10 @@ namespace PME
     {
         return instance().m_logger;
     }
+
+    void GlobalState::seed(unsigned val)
+    {
+        m_random.seed(val);
+        m_is_random = true;
+    }
 }

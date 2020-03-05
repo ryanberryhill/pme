@@ -22,6 +22,8 @@
 #include "pme/ivc/ivc_bf.h"
 #include "pme/ic3/ic3_solver.h"
 
+#include <algorithm>
+
 namespace PME {
     IVCBFFinder::IVCBFFinder(VariableManager & varman,
                              const TransitionRelation & tr)
@@ -36,6 +38,12 @@ namespace PME {
     void IVCBFFinder::shrink(Seed & seed, MapSolver * map)
     {
         // TODO: incrementality
+
+        if (GlobalState::isRandom())
+        {
+            std::shuffle(seed.begin(), seed.end(), GlobalState::random());
+        }
+
         for (size_t i = 0; i < seed.size(); )
         {
             Seed seed_copy = seed;

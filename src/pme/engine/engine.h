@@ -86,6 +86,8 @@ namespace PME
 
             void parseOption(const std::string& option);
 
+            void seed(unsigned val);
+
         private:
             VariableManager m_vars;
             TransitionRelation m_tr;

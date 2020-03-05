@@ -26,6 +26,7 @@
 #include "pme/engine/options.h"
 
 #include <memory>
+#include <random>
 
 namespace PME
 {
@@ -146,18 +147,32 @@ namespace PME
             mutable Logger m_logger;
             mutable PMEStats m_stats;
             std::unique_ptr<PMEOptions> m_opts;
+            std::default_random_engine m_random;
+
+            // HACK for seed noise tests
+            bool m_is_random;
+
         public:
-            GlobalState() : m_opts(new PMEOptions()) { }
+            GlobalState() : m_opts(new PMEOptions()), m_is_random(false) { }
 
             static GlobalState& instance();
             static PMEOptions& options();
             static PMEStats& stats();
             static Logger& logger();
 
+            // HACK: for seed noise tests
+            std::default_random_engine & getRandom() { return m_random; }
+            static std::default_random_engine & random()
+            { return instance().getRandom(); }
+            static bool isRandom() { return instance().m_is_random; }
+
             // This function is for testing, hence why it is not static.
             // That you can only access it through GlobalState::instance()
             // suggests you shouldn't use it.
             void resetOptions();
+
+            // HACK: for seed noise tests
+            void seed(unsigned val);
 
             GlobalState(const GlobalState &)     = delete;
             void operator=(const GlobalState &)  = delete;

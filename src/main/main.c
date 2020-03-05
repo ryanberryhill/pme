@@ -560,6 +560,7 @@ int main(int argc, char ** argv)
     int option = 0;
     int option_index = 0;
     unsigned bmc_kmax = 0;
+    unsigned pme_seed = 0;
     char failure = 0;
     aiger * aig = NULL;
     void * pme = NULL;
@@ -587,6 +588,7 @@ int main(int argc, char ** argv)
             {"no-cex",              no_argument,        &g_nocex,      1 },
             {"opt",                 required_argument,  0,            'o'},
             {"sat-seed",            required_argument,  0,             0 },
+            {"pme-seed",            required_argument,  0,             0 },
             {"help",                no_argument,        0,            'h'},
             {0,                     0,                  0,             0 }
     };
@@ -666,6 +668,19 @@ int main(int argc, char ** argv)
                     if (*endptr != '\0' && *optarg != '\0')
                     {
                         fprintf(stderr, "--sat-seed argument %s not understood\n", optarg);
+                        print_usage(argv);
+                        failure = 1; goto cleanup;
+                    }
+                }
+                else if (strcmp(long_opts[option_index].name, "pme-seed") == 0)
+                {
+                    char *endptr = NULL;
+                    // 0 base = decimal, hex, or octal depending on prefix
+                    pme_seed = strtoul(optarg, &endptr, 0);
+
+                    if (*endptr != '\0' && *optarg != '\0')
+                    {
+                        fprintf(stderr, "--pme-seed argument %s not understood\n", optarg);
                         print_usage(argv);
                         failure = 1; goto cleanup;
                     }
@@ -823,6 +838,11 @@ int main(int argc, char ** argv)
     // Initialize the PME library
     pme = cpme_init(aig, proof);
     assert(pme);
+
+    if (pme_seed != 0)
+    {
+        cpme_set_random_seed(pme, pme_seed);
+    }
 
     // External pointer to the same PME instance, used by the atexit
     // handler to print stats

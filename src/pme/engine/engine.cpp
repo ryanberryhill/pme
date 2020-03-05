@@ -347,5 +347,10 @@ namespace PME
     {
         GlobalState::options().parseOption(option);
     }
+
+    void Engine::seed(unsigned val)
+    {
+        GlobalState::instance().seed(val);
+    }
 }
 

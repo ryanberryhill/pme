@@ -630,6 +630,14 @@ void cpme_print_stats(void * pme)
     fflush(stdout);
 }
 
+void cpme_set_random_seed(void * pme, unsigned val)
+{
+    PME::Engine * eng = static_cast<PME::Engine *>(pme);
+    assert(eng);
+
+    eng->seed(val);
+}
+
 const char * cpme_set_option(void * pme, const char * option)
 {
     static std::string error_msg;

@@ -126,6 +126,7 @@ int cpme_run_ic3(void * pme);
 int cpme_run_bmc(void * pme, unsigned k_max);
 
 void cpme_print_stats(void * pme);
+void cpme_set_random_seed(void * pme, unsigned val);
 const char * cpme_set_option(void * pme, const char * option);
 
 #ifdef __cplusplus
