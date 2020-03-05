@@ -503,7 +503,7 @@ char * g_saveproof_name = NULL;
 // = 0 means no randomness
 // otherwise, the seed is converted to a double inside glucose and used
 // to control randomness
-unsigned g_sat_seed = 0;
+extern unsigned g_sat_seed;
 
 int needs_proof_arg()
 {

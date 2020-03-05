@@ -29,7 +29,7 @@
 
 // HACK: for seed noise tests. This variable is in main.c and set
 // by a command line option. If 0, no randomness.
-extern unsigned g_sat_seed;
+unsigned g_sat_seed = 0;
 
 namespace SAT
 {
