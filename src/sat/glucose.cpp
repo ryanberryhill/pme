@@ -27,6 +27,10 @@
 #include <cassert>
 #include <set>
 
+// HACK: for seed noise tests. This variable is in main.c and set
+// by a command line option. If 0, no randomness.
+extern unsigned g_sat_seed;
+
 namespace SAT
 {
     template <> Glucose::Lit mkLit(Glucose::Var v, bool neg)
@@ -46,7 +50,16 @@ namespace SAT
 
     GlucoseSolver::GlucoseSolver()
         : m_solver(new Glucose::Solver)
-    { }
+    {
+        // HACK: for seed noise tests
+        if (g_sat_seed != 0)
+        {
+            m_solver->random_seed = g_sat_seed;
+            m_solver->rnd_pol = true;
+            m_solver->rnd_init_act = true;
+            m_solver->randomizeFirstDescent = true;
+        }
+    }
 
     GlucoseSolver::~GlucoseSolver()
     { }

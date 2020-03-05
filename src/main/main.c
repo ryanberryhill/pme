@@ -499,6 +499,12 @@ int g_savemax = 0;
 char * g_saveivc_name = NULL;
 char * g_saveproof_name = NULL;
 
+// HACK: for seed noise tests
+// = 0 means no randomness
+// otherwise, the seed is converted to a double inside glucose and used
+// to control randomness
+unsigned g_sat_seed = 0;
+
 int needs_proof_arg()
 {
     return !(g_ic3 || g_bmc ||
@@ -580,6 +586,7 @@ int main(int argc, char ** argv)
             {"stats",               no_argument,        &g_printstats, 1 },
             {"no-cex",              no_argument,        &g_nocex,      1 },
             {"opt",                 required_argument,  0,            'o'},
+            {"sat-seed",            required_argument,  0,             0 },
             {"help",                no_argument,        0,            'h'},
             {0,                     0,                  0,             0 }
     };
@@ -649,6 +656,19 @@ int main(int argc, char ** argv)
                         failure = 1; goto cleanup;
                     }
                     g_savemax = savemax;
+                }
+                else if (strcmp(long_opts[option_index].name, "sat-seed") == 0)
+                {
+                    char *endptr = NULL;
+                    // 0 base = decimal, hex, or octal depending on prefix
+                    g_sat_seed = strtoul(optarg, &endptr, 0);
+
+                    if (*endptr != '\0' && *optarg != '\0')
+                    {
+                        fprintf(stderr, "--sat-seed argument %s not understood\n", optarg);
+                        print_usage(argv);
+                        failure = 1; goto cleanup;
+                    }
                 }
                 break;
             case 'v':
