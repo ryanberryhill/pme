@@ -342,28 +342,64 @@ namespace PME
         std::sort(seed_copy.begin(), seed_copy.end());
         assert(std::adjacent_find(seed_copy.begin(), seed_copy.end()) == seed_copy.end());
 
-        for (auto it = seed_copy.begin(); it != seed_copy.end(); )
+        // HACK: for seed noise tests
+        if (GlobalState::isRandom())
         {
-            ClauseID id = *it;
-            if (id == propertyID()) { ++it; continue; }
-            Seed test_seed;
-            test_seed.reserve(seed_copy.size());
-            // test_seed = seed_copy - id
-            std::remove_copy(seed_copy.begin(), seed_copy.end(),
-                             std::back_inserter(test_seed), id);
+            std::set<ClauseID> keep;
+            shuffle(seed_copy.begin(), seed_copy.end(), GlobalState::random());
 
-            if (findSIS(test_seed))
+            for (auto it = seed_copy.begin(); it != seed_copy.end(); )
             {
-                seed_copy = test_seed;
-                std::sort(seed_copy.begin(), seed_copy.end());
-                // Set it to the first element greater than id (seed_copy is
-                // sorted, so this is the first element we haven't tried to
-                // remove)
-                it = std::upper_bound(seed_copy.begin(), seed_copy.end(), id);
+                ClauseID id = *it;
+
+                if (id == propertyID() || keep.count(id)) { ++it; continue; }
+
+                // test_seed = seed_copy - id
+                Seed test_seed;
+                test_seed.reserve(seed_copy.size());
+                std::remove_copy(seed_copy.begin(), seed_copy.end(),
+                                 std::back_inserter(test_seed), id);
+
+                if (findSIS(test_seed))
+                {
+                    seed_copy = test_seed;
+                    shuffle(seed_copy.begin(), seed_copy.end(), GlobalState::random());
+                    it = seed_copy.begin();
+                }
+                else
+                {
+                    ++it;
+                }
+
+                keep.insert(id);
             }
-            else
+        }
+        else
+        {
+
+            for (auto it = seed_copy.begin(); it != seed_copy.end(); )
             {
-                ++it;
+                ClauseID id = *it;
+                if (id == propertyID()) { ++it; continue; }
+                Seed test_seed;
+                test_seed.reserve(seed_copy.size());
+                // test_seed = seed_copy - id
+                std::remove_copy(seed_copy.begin(), seed_copy.end(),
+                                 std::back_inserter(test_seed), id);
+
+                if (findSIS(test_seed))
+                {
+                    seed_copy = test_seed;
+                    std::sort(seed_copy.begin(), seed_copy.end());
+                    // Set it to the first element greater than id (seed_copy is
+                    // sorted, so this is the first element we haven't tried to
+                    // remove)
+                    it = std::upper_bound(seed_copy.begin(), seed_copy.end(), id);
+                }
+                else
+                {
+                    ++it;
+                }
             }
         }
 
