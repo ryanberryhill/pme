@@ -37,6 +37,9 @@ extern "C" {
 typedef std::vector<unsigned> ParsedClause;
 typedef std::vector<ParsedClause> ParsedProof;
 
+typedef std::vector<std::string> ParsedPMEClause;
+typedef std::vector<ParsedPMEClause> ParsedPMEProof;
+
 void print_usage(char ** argv)
 {
     const char * name = argv[0];
@@ -54,7 +57,8 @@ std::string default_name(std::string prefix, unsigned index)
 void parse_symbols(aiger_symbol * syms,
                    size_t n,
                    std::string name_prefix,
-                   std::unordered_map<std::string, unsigned> & name_to_id)
+                   std::unordered_map<std::string, unsigned> * name_to_id,
+                   std::unordered_map<unsigned, std::string> * id_to_name)
 {
     for (size_t i = 0; i < n; ++i)
     {
@@ -71,8 +75,47 @@ void parse_symbols(aiger_symbol * syms,
             name = aig_name;
         }
         assert(!name.empty());
-        name_to_id[name] = lit;
+
+        if (name_to_id) { (*name_to_id)[name] = lit; }
+        if (id_to_name) { (*id_to_name)[lit] = name; }
     }
+}
+
+ParsedPMEProof parse_pme(aiger * aig, std::ifstream & file)
+{
+    ParsedPMEProof parsed;
+    std::unordered_map<unsigned, std::string> id_to_name;
+
+    parse_symbols(aig->latches, aig->num_latches, "l", nullptr, &id_to_name);
+
+    std::string line;
+    size_t lineno = 0;
+
+    while (std::getline(file, line))
+    {
+        lineno++;
+
+        ParsedPMEClause cls;
+
+        unsigned disjunct;
+        std::istringstream iss(line);
+
+        while (iss >> disjunct)
+        {
+            bool neg = (disjunct & 1) != 0;
+            disjunct = disjunct & ~1U;
+
+            std::string str = id_to_name.at(disjunct);
+
+            if (neg) { str.insert(0, "!"); }
+
+            cls.push_back(str);
+        }
+
+        parsed.push_back(cls);
+    }
+
+    return parsed;
 }
 
 ParsedProof parse_proof(aiger * aig, std::ifstream & file)
@@ -80,8 +123,8 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
     ParsedProof parsed;
     std::unordered_map<std::string, unsigned> name_to_id;
 
-    parse_symbols(aig->inputs, aig->num_inputs, "i", name_to_id);
-    parse_symbols(aig->latches, aig->num_latches, "l", name_to_id);
+    parse_symbols(aig->inputs, aig->num_inputs, "i", &name_to_id, nullptr);
+    parse_symbols(aig->latches, aig->num_latches, "l", &name_to_id, nullptr);
 
     std::string ignorable = "One-step Inductive Strengthening of Property"
                             " (in CNF):";
@@ -138,6 +181,13 @@ ParsedProof parse_proof(aiger * aig, std::ifstream & file)
     }
 
     return parsed;
+}
+
+bool is_pme_file(const char* path)
+{
+    std::string str = path;
+
+    return str.substr(str.find_last_of(".")) == ".pme";
 }
 
 int main(int argc, char ** argv)
@@ -216,17 +266,41 @@ int main(int argc, char ** argv)
         return EXIT_FAILURE;
     }
 
-    // Read and parse the proof file
-    ParsedProof pp = parse_proof(aig, proof_file);
+    // Check the extension on the proof file. If it's anything other
+    // than .pme, it is treated as a proof file. If its .pme, it is
+    // treated as a pme file
 
-    // Output the new proof to stdout
-    for (const ParsedClause & pc : pp)
+    if (is_pme_file(proof_path))
     {
-        for (unsigned lit : pc)
+        // Read and parse the pme file
+        ParsedPMEProof pp = parse_pme(aig, proof_file);
+
+        // Output the parsed proof to stdout
+        for (unsigned i = 0; i < pp.size(); ++i)
         {
-            std::cout << lit << " ";
+            std::cout << "Clause " << i << ": ";
+            const auto & cls = pp.at(i);
+            for (const std::string & str : cls)
+            {
+                std::cout << str << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
+    }
+    else
+    {
+        // Read and parse the proof file
+        ParsedProof pp = parse_proof(aig, proof_file);
+
+        // Output the new proof to stdout
+        for (const ParsedClause & pc : pp)
+        {
+            for (unsigned lit : pc)
+            {
+                std::cout << lit << " ";
+            }
+            std::cout << std::endl;
+        }
     }
 
     return EXIT_SUCCESS;
